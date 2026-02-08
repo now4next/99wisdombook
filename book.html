@@ -3,7 +3,7 @@
   <!-- 🔴 초강력 캐시 무효화 -->
   <script>
     (function() {
-      const currentVersion = '1770544648';
+      const currentVersion = '1770544793';
       
       // 1. Service Worker 무효화
       if ('serviceWorker' in navigator) {
@@ -52,7 +52,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="version" content="1770544648">
+  <meta name="version" content="1770544793">
   <title>살아본 뒤에야 비로소 읽히는 문장들</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -449,24 +449,26 @@
 
       .toc-close {
         position: absolute;
-        top: 15px;
-        right: 15px;
-        width: 30px;
-        height: 30px;
-        background: #f0f0f0;
+        top: 20px;
+        right: 20px;
+        width: 32px;
+        height: 32px;
+        background: transparent;
         border: none;
-        border-radius: 50%;
         cursor: pointer;
-        font-size: 18px;
+        font-size: 24px;
+        font-weight: 300;
+        color: #999;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.2s;
+        transition: all 0.2s ease;
+        line-height: 1;
       }
 
       .toc-close:hover {
-        background: #e0e0e0;
-        transform: rotate(90deg);
+        color: #000;
+        transform: scale(1.1);
       }
 
       /* Overlay */
@@ -1205,7 +1207,7 @@
 
     <!-- Floating TOC Panel -->
     <div id="floating-toc-panel">
-      <button class="toc-close" onclick="toggleTOC()">✕</button>
+      <button class="toc-close" onclick="toggleTOC()">×</button>
       <h3>CONTENTS</h3>
       
       <div class="toc-section">
