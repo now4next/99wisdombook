@@ -110,7 +110,7 @@
         background-color: #f8f8f8;
         border-bottom: 1px solid #e0e0e0;
         padding: 10px 40px;
-        z-index: 9999;
+        z-index: 10000;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -491,99 +491,128 @@
         border-bottom: 1px solid #eee;
       }
     
+      
+
+    
       /* ========================================
          반응형 웹 디자인 (Responsive Web Design)
          ======================================== */
       
-      /* 태블릿 (768px ~ 1024px) */
-      @media screen and (max-width: 1024px) {
+      /* 태블릿 (769px ~ 1024px) */
+      @media screen and (min-width: 769px) and (max-width: 1024px) {
         body {
           padding: 30px 40px;
           padding-top: 70px;
           font-size: 15px;
         }
         
-        h1 {
-          font-size: 2em;
-        }
-        
-        h2 {
-          font-size: 1.6em;
-        }
-        
-        h3 {
-          font-size: 1.3em;
-        }
+        h1 { font-size: 2em; }
+        h2 { font-size: 1.6em; }
+        h3 { font-size: 1.3em; }
         
         #language-selector {
           padding: 8px 20px;
           font-size: 12px;
         }
+
+      /* PC (1025px ~ 1439px) */
+      @media screen and (min-width: 1025px) and (max-width: 1439px) {
+        body {
+          max-width: 960px;
+          padding: 40px 60px;
+          padding-top: 80px;
+          font-size: 16px;
+        }
+        
+        h1 { font-size: 2.2em; }
+        h2 { font-size: 1.7em; }
+        h3 { font-size: 1.35em; }
+        h4 { font-size: 1.15em; }
+        
+        #language-selector {
+          padding: 10px 30px;
+          font-size: 13px;
+        }
+        
+        #language-selector a {
+          padding: 6px 12px;
+          font-size: 13px;
+        }
+        
+        #user-info {
+          font-size: 13px;
+        }
+        
+        #mobile-toc-button {
+          display: none !important;
+        }
         
         #floating-toc-button {
-          right: 20px;
-          bottom: 20px;
+          display: flex !important;
+          top: 80px;
+          right: 30px;
+          width: 56px;
+          height: 56px;
+        }
+        
+        #floating-toc-panel {
+          top: 80px;
+          width: 360px;
+          max-height: 80vh;
+          padding: 20px;
+        }
+        
+        .toc-item {
+          padding: 12px 16px;
+          font-size: 14px;
+        }
+        
+        .chapter {
+          padding: 24px 0;
+          margin-bottom: 20px;
+        }
+        
+        .chapter-header {
+          margin-bottom: 16px;
         }
       }
       
+      }
       
-      /* 모바일 (768px 이하) */
+      /* 모바일 (최대 768px) */
       @media screen and (max-width: 768px) {
         body {
           padding: 20px 16px;
-          padding-top: 60px; /* 헤더 높이만큼 */
+          padding-top: 60px;
           font-size: 14px;
           line-height: 1.7;
         }
         
-        h1 {
-          font-size: 1.6em;
-          margin-top: 1em;
-        }
+        h1 { font-size: 1.6em; margin-top: 1em; }
+        h2 { font-size: 1.4em; margin-top: 2em; }
+        h3 { font-size: 1.2em; margin-top: 1.5em; }
+        h4 { font-size: 1.1em; }
         
-        h2 {
-          font-size: 1.4em;
-          margin-top: 2em;
-        }
-        
-        h3 {
-          font-size: 1.2em;
-          margin-top: 1.5em;
-        }
-        
-        h4 {
-          font-size: 1.1em;
-        }
-        
-        /* 언어 선택 메뉴 - 모바일 최적화 */
+        /* 헤더 레이아웃 */
         #language-selector {
           padding: 8px 12px;
           height: 50px;
           min-height: 50px;
           flex-direction: row;
-          gap: 8px;
-          align-items: center;
           justify-content: space-between;
         }
         
-        /* 왼쪽: 언어 선택 드롭다운 */
-        #user-info {
-          display: none; /* 모바일에서는 사용자 정보 숨김 (공간 절약) */
-        }
+        #user-info { display: none; }
         
         #language-links {
           flex: 1;
-          display: flex;
-          align-items: center;
-          gap: 4px;
           overflow-x: auto;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: none;
+          gap: 4px;
         }
         
-        #language-links::-webkit-scrollbar {
-          display: none;
-        }
+        #language-links::-webkit-scrollbar { display: none; }
         
         #language-selector a {
           padding: 4px 8px;
@@ -592,22 +621,16 @@
           flex-shrink: 0;
         }
         
-        #language-selector span.divider {
-          display: none; /* 모바일에서는 구분선 숨김 */
-        }
+        #language-selector span.divider { display: none; }
         
-        /* 오른쪽: 목차 햄버거 버튼 */
+        /* 모바일 목차 버튼 */
         #mobile-toc-button {
           display: flex !important;
-          align-items: center;
-          justify-content: center;
           width: 40px;
           height: 40px;
           background: var(--color-accent);
           border: none;
           border-radius: 6px;
-          cursor: pointer;
-          padding: 0;
           flex-shrink: 0;
         }
         
@@ -617,12 +640,9 @@
           fill: white;
         }
         
-        /* 기존 Floating TOC 버튼 숨김 (모바일) */
-        #floating-toc-button {
-          display: none !important;
-        }
+        #floating-toc-button { display: none !important; }
         
-        /* 목차 패널 - 모바일 */
+        /* 목차 패널 */
         #floating-toc-panel {
           top: 50px;
           width: 85%;
@@ -650,241 +670,42 @@
           font-size: 24px;
         }
         
-        /* 책 표지 이미지 */
-        .book-cover {
-          max-width: 100%;
-          height: auto;
-        }
-        
-        /* 챕터 */
-        .chapter {
-          padding: 16px 0;
-        }
-        
-        .chapter-header {
-          margin-bottom: 12px;
-        }
-        
-        .chapter-number {
-          font-size: 0.9em;
-        }
-        
-        .chapter-title {
-          font-size: 1.1em;
-        }
-        
-        /* 목차 페이지 */
-        .toc-page {
-          padding: 16px 0;
-        }
-        
-        .toc-title {
-          font-size: 1.4em;
-        }
-        
-        .toc-part {
-          margin: 16px 0;
-        }
-        
-        .toc-chapter {
-          padding: 8px 0;
-          font-size: 13px;
-        }
-      }
-
-        
-        h1 {
-          font-size: 1.6em;
-          margin-top: 1em;
-        }
-        
-        h2 {
-          font-size: 1.4em;
-          margin-top: 2em;
-        }
-        
-        h3 {
-          font-size: 1.2em;
-          margin-top: 1.5em;
-        }
-        
-        h4 {
-          font-size: 1.1em;
-        }
-        
-        /* 언어 선택 메뉴 - 모바일 최적화 */
-        #language-selector {
-          padding: 8px 12px;
-          height: auto;
-          min-height: 45px;
-          flex-direction: column;
-          gap: 8px;
-          align-items: stretch;
-        }
-        
-        #user-info {
-          width: 100%;
-          justify-content: space-between;
-          gap: 10px;
-          font-size: 12px;
-        }
-        
-        #user-info .user-name {
-          font-size: 12px;
-          max-width: 120px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-        
-        #user-info .logout-btn {
-          padding: 5px 12px;
-          font-size: 11px;
-        }
-        
-        #language-links {
-          width: 100%;
-          flex-wrap: wrap;
-          justify-content: center;
-          gap: 4px;
-        }
-        
-        #language-selector a {
-          padding: 4px 6px;
-          font-size: 11px;
-        }
-        
-        #language-selector span.divider {
-          display: none; /* 모바일에서는 구분선 숨김 */
-        }
-        
-        /* 목차 버튼 - 모바일 */
-        #floating-toc-button {
-          right: 12px;
-          bottom: 12px;
-          width: 50px;
-          height: 50px;
-        }
-        
-        #floating-toc-button svg {
-          width: 24px;
-          height: 24px;
-        }
-        
-        /* 목차 패널 - 모바일 */
-        #floating-toc-panel {
-          width: 85%;
-          max-width: 320px;
-          padding: 16px;
-        }
-        
-        #floating-toc-panel h3 {
-          font-size: 1.2em;
-          margin-top: 0;
-        }
-        
-        .toc-item {
-          padding: 10px 12px;
-          font-size: 13px;
-        }
-        
-        .toc-close {
-          top: 12px;
-          right: 12px;
-          width: 32px;
-          height: 32px;
-          font-size: 24px;
-        }
-        
-        /* 책 표지 이미지 */
-        .book-cover {
-          max-width: 100%;
-          height: auto;
-        }
-        
-        /* 챕터 */
-        .chapter {
-          padding: 16px 0;
-        }
-        
-        .chapter-header {
-          margin-bottom: 12px;
-        }
-        
-        .chapter-number {
-          font-size: 0.9em;
-        }
-        
-        .chapter-title {
-          font-size: 1.1em;
-        }
-        
-        /* 목차 페이지 */
-        .toc-page {
-          padding: 16px 0;
-        }
-        
-        .toc-title {
-          font-size: 1.4em;
-        }
-        
-        .toc-part {
-          margin: 16px 0;
-        }
-        
-        .toc-chapter {
-          padding: 8px 0;
-          font-size: 13px;
-        }
+        .book-cover { max-width: 100%; height: auto; }
+        .chapter { padding: 16px 0; }
+        .chapter-header { margin-bottom: 12px; }
+        .chapter-number { font-size: 0.9em; }
+        .chapter-title { font-size: 1.1em; }
+        .toc-page { padding: 16px 0; }
+        .toc-title { font-size: 1.4em; }
+        .toc-part { margin: 16px 0; }
+        .toc-chapter { padding: 8px 0; font-size: 13px; }
       }
       
-      /* 아주 작은 모바일 (480px 이하) */
+      /* 소형 모바일 (최대 480px) */
       @media screen and (max-width: 480px) {
         body {
           padding: 16px 12px;
-          padding-top: 110px;
+          padding-top: 60px;
           font-size: 13px;
         }
         
-        h1 {
-          font-size: 1.4em;
-        }
+        h1 { font-size: 1.4em; }
+        h2 { font-size: 1.3em; }
+        h3 { font-size: 1.15em; }
         
-        h2 {
-          font-size: 1.3em;
-        }
-        
-        h3 {
-          font-size: 1.15em;
-        }
-        
-        #language-selector {
-          padding: 6px 8px;
-        }
-        
-        #user-info .user-name {
-          max-width: 80px;
-          font-size: 11px;
-        }
-        
-        #user-info .logout-btn {
-          padding: 4px 10px;
-          font-size: 10px;
-        }
+        #language-selector { padding: 6px 8px; }
         
         #language-selector a {
           padding: 3px 5px;
           font-size: 10px;
         }
         
-        #floating-toc-button {
-          width: 45px;
-          height: 45px;
-          right: 10px;
-          bottom: 10px;
+        #mobile-toc-button {
+          width: 38px;
+          height: 38px;
         }
         
-        #floating-toc-button svg {
+        #mobile-toc-button svg {
           width: 20px;
           height: 20px;
         }
@@ -897,55 +718,33 @@
       
       /* 가로 모드 모바일 */
       @media screen and (max-width: 768px) and (orientation: landscape) {
-        body {
-          padding-top: 70px;
-        }
-        
-        #language-selector {
-          flex-direction: row;
-          height: 45px;
-          min-height: 45px;
-        }
-        
-        #user-info {
-          width: auto;
-          flex: 0 0 auto;
-        }
+        body { padding-top: 60px; }
         
         #language-links {
-          width: auto;
-          flex: 1;
-          justify-content: flex-end;
           flex-wrap: nowrap;
           overflow-x: auto;
         }
       }
       
-      /* 큰 화면 (1440px 이상) */
+      /* 대형 화면 (1440px 이상) */
       @media screen and (min-width: 1440px) {
         body {
           max-width: 1000px;
           padding: 50px 100px;
+          padding-top: 90px;
           font-size: 17px;
         }
         
-        h1 {
-          font-size: 2.6em;
-        }
-        
-        h2 {
-          font-size: 2em;
-        }
-        
-        h3 {
-          font-size: 1.5em;
-        }
+        h1 { font-size: 2.6em; }
+        h2 { font-size: 2em; }
+        h3 { font-size: 1.5em; }
       }
       
       /* 인쇄 스타일 */
       @media print {
         #language-selector,
         #floating-toc-button,
+        #mobile-toc-button,
         #floating-toc-panel,
         #toc-overlay,
         #user-info {
@@ -957,13 +756,8 @@
           max-width: none;
         }
         
-        .chapter {
-          page-break-inside: avoid;
-        }
-        
-        h1, h2, h3 {
-          page-break-after: avoid;
-        }
+        .chapter { page-break-inside: avoid; }
+        h1, h2, h3 { page-break-after: avoid; }
       }
 
     </style>
