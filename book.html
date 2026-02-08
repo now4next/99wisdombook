@@ -1026,7 +1026,12 @@
           }
           
           // Google Translate Element 생성
-          var translateElement = 
+          new google.translate.TranslateElement({
+            pageLanguage: 'ko',
+            includedLanguages: 'ar,zh-CN,en,es,fr,ja,ko,ru',
+            layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+            autoDisplay: false
+          }, 'google_translate_element');
           
           console.log('✅ TranslateElement 객체 생성 완료');
           
