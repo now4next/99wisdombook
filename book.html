@@ -148,7 +148,79 @@
         background: #4a332c;
       }
 
-      /* Language Links Section */
+      
+
+      /* Header Icons */
+      .header-icons {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      
+      .icon-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(93, 64, 55, 0.1);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+      }
+      
+      .icon-btn:hover {
+        background: rgba(93, 64, 55, 0.2);
+        transform: scale(1.05);
+      }
+      
+      .icon-btn svg {
+        fill: var(--color-accent);
+      }
+      
+      /* Language Dropdown */
+      .language-dropdown {
+        position: relative;
+      }
+      
+      .language-menu {
+        display: none;
+        position: absolute;
+        top: 50px;
+        right: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        min-width: 180px;
+        z-index: 10001;
+        padding: 8px 0;
+      }
+      
+      .language-menu.show {
+        display: block;
+      }
+      
+      .language-menu a {
+        display: block;
+        padding: 10px 16px;
+        color: #333;
+        text-decoration: none;
+        font-size: 14px;
+        transition: background 0.2s;
+      }
+      
+      .language-menu a:hover {
+        background: #f5f5f5;
+      }
+      
+      .language-menu a.active {
+        background: #e8f4f8;
+        color: #0066cc;
+        font-weight: 600;
+      }
+/* Language Links Section */
       #language-links {
         display: flex;
         align-items: center;
@@ -203,36 +275,11 @@
       }
 
       /* Floating TOC Button */
-      #floating-toc-button {
-        position: fixed;
-        top: 60px;
-        right: 30px;
-        width: 56px;
-        height: 56px;
-        background: linear-gradient(135deg, #4a4a4a 0%, #2c2c2c 100%);
-        border-radius: 50%;
-        border: 2px solid #666;
-        cursor: pointer;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-        z-index: 9998;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-      }
+      
 
-      #floating-toc-button:hover {
-        transform: scale(1.1);
-        background: linear-gradient(135deg, #5a5a5a 0%, #3c3c3c 100%);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-        border-color: #888;
-      }
+      
 
-      #floating-toc-button svg {
-        width: 28px;
-        height: 28px;
-        fill: #e0e0e0;
-      }
+      
 
       /* TOC Panel */
       #floating-toc-panel {
@@ -543,13 +590,7 @@
           font-size: 13px;
         }
         
-        #floating-toc-button {
-          display: flex !important;
-          top: 80px;
-          right: 30px;
-          width: 56px;
-          height: 56px;
-        }
+        
         
         #floating-toc-panel {
           top: 80px;
@@ -578,29 +619,9 @@
       /* 모바일 (최대 768px) */
       @media screen and (max-width: 768px) {
         /* 플로팅 TOC 버튼 모바일에서 표시 */
-        #floating-toc-button {
-          display: flex !important;
-          position: fixed;
-          top: 65px;
-          right: 20px;
-          width: 50px;
-          height: 50px;
-          background: linear-gradient(135deg, #4a4a4a 0%, #2c2c2c 100%);
-          border-radius: 50%;
-          border: 2px solid #666;
-          cursor: pointer;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-          z-index: 9998;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.3s ease;
-        }
         
-        #floating-toc-button svg {
-          width: 24px;
-          height: 24px;
-          fill: #e0e0e0;
-        }
+        
+        
 
         body {
           padding: 20px 16px;
@@ -644,7 +665,7 @@
         
         #language-selector span.divider { display: none; }
         
-        #floating-toc-button { display: none !important; }
+        
         
         /* 목차 패널 */
         #floating-toc-panel {
@@ -820,6 +841,47 @@
       html[translate="yes"] body {
         top: 0 !important;
       }
+      /* 모바일 반응형 */
+      @media screen and (max-width: 768px) {
+        #language-selector {
+          padding: 10px 16px;
+          height: 55px;
+        }
+        
+        #user-info {
+          display: none;  /* 모바일에서 사용자 정보 숨김 */
+        }
+        
+        .header-icons {
+          gap: 8px;
+        }
+        
+        .icon-btn {
+          width: 36px;
+          height: 36px;
+        }
+        
+        .icon-btn svg {
+          width: 20px;
+          height: 20px;
+        }
+        
+        .language-menu {
+          right: -8px;
+        }
+      }
+      
+      @media screen and (max-width: 480px) {
+        .language-menu {
+          min-width: 160px;
+        }
+        
+        .language-menu a {
+          padding: 8px 12px;
+          font-size: 13px;
+        }
+      }
+
 
 
     </style>
@@ -874,6 +936,47 @@
     iframe.skiptranslate {
       display: none !important;
     }
+      /* 모바일 반응형 */
+      @media screen and (max-width: 768px) {
+        #language-selector {
+          padding: 10px 16px;
+          height: 55px;
+        }
+        
+        #user-info {
+          display: none;  /* 모바일에서 사용자 정보 숨김 */
+        }
+        
+        .header-icons {
+          gap: 8px;
+        }
+        
+        .icon-btn {
+          width: 36px;
+          height: 36px;
+        }
+        
+        .icon-btn svg {
+          width: 20px;
+          height: 20px;
+        }
+        
+        .language-menu {
+          right: -8px;
+        }
+      }
+      
+      @media screen and (max-width: 480px) {
+        .language-menu {
+          min-width: 160px;
+        }
+        
+        .language-menu a {
+          padding: 8px 12px;
+          font-size: 13px;
+        }
+      }
+
   </style>
 
 </head>
@@ -883,31 +986,42 @@
     <!-- Hidden Google Translate Widget -->
     
 
+    
     <div id="language-selector">
       <div id="user-info">
         <span class="user-name" id="userName"></span>
         <button class="logout-btn" onclick="logout()">로그아웃</button>
       </div>
-      <div id="language-links">
-        <a href="javascript:void(0)" onclick="switchLanguage('ar')" data-lang="ar">عربي</a>
-        <span class="divider">|</span>
-        <a href="javascript:void(0)" onclick="switchLanguage('zh-CN')" data-lang="zh-CN">中文</a>
-        <span class="divider">|</span>
-        <a href="javascript:void(0)" onclick="switchLanguage('en')" data-lang="en">English</a>
-        <span class="divider">|</span>
-        <a href="javascript:void(0)" onclick="switchLanguage('fr')" data-lang="fr">Français</a>
-        <span class="divider">|</span>
-        <a href="javascript:void(0)" onclick="switchLanguage('ru')" data-lang="ru">Русский</a>
-        <span class="divider">|</span>
-        <a href="javascript:void(0)" onclick="switchLanguage('es')" data-lang="es">Español</a>
-        <span class="divider">|</span>
-        <a href="javascript:void(0)" onclick="switchLanguage('ja')" data-lang="ja">日本語</a>
-        <span class="divider">|</span>
-        <a href="javascript:void(0)" onclick="switchLanguage('ko')" data-lang="ko" class="active">한국어</a>
+      
+      <!-- 언어 선택 드롭다운 -->
+      <div class="header-icons">
+        <div class="language-dropdown">
+          <button class="icon-btn" id="languageBtn" onclick="toggleLanguageMenu()" title="언어 선택">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+              <path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
+            </svg>
+          </button>
+          <div class="language-menu" id="languageMenu">
+            <a href="javascript:void(0)" onclick="selectLanguage('ko')" data-lang="ko">🇰🇷 한국어</a>
+            <a href="javascript:void(0)" onclick="selectLanguage('en')" data-lang="en">🇺🇸 English</a>
+            <a href="javascript:void(0)" onclick="selectLanguage('zh-CN')" data-lang="zh-CN">🇨🇳 中文</a>
+            <a href="javascript:void(0)" onclick="selectLanguage('ja')" data-lang="ja">🇯🇵 日本語</a>
+            <a href="javascript:void(0)" onclick="selectLanguage('es')" data-lang="es">🇪🇸 Español</a>
+            <a href="javascript:void(0)" onclick="selectLanguage('fr')" data-lang="fr">🇫🇷 Français</a>
+            <a href="javascript:void(0)" onclick="selectLanguage('ru')" data-lang="ru">🇷🇺 Русский</a>
+            <a href="javascript:void(0)" onclick="selectLanguage('ar')" data-lang="ar">🇸🇦 عربي</a>
+          </div>
+        </div>
+        
+        <!-- 목차 버튼 -->
+        <button class="icon-btn" id="tocBtn" onclick="toggleTOC()" title="목차">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+            <path d="M3 9h14V7H3v2zm0 4h14v-2H3v2zm0 4h14v-2H3v2zm16 0h2v-2h-2v2zm0-10v2h2V7h-2zm0 6h2v-2h-2v2z"/>
+          </svg>
+        </button>
       </div>
     </div>
-
-    <!-- Language Notice -->
+<!-- Language Notice -->
     <div id="translation-notice" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); color: white; padding: 30px 50px; border-radius: 12px; z-index: 10000; text-align: center; font-family: var(--font-sans);">
       <h3 style="margin: 0 0 15px 0; color: white;">⚠️ 번역 기능 안내</h3>
       <p style="margin: 0; line-height: 1.6;">
@@ -928,11 +1042,7 @@
     <!-- i18n system replaces Google Translate -->
 
     <!-- Floating TOC Button -->
-    <button id="floating-toc-button" onclick="toggleTOC()" title="목차 보기">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-        <path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"></path>
-      </svg>
-    </button>
+    
 
     <!-- TOC Overlay -->
     <div id="toc-overlay" onclick="toggleTOC()"></div>
@@ -1396,7 +1506,52 @@
     // 사용자 정보 표시 및 로그아웃
     (function() {
       // 사용자 정보 표시
-      function displayUserInfo() {
+      
+    // 언어 메뉴 토글
+    function toggleLanguageMenu() {
+      const menu = document.getElementById('languageMenu');
+      menu.classList.toggle('show');
+      
+      // 다른 곳 클릭시 닫기
+      if (menu.classList.contains('show')) {
+        document.addEventListener('click', closeLanguageMenu);
+      }
+    }
+    
+    function closeLanguageMenu(e) {
+      const menu = document.getElementById('languageMenu');
+      const btn = document.getElementById('languageBtn');
+      
+      if (!menu.contains(e.target) && !btn.contains(e.target)) {
+        menu.classList.remove('show');
+        document.removeEventListener('click', closeLanguageMenu);
+      }
+    }
+    
+    // 언어 선택 및 번역
+    function selectLanguage(lang) {
+      console.log('🌐 언어 선택:', lang);
+      
+      // 활성 언어 표시
+      const items = document.querySelectorAll('.language-menu a');
+      items.forEach(item => {
+        if (item.getAttribute('data-lang') === lang) {
+          item.classList.add('active');
+        } else {
+          item.classList.remove('active');
+        }
+      });
+      
+      // 메뉴 닫기
+      document.getElementById('languageMenu').classList.remove('show');
+      
+      // Google Translate 호출
+      if (window.switchLanguage) {
+        window.switchLanguage(lang);
+      }
+    }
+    
+function displayUserInfo() {
         const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
         if (currentUser) {
           try {
