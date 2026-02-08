@@ -543,10 +543,6 @@
           font-size: 13px;
         }
         
-        #mobile-toc-button {
-          display: none !important;
-        }
-        
         #floating-toc-button {
           display: flex !important;
           top: 80px;
@@ -581,6 +577,21 @@
       
       /* 모바일 (최대 768px) */
       @media screen and (max-width: 768px) {
+        /* 플로팅 TOC 버튼 모바일에서도 표시 */
+        #floating-toc-button {
+          display: flex !important;
+          top: auto;
+          bottom: 20px;
+          right: 20px;
+          width: 50px;
+          height: 50px;
+        }
+        
+        #floating-toc-button svg {
+          width: 24px;
+          height: 24px;
+        }
+
         body {
           padding: 20px 16px;
           padding-top: 60px;
@@ -622,23 +633,6 @@
         }
         
         #language-selector span.divider { display: none; }
-        
-        /* 모바일 목차 버튼 (기본 숨김) */
-      #mobile-toc-button {
-        display: none;
-        position: fixed;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        z-index: 9998;
-        transition: all 0.3s;
-      }
-        
-        #mobile-toc-button svg {
-          width: 24px;
-          height: 24px;
-          fill: white;
-        }
         
         #floating-toc-button { display: none !important; }
         
@@ -698,16 +692,6 @@
         #language-selector a {
           padding: 3px 5px;
           font-size: 10px;
-        }
-        
-        #mobile-toc-button {
-          width: 38px;
-          height: 38px;
-        }
-        
-        #mobile-toc-button svg {
-          width: 20px;
-          height: 20px;
         }
         
         #floating-toc-panel {
@@ -911,12 +895,6 @@
         <span class="divider">|</span>
         <a href="javascript:void(0)" onclick="switchLanguage('ko')" data-lang="ko" class="active">한국어</a>
       </div>
-      <!-- 모바일 목차 햄버거 버튼 -->
-      <button id="mobile-toc-button" onclick="toggleTOC()" title="목차" aria-label="목차 열기">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-          <path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/>
-        </svg>
-      </button>
     </div>
 
     <!-- Language Notice -->
