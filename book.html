@@ -623,30 +623,42 @@
       
       /* 모바일 (최대 768px) */
       @media screen and (max-width: 768px) {
-        /* 모바일에서도 아이콘 명확하게 유지 */
+        /* 모바일에서 텍스트 버튼 최적화 */
         .header-icons {
           display: flex !important;
-          gap: 10px;
+          gap: 8px;
         }
         
-        .icon-btn {
-          width: 40px !important;
-          height: 40px !important;
-          border: 2px solid #333 !important;
+        .text-btn {
+          padding: 8px 16px !important;
+          font-size: 14px !important;
+          gap: 6px !important;
         }
         
-        .icon-btn svg {
-          width: 22px !important;
-          height: 22px !important;
-          stroke: #333 !important;
+        .text-btn .btn-icon {
+          width: 18px !important;
+          height: 18px !important;
         }
         
-        .icon-btn:hover svg {
-          stroke: #fff !important;
+        .text-btn .btn-text {
+          font-size: 14px !important;
+        }
+        
+        .text-btn .btn-arrow {
+          width: 14px !important;
+          height: 14px !important;
+        }
+        
+        .language-btn {
+          padding: 8px 14px 8px 16px !important;
+        }
+        
+        .contents-btn {
+          padding: 8px 16px !important;
         }
         
         .language-menu {
-          top: 50px;
+          top: 48px;
           min-width: 180px;
           right: 0;
         }
@@ -657,56 +669,7 @@
         }
         
 
-        /* 플로팅 TOC 버튼 모바일에서 표시 */
         
-        
-        
-
-        body {
-          padding: 20px 16px;
-          padding-top: 60px;
-          font-size: 14px;
-          line-height: 1.7;
-        }
-        
-        h1 { font-size: 1.6em; margin-top: 1em; }
-        h2 { font-size: 1.4em; margin-top: 2em; }
-        h3 { font-size: 1.2em; margin-top: 1.5em; }
-        h4 { font-size: 1.1em; }
-        
-        /* 헤더 레이아웃 */
-        #language-selector {
-          padding: 8px 12px;
-          height: 50px;
-          min-height: 50px;
-          flex-direction: row;
-          justify-content: space-between;
-        }
-        
-        #user-info { display: none; }
-        
-        #language-links {
-          flex: 1;
-          overflow-x: auto;
-          -webkit-overflow-scrolling: touch;
-          scrollbar-width: none;
-          gap: 4px;
-        }
-        
-        #language-links::-webkit-scrollbar { display: none; }
-        
-        #language-selector a {
-          padding: 4px 8px;
-          font-size: 12px;
-          white-space: nowrap;
-          flex-shrink: 0;
-        }
-        
-        #language-selector span.divider { display: none; }
-        
-        
-        
-        /* 목차 패널 */
         #floating-toc-panel {
           top: 50px;
           width: 85%;
@@ -747,20 +710,33 @@
       
       /* 소형 모바일 (최대 480px) */
       @media screen and (max-width: 480px) {
-        /* 초소형 모바일에서도 아이콘 유지 */
-        .icon-btn {
-          width: 36px !important;
-          height: 36px !important;
+        /* 초소형 모바일에서 텍스트 버튼 최적화 */
+        .text-btn {
+          padding: 7px 14px !important;
+          font-size: 13px !important;
+          gap: 5px !important;
         }
         
-        .icon-btn svg {
-          width: 20px !important;
-          height: 20px !important;
+        .text-btn .btn-icon {
+          width: 16px !important;
+          height: 16px !important;
+        }
+        
+        .text-btn .btn-text {
+          font-size: 13px !important;
+        }
+        
+        .text-btn .btn-arrow {
+          width: 12px !important;
+          height: 12px !important;
         }
         
         .language-menu {
           min-width: 160px;
         }
+        
+
+        
         
 
         body {
@@ -898,6 +874,52 @@
       }
       /* 모바일 반응형 */
       @media screen and (max-width: 768px) {
+        /* 모바일에서 텍스트 버튼 최적화 */
+        .header-icons {
+          display: flex !important;
+          gap: 8px;
+        }
+        
+        .text-btn {
+          padding: 8px 16px !important;
+          font-size: 14px !important;
+          gap: 6px !important;
+        }
+        
+        .text-btn .btn-icon {
+          width: 18px !important;
+          height: 18px !important;
+        }
+        
+        .text-btn .btn-text {
+          font-size: 14px !important;
+        }
+        
+        .text-btn .btn-arrow {
+          width: 14px !important;
+          height: 14px !important;
+        }
+        
+        .language-btn {
+          padding: 8px 14px 8px 16px !important;
+        }
+        
+        .contents-btn {
+          padding: 8px 16px !important;
+        }
+        
+        .language-menu {
+          top: 48px;
+          min-width: 180px;
+          right: 0;
+        }
+        
+        .language-menu a {
+          padding: 10px 16px;
+          font-size: 14px;
+        }
+        
+
         /* 모바일에서도 아이콘 명확하게 유지 */
         .header-icons {
           display: flex !important;
@@ -961,15 +983,25 @@
       }
       
       @media screen and (max-width: 480px) {
-        /* 초소형 모바일에서도 아이콘 유지 */
-        .icon-btn {
-          width: 36px !important;
-          height: 36px !important;
+        /* 초소형 모바일에서 텍스트 버튼 최적화 */
+        .text-btn {
+          padding: 7px 14px !important;
+          font-size: 13px !important;
+          gap: 5px !important;
         }
         
-        .icon-btn svg {
-          width: 20px !important;
-          height: 20px !important;
+        .text-btn .btn-icon {
+          width: 16px !important;
+          height: 16px !important;
+        }
+        
+        .text-btn .btn-text {
+          font-size: 13px !important;
+        }
+        
+        .text-btn .btn-arrow {
+          width: 12px !important;
+          height: 12px !important;
         }
         
         .language-menu {
@@ -977,54 +1009,7 @@
         }
         
 
-        .language-menu {
-          min-width: 160px;
-        }
         
-        .language-menu a {
-          padding: 8px 12px;
-          font-size: 13px;
-        }
-      }
-
-
-
-    </style>
-  
-    
-
-  <!-- Google Translate Element -->
-  <div id="google_translate_element" style="display: none;"></div>
-  
-  <script type="text/javascript">
-    function googleTranslateElementInit() {
-      new google.translate.TranslateElement({
-        pageLanguage: 'ko',
-        includedLanguages: 'ar,zh-CN,en,es,fr,ja,ko,ru',
-        layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
-        autoDisplay: false
-      }, 'google_translate_element');
-    }
-  </script>
-  
-  <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-  
-  <style>
-    /* Google Translate 위젯 완전 숨김 */
-    .goog-te-banner-frame,
-    .goog-te-gadget,
-    #google_translate_element,
-    .goog-logo-link,
-    .goog-te-balloon-frame,
-    div#goog-gt-tt,
-    .goog-te-spinner-pos,
-    .skiptranslate {
-      display: none !important;
-      visibility: hidden !important;
-      opacity: 0 !important;
-      height: 0 !important;
-      position: absolute !important;
-    }
     
     body {
       top: 0 !important;
@@ -1043,6 +1028,52 @@
     }
       /* 모바일 반응형 */
       @media screen and (max-width: 768px) {
+        /* 모바일에서 텍스트 버튼 최적화 */
+        .header-icons {
+          display: flex !important;
+          gap: 8px;
+        }
+        
+        .text-btn {
+          padding: 8px 16px !important;
+          font-size: 14px !important;
+          gap: 6px !important;
+        }
+        
+        .text-btn .btn-icon {
+          width: 18px !important;
+          height: 18px !important;
+        }
+        
+        .text-btn .btn-text {
+          font-size: 14px !important;
+        }
+        
+        .text-btn .btn-arrow {
+          width: 14px !important;
+          height: 14px !important;
+        }
+        
+        .language-btn {
+          padding: 8px 14px 8px 16px !important;
+        }
+        
+        .contents-btn {
+          padding: 8px 16px !important;
+        }
+        
+        .language-menu {
+          top: 48px;
+          min-width: 180px;
+          right: 0;
+        }
+        
+        .language-menu a {
+          padding: 10px 16px;
+          font-size: 14px;
+        }
+        
+
         /* 모바일에서도 아이콘 명확하게 유지 */
         .header-icons {
           display: flex !important;
@@ -1106,6 +1137,32 @@
       }
       
       @media screen and (max-width: 480px) {
+        /* 초소형 모바일에서 텍스트 버튼 최적화 */
+        .text-btn {
+          padding: 7px 14px !important;
+          font-size: 13px !important;
+          gap: 5px !important;
+        }
+        
+        .text-btn .btn-icon {
+          width: 16px !important;
+          height: 16px !important;
+        }
+        
+        .text-btn .btn-text {
+          font-size: 13px !important;
+        }
+        
+        .text-btn .btn-arrow {
+          width: 12px !important;
+          height: 12px !important;
+        }
+        
+        .language-menu {
+          min-width: 160px;
+        }
+        
+
         /* 초소형 모바일에서도 아이콘 유지 */
         .icon-btn {
           width: 36px !important;
@@ -1151,11 +1208,15 @@
       <!-- 언어 선택 드롭다운 -->
       <div class="header-icons">
         <div class="language-dropdown">
-          <button class="icon-btn" id="languageBtn" onclick="toggleLanguageMenu()" title="언어 선택" aria-label="언어 선택">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <button class="text-btn language-btn" id="languageBtn" onclick="toggleLanguageMenu()" title="언어 선택" aria-label="언어 선택">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="2" y1="12" x2="22" y2="12"></line>
               <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+            <span class="btn-text">Language</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-arrow">
+              <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
           </button>
           <div class="language-menu" id="languageMenu">
@@ -1171,12 +1232,13 @@
         </div>
         
         <!-- 목차 버튼 -->
-        <button class="icon-btn" id="tocBtn" onclick="toggleTOC()" title="목차" aria-label="목차">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <button class="text-btn contents-btn" id="tocBtn" onclick="toggleTOC()" title="목차" aria-label="목차">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
             <line x1="3" y1="6" x2="21" y2="6"></line>
             <line x1="3" y1="12" x2="21" y2="12"></line>
             <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg>
+          <span class="btn-text">Contents</span>
         </button>
       </div>
     </div>
@@ -1669,12 +1731,16 @@
     // 언어 메뉴 토글
     function toggleLanguageMenu() {
       const menu = document.getElementById('languageMenu');
+      const btn = document.getElementById('languageBtn');
+      
       menu.classList.toggle('show');
+      btn.classList.toggle('active');
       
       // 다른 곳 클릭시 닫기
       if (menu.classList.contains('show')) {
         document.addEventListener('click', closeLanguageMenu);
       }
+    }
     }
     
     function closeLanguageMenu(e) {
@@ -1683,8 +1749,10 @@
       
       if (!menu.contains(e.target) && !btn.contains(e.target)) {
         menu.classList.remove('show');
+        btn.classList.remove('active');
         document.removeEventListener('click', closeLanguageMenu);
       }
+    }
     }
     
     // 언어 선택 및 번역
