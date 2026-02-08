@@ -1,18 +1,43 @@
 <!DOCTYPE html>
 <html lang="ko" data-theme="light" style="height: 100%;"><head>
-  <!-- 🔴 강력한 캐시 무효화 -->
+  <!-- 🔴 초강력 캐시 무효화 -->
   <script>
     (function() {
-      // URL에 버전 파라미터가 없으면 추가하고 리로드
+      const currentVersion = '1770542000';
+      
+      // 1. Service Worker 무효화
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for(let registration of registrations) {
+            registration.unregister();
+            console.log('🗑️ Service Worker 제거됨');
+          }
+        });
+      }
+      
+      // 2. 모든 캐시 삭제
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          for (let name of names) {
+            caches.delete(name);
+            console.log('🗑️ 캐시 삭제됨:', name);
+          }
+        });
+      }
+      
+      // 3. URL 버전 체크 및 리다이렉트
       const url = new URL(window.location.href);
       const hasVersion = url.searchParams.get('v');
-      const currentVersion = '1770541848';
       
       if (!hasVersion || hasVersion !== currentVersion) {
-        console.log('🔄 최신 버전으로 리다이렉트 중...');
+        console.log('🔄 최신 버전으로 강제 리다이렉트 중... v=' + currentVersion);
         url.searchParams.set('v', currentVersion);
         url.searchParams.set('_', Date.now());
-        window.location.replace(url.href);
+        
+        // location.replace 대신 location.href 사용 (더 강력한 리로드)
+        window.location.href = url.href;
+      } else {
+        console.log('✅ 최신 버전 로드됨: v=' + currentVersion);
       }
     })();
   </script>
@@ -27,7 +52,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="version" content="1770541647">
+  <meta name="version" content="1770542617">
   <title>살아본 뒤에야 비로소 읽히는 문장들</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
