@@ -3,7 +3,7 @@
   <!-- 🔴 초강력 캐시 무효화 -->
   <script>
     (function() {
-      const currentVersion = '1770544088';
+      const currentVersion = '1770544648';
       
       // 1. Service Worker 무효화
       if ('serviceWorker' in navigator) {
@@ -52,7 +52,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="version" content="1770544088">
+  <meta name="version" content="1770544648">
   <title>살아본 뒤에야 비로소 읽히는 문장들</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -409,41 +409,42 @@
       }
 
       #floating-toc-panel h3 {
-        margin: 0 0 20px 0;
-        font-size: 1.3em;
-        color: #333;
-        border-bottom: 2px solid #666;
-        padding-bottom: 10px;
+        margin: 0 0 24px 0;
+        font-size: 1.1em;
+        font-weight: 600;
+        color: #000;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid #e0e0e0;
+        padding-bottom: 12px;
       }
 
       .toc-section {
-        margin-bottom: 20px;
+        margin-bottom: 16px;
       }
 
       .toc-section-title {
-        font-weight: bold;
-        font-size: 1em;
-        color: #444;
+        font-weight: 600;
+        font-size: 0.9em;
+        color: #666;
         margin-bottom: 8px;
-        padding-left: 5px;
-        border-left: 3px solid #666;
+        padding-left: 0;
+        letter-spacing: 0.03em;
       }
 
       .toc-item {
         display: block;
-        padding: 8px 12px;
-        margin: 4px 0;
-        color: #333;
+        padding: 6px 0;
+        margin: 2px 0;
+        color: #444;
         text-decoration: none;
-        border-radius: 6px;
         transition: all 0.2s;
         font-size: 0.9em;
+        line-height: 1.5;
       }
 
       .toc-item:hover {
-        background: #e8e8e8;
         color: #000;
-        transform: translateX(5px);
+        font-weight: 500;
       }
 
       .toc-close {
@@ -1205,10 +1206,10 @@
     <!-- Floating TOC Panel -->
     <div id="floating-toc-panel">
       <button class="toc-close" onclick="toggleTOC()">✕</button>
-      <h3>📖 목차 (CONTENT)</h3>
+      <h3>CONTENTS</h3>
       
       <div class="toc-section">
-        <a href="#opening" class="toc-item" onclick="navigateToSection('opening')">📌 여는 말</a>
+        <a href="#opening" class="toc-item" onclick="navigateToSection('opening')">여는 말</a>
       </div>
 
       <div class="toc-section">
@@ -1234,7 +1235,7 @@
 
       <div class="toc-section">
         <a href="#chapter-100" class="toc-item" onclick="navigateToSection('chapter-100')">100. 당신만의 지혜</a>
-        <a href="#closing" class="toc-item" onclick="navigateToSection('closing')">📌 맺음 말</a>
+        <a href="#closing" class="toc-item" onclick="navigateToSection('closing')">맺음 말</a>
       </div>
     </div>
 
