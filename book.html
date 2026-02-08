@@ -1570,9 +1570,10 @@
       
       // 다른 곳 클릭시 닫기
       if (menu.classList.contains('show')) {
-        document.addEventListener('click', closeLanguageMenu);
+        setTimeout(() => {
+          document.addEventListener('click', closeLanguageMenu);
+        }, 0);
       }
-    }
     }
     
     function closeLanguageMenu(e) {
@@ -1584,7 +1585,6 @@
         btn.classList.remove('active');
         document.removeEventListener('click', closeLanguageMenu);
       }
-    }
     }
     
     // 언어 선택 및 번역
@@ -1602,7 +1602,10 @@
       });
       
       // 메뉴 닫기
-      document.getElementById('languageMenu').classList.remove('show');
+      const menu = document.getElementById('languageMenu');
+      const btn = document.getElementById('languageBtn');
+      menu.classList.remove('show');
+      btn.classList.remove('active');
       
       // Google Translate 호출
       if (window.switchLanguage) {
