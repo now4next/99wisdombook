@@ -526,14 +526,172 @@
         }
       }
       
+      
       /* 모바일 (768px 이하) */
       @media screen and (max-width: 768px) {
         body {
           padding: 20px 16px;
-          padding-top: 100px; /* 언어 메뉴가 2줄이 될 수 있으므로 여유 공간 */
+          padding-top: 60px; /* 헤더 높이만큼 */
           font-size: 14px;
           line-height: 1.7;
         }
+        
+        h1 {
+          font-size: 1.6em;
+          margin-top: 1em;
+        }
+        
+        h2 {
+          font-size: 1.4em;
+          margin-top: 2em;
+        }
+        
+        h3 {
+          font-size: 1.2em;
+          margin-top: 1.5em;
+        }
+        
+        h4 {
+          font-size: 1.1em;
+        }
+        
+        /* 언어 선택 메뉴 - 모바일 최적화 */
+        #language-selector {
+          padding: 8px 12px;
+          height: 50px;
+          min-height: 50px;
+          flex-direction: row;
+          gap: 8px;
+          align-items: center;
+          justify-content: space-between;
+        }
+        
+        /* 왼쪽: 언어 선택 드롭다운 */
+        #user-info {
+          display: none; /* 모바일에서는 사용자 정보 숨김 (공간 절약) */
+        }
+        
+        #language-links {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+        }
+        
+        #language-links::-webkit-scrollbar {
+          display: none;
+        }
+        
+        #language-selector a {
+          padding: 4px 8px;
+          font-size: 12px;
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+        
+        #language-selector span.divider {
+          display: none; /* 모바일에서는 구분선 숨김 */
+        }
+        
+        /* 오른쪽: 목차 햄버거 버튼 */
+        #mobile-toc-button {
+          display: flex !important;
+          align-items: center;
+          justify-content: center;
+          width: 40px;
+          height: 40px;
+          background: var(--color-accent);
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          padding: 0;
+          flex-shrink: 0;
+        }
+        
+        #mobile-toc-button svg {
+          width: 24px;
+          height: 24px;
+          fill: white;
+        }
+        
+        /* 기존 Floating TOC 버튼 숨김 (모바일) */
+        #floating-toc-button {
+          display: none !important;
+        }
+        
+        /* 목차 패널 - 모바일 */
+        #floating-toc-panel {
+          top: 50px;
+          width: 85%;
+          max-width: 320px;
+          padding: 16px;
+          max-height: calc(100vh - 60px);
+          border-radius: 0;
+        }
+        
+        #floating-toc-panel h3 {
+          font-size: 1.2em;
+          margin-top: 0;
+        }
+        
+        .toc-item {
+          padding: 10px 12px;
+          font-size: 13px;
+        }
+        
+        .toc-close {
+          top: 12px;
+          right: 12px;
+          width: 32px;
+          height: 32px;
+          font-size: 24px;
+        }
+        
+        /* 책 표지 이미지 */
+        .book-cover {
+          max-width: 100%;
+          height: auto;
+        }
+        
+        /* 챕터 */
+        .chapter {
+          padding: 16px 0;
+        }
+        
+        .chapter-header {
+          margin-bottom: 12px;
+        }
+        
+        .chapter-number {
+          font-size: 0.9em;
+        }
+        
+        .chapter-title {
+          font-size: 1.1em;
+        }
+        
+        /* 목차 페이지 */
+        .toc-page {
+          padding: 16px 0;
+        }
+        
+        .toc-title {
+          font-size: 1.4em;
+        }
+        
+        .toc-part {
+          margin: 16px 0;
+        }
+        
+        .toc-chapter {
+          padding: 8px 0;
+          font-size: 13px;
+        }
+      }
+
         
         h1 {
           font-size: 1.6em;
@@ -891,6 +1049,12 @@
         <span class="divider">|</span>
         <a href="javascript:void(0)" onclick="switchLanguage('ko')" data-lang="ko" class="active">한국어</a>
       </div>
+      <!-- 모바일 목차 햄버거 버튼 -->
+      <button id="mobile-toc-button" onclick="toggleTOC()" title="목차" aria-label="목차 열기">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/>
+        </svg>
+      </button>
     </div>
 
     <!-- Language Notice -->
