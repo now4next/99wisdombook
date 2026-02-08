@@ -623,6 +623,40 @@
       
       /* 모바일 (최대 768px) */
       @media screen and (max-width: 768px) {
+        /* 모바일에서도 아이콘 명확하게 유지 */
+        .header-icons {
+          display: flex !important;
+          gap: 10px;
+        }
+        
+        .icon-btn {
+          width: 40px !important;
+          height: 40px !important;
+          border: 2px solid #333 !important;
+        }
+        
+        .icon-btn svg {
+          width: 22px !important;
+          height: 22px !important;
+          stroke: #333 !important;
+        }
+        
+        .icon-btn:hover svg {
+          stroke: #fff !important;
+        }
+        
+        .language-menu {
+          top: 50px;
+          min-width: 180px;
+          right: 0;
+        }
+        
+        .language-menu a {
+          padding: 10px 16px;
+          font-size: 14px;
+        }
+        
+
         /* 플로팅 TOC 버튼 모바일에서 표시 */
         
         
@@ -713,6 +747,22 @@
       
       /* 소형 모바일 (최대 480px) */
       @media screen and (max-width: 480px) {
+        /* 초소형 모바일에서도 아이콘 유지 */
+        .icon-btn {
+          width: 36px !important;
+          height: 36px !important;
+        }
+        
+        .icon-btn svg {
+          width: 20px !important;
+          height: 20px !important;
+        }
+        
+        .language-menu {
+          min-width: 160px;
+        }
+        
+
         body {
           padding: 16px 12px;
           padding-top: 60px;
@@ -848,6 +898,40 @@
       }
       /* 모바일 반응형 */
       @media screen and (max-width: 768px) {
+        /* 모바일에서도 아이콘 명확하게 유지 */
+        .header-icons {
+          display: flex !important;
+          gap: 10px;
+        }
+        
+        .icon-btn {
+          width: 40px !important;
+          height: 40px !important;
+          border: 2px solid #333 !important;
+        }
+        
+        .icon-btn svg {
+          width: 22px !important;
+          height: 22px !important;
+          stroke: #333 !important;
+        }
+        
+        .icon-btn:hover svg {
+          stroke: #fff !important;
+        }
+        
+        .language-menu {
+          top: 50px;
+          min-width: 180px;
+          right: 0;
+        }
+        
+        .language-menu a {
+          padding: 10px 16px;
+          font-size: 14px;
+        }
+        
+
         #language-selector {
           padding: 10px 16px;
           height: 55px;
@@ -877,6 +961,22 @@
       }
       
       @media screen and (max-width: 480px) {
+        /* 초소형 모바일에서도 아이콘 유지 */
+        .icon-btn {
+          width: 36px !important;
+          height: 36px !important;
+        }
+        
+        .icon-btn svg {
+          width: 20px !important;
+          height: 20px !important;
+        }
+        
+        .language-menu {
+          min-width: 160px;
+        }
+        
+
         .language-menu {
           min-width: 160px;
         }
@@ -943,6 +1043,40 @@
     }
       /* 모바일 반응형 */
       @media screen and (max-width: 768px) {
+        /* 모바일에서도 아이콘 명확하게 유지 */
+        .header-icons {
+          display: flex !important;
+          gap: 10px;
+        }
+        
+        .icon-btn {
+          width: 40px !important;
+          height: 40px !important;
+          border: 2px solid #333 !important;
+        }
+        
+        .icon-btn svg {
+          width: 22px !important;
+          height: 22px !important;
+          stroke: #333 !important;
+        }
+        
+        .icon-btn:hover svg {
+          stroke: #fff !important;
+        }
+        
+        .language-menu {
+          top: 50px;
+          min-width: 180px;
+          right: 0;
+        }
+        
+        .language-menu a {
+          padding: 10px 16px;
+          font-size: 14px;
+        }
+        
+
         #language-selector {
           padding: 10px 16px;
           height: 55px;
@@ -972,6 +1106,22 @@
       }
       
       @media screen and (max-width: 480px) {
+        /* 초소형 모바일에서도 아이콘 유지 */
+        .icon-btn {
+          width: 36px !important;
+          height: 36px !important;
+        }
+        
+        .icon-btn svg {
+          width: 20px !important;
+          height: 20px !important;
+        }
+        
+        .language-menu {
+          min-width: 160px;
+        }
+        
+
         .language-menu {
           min-width: 160px;
         }
@@ -1001,9 +1151,11 @@
       <!-- 언어 선택 드롭다운 -->
       <div class="header-icons">
         <div class="language-dropdown">
-          <button class="icon-btn" id="languageBtn" onclick="toggleLanguageMenu()" title="언어 선택">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-              <path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
+          <button class="icon-btn" id="languageBtn" onclick="toggleLanguageMenu()" title="언어 선택" aria-label="언어 선택">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
             </svg>
           </button>
           <div class="language-menu" id="languageMenu">
@@ -1019,9 +1171,11 @@
         </div>
         
         <!-- 목차 버튼 -->
-        <button class="icon-btn" id="tocBtn" onclick="toggleTOC()" title="목차">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-            <path d="M3 9h14V7H3v2zm0 4h14v-2H3v2zm0 4h14v-2H3v2zm16 0h2v-2h-2v2zm0-10v2h2V7h-2zm0 6h2v-2h-2v2z"/>
+        <button class="icon-btn" id="tocBtn" onclick="toggleTOC()" title="목차" aria-label="목차">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg>
         </button>
       </div>
