@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="page_title">살아본 뒤에야 비로소 읽히는 문장들</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- i18n 시스템 로드 -->
+    <script src="js/i18n.js"></script>
+    
+    <script>
+      // 인증 체크
+      (function() {
+        const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+        if (!currentUser) {
+          window.location.href = 'index.html';
+        }
+      })();
+    </script>
+    
+    <style>
+      :root {
+        --font-main: 'Nanum Myeongjo', serif;
+        --font-sans: 'Noto Sans KR', sans-serif;
+        --color-text: #1a1a1a;
+        --color-heading: #000000;
+        --color-accent: #5d4037;
+        --color-link: #3d5afe;
+        --page-width: 880px;
+      }
+
+      body {
+        max-width: var(--page-width);
+        margin: 0 auto;
+        padding: 40px 80px;
+        padding-top: 120px;
+        color: var(--color-text);
+        font-family: var(--font-main);
+        line-height: 1.8;
+        font-size: 16px;
+        background-color: #ffffff;
+        word-break: keep-all;
+        text-align: justify;
+      }
+
+      /* 언어 선택 메뉴 */
+      #language-selector {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 15px 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        z-index: 1000;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .user-info {
+        color: white;
+        font-family: var(--font-sans);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .user-name {
+        font-weight: 500;
+      }
+
+      .logout-btn {
+        background: rgba(255,255,255,0.2);
+        color: white;
+        border: 1px solid rgba(255,255,255,0.3);
+        padding: 6px 16px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease;
+      }
+
+      .logout-btn:hover {
+        background: rgba(255,255,255,0.3);
+        transform: translateY(-1px);
+      }
+
+      .language-links {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .language-links a {
+        color: white;
+        text-decoration: none;
+        padding: 6px 12px;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        font-size: 14px;
+        font-family: var(--font-sans);
+        background: rgba(255,255,255,0.1);
+      }
+
+      .language-links a:hover {
+        background: rgba(255,255,255,0.2);
+        transform: translateY(-1px);
+      }
+
+      .language-links a.active {
+        background: rgba(255,255,255,0.3);
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      }
+
+      .divider {
+        color: rgba(255,255,255,0.4);
+        margin: 0 4px;
+      }
+
+      /* Loading indicator */
+      .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255,255,255,0.95);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      }
+
+      .loading-overlay.active {
+        display: flex;
+      }
+
+      .loading-content {
+        text-align: center;
+      }
+
+      .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      /* Typography */
+      h1 { font-size: 2.4em; color: var(--color-heading); margin: 1.5em 0 0.8em; }
+      h2 { font-size: 1.8em; color: var(--color-heading); border-bottom: 2px solid #eee; padding-bottom: 0.3em; margin: 1.3em 0 0.6em; }
+      h3 { font-size: 1.4em; color: var(--color-heading); margin: 1.2em 0 0.5em; }
+      
+      .cover-page {
+        min-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        margin-bottom: 3em;
+      }
+
+      .cover-title {
+        font-size: 3.5em;
+        font-weight: 700;
+        color: var(--color-heading);
+        margin-bottom: 0.5em;
+        line-height: 1.3;
+      }
+
+      .cover-subtitle {
+        font-size: 1.3em;
+        color: var(--color-accent);
+        margin-bottom: 2em;
+        font-family: var(--font-sans);
+      }
+
+      .cover-author {
+        font-size: 1.1em;
+        color: #666;
+        font-family: var(--font-sans);
+      }
+
+      @media (max-width: 768px) {
+        body { padding: 20px; padding-top: 140px; }
+        #language-selector { flex-direction: column; gap: 10px; padding: 10px; }
+        .language-links { justify-content: center; }
+        .cover-title { font-size: 2.2em; }
+      }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p data-i18n="loading_translation">번역 중...</p>
+        </div>
+    </div>
+
+    <!-- Language Selector -->
+    <div id="language-selector">
+        <div class="user-info">
+            <span class="user-name" id="userName">사용자</span>
+            <button class="logout-btn" onclick="logout()" data-i18n="logout">로그아웃</button>
+        </div>
+        
+        <div class="language-links">
+            <a href="javascript:void(0)" onclick="switchLanguage('ar')" data-lang="ar">العربية</a>
+            <span class="divider">|</span>
+            <a href="javascript:void(0)" onclick="switchLanguage('zh-CN')" data-lang="zh-CN">中文</a>
+            <span class="divider">|</span>
+            <a href="javascript:void(0)" onclick="switchLanguage('en')" data-lang="en">English</a>
+            <span class="divider">|</span>
+            <a href="javascript:void(0)" onclick="switchLanguage('fr')" data-lang="fr">Français</a>
+            <span class="divider">|</span>
+            <a href="javascript:void(0)" onclick="switchLanguage('ru')" data-lang="ru">Русский</a>
+            <span class="divider">|</span>
+            <a href="javascript:void(0)" onclick="switchLanguage('es')" data-lang="es">Español</a>
+            <span class="divider">|</span>
+            <a href="javascript:void(0)" onclick="switchLanguage('ja')" data-lang="ja">日本語</a>
+            <span class="divider">|</span>
+            <a href="javascript:void(0)" onclick="switchLanguage('ko')" data-lang="ko" class="active">한국어</a>
+        </div>
+    </div>
+
+    <!-- Cover Page -->
+    <div class="cover-page">
+        <div class="cover-title" data-i18n="book_title">
+            살아본 뒤에야<br>비로소 읽히는<br>문장들
+        </div>
+        <div class="cover-subtitle">
+            <span data-i18n="book_subtitle">Lines Life Taught Me</span>
+        </div>
+        <div class="cover-author">
+            <span data-i18n="author">강림선생 지음</span>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main>
+        <h2 data-i18n="section_opening">여는 말</h2>
+        <p data-i18n="opening_text">
+            이 책은 인생의 지혜를 담은 99가지 문장들을 소개합니다. 
+            살면서 경험하게 되는 다양한 상황에서 우리에게 필요한 통찰을 제공합니다.
+        </p>
+
+        <h2 data-i18n="part1_title">제1부. 경제와 거래의 법칙</h2>
+        
+        <h3 data-i18n="chapter1_title">1. 세상에 공짜는 없다</h3>
+        <p data-i18n="chapter1_text">
+            모든 것에는 대가가 있습니다. 공짜처럼 보이는 것도 어딘가에서 비용을 지불하고 있습니다.
+        </p>
+
+        <h3 data-i18n="chapter2_title">2. 하이 리스크, 하이 리턴</h3>
+        <p data-i18n="chapter2_text">
+            큰 이익을 얻으려면 큰 위험을 감수해야 합니다. 투자와 인생의 기본 원칙입니다.
+        </p>
+
+        <div style="text-align: center; margin: 60px 0; color: #999; font-style: italic;">
+            <p data-i18n="content_omitted">※ 제3~99장 생략 ※</p>
+        </div>
+
+        <h2 data-i18n="section_closing">맺음 말</h2>
+        <p data-i18n="closing_text">
+            이 문장들이 여러분의 삶에 작은 지혜를 더하길 바랍니다. 
+            인생은 경험을 통해 배우는 것이며, 이 문장들이 그 경험을 이해하는 데 도움이 되기를 바랍니다.
+        </p>
+    </main>
+
+    <script>
+        // 사용자 정보 표시
+        function displayUserInfo() {
+            const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+            if (currentUser) {
+                try {
+                    const user = JSON.parse(currentUser);
+                    document.getElementById('userName').textContent = user.name || '게스트';
+                } catch (e) {
+                    document.getElementById('userName').textContent = '게스트';
+                }
+            }
+        }
+
+        // 로그아웃
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('currentUser');
+                sessionStorage.removeItem('currentUser');
+                window.location.href = 'index.html';
+            }
+        }
+
+        // 언어 전환 (i18n 사용)
+        async function switchLanguage(lang) {
+            console.log('🔄 언어 전환 시도:', lang);
+            
+            // 로딩 표시
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.classList.add('active');
+            
+            try {
+                // i18n을 사용하여 언어 전환
+                const success = await window.i18n.switchLanguage(lang);
+                
+                if (success) {
+                    // 활성 언어 메뉴 업데이트
+                    updateActiveLanguage(lang);
+                    console.log('✅ 언어 전환 완료:', lang);
+                } else {
+                    console.error('❌ 언어 전환 실패:', lang);
+                    alert('번역 파일을 불러오는데 실패했습니다. 다시 시도해주세요.');
+                }
+            } catch (error) {
+                console.error('❌ 언어 전환 오류:', error);
+                alert('번역 중 오류가 발생했습니다.');
+            } finally {
+                // 로딩 숨김
+                setTimeout(() => {
+                    loadingOverlay.classList.remove('active');
+                }, 500);
+            }
+        }
+
+        // 활성 언어 메뉴 업데이트
+        function updateActiveLanguage(lang) {
+            const links = document.querySelectorAll('.language-links a');
+            links.forEach(link => {
+                if (link.getAttribute('data-lang') === lang) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+        }
+
+        // 페이지 로드 시
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('📖 페이지 로드 완료');
+            displayUserInfo();
+            
+            // i18n 초기화 완료 대기
+            const checkI18n = setInterval(() => {
+                if (window.i18n) {
+                    console.log('✅ i18n 시스템 준비 완료');
+                    clearInterval(checkI18n);
+                    
+                    // 현재 언어로 활성 메뉴 업데이트
+                    const currentLang = window.i18n.getCurrentLanguage();
+                    updateActiveLanguage(currentLang);
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>

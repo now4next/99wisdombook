@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      padding: 50px;
+      font-family: sans-serif;
+    }
+    
+    #user-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 30px;
+      background: #f0f0f0;
+      padding: 10px;
+    }
+
+    #user-info .user-name {
+      color: #333;
+      font-weight: 500;
+      line-height: 32px;
+      display: flex;
+      align-items: center;
+    }
+
+    #user-info .logout-btn {
+      background: #5d4037;
+      color: white;
+      border: none;
+      padding: 6px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background 0.3s;
+    }
+    
+    .header-icons {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .language-dropdown {
+      position: relative;
+    }
+    
+    .text-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: #f5f5f5;
+      color: #333;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s;
+      height: 32px;
+    }
+    
+    .text-btn:hover {
+      background: #e8e8e8;
+      border-color: #999;
+    }
+    
+    .btn-icon {
+      width: 16px;
+      height: 16px;
+    }
+    
+    .btn-arrow {
+      width: 12px;
+      height: 12px;
+      transition: transform 0.3s;
+    }
+    
+    .text-btn.active .btn-arrow {
+      transform: rotate(180deg);
+    }
+    
+    .language-menu {
+      display: none;
+      position: absolute;
+      top: 40px;
+      right: 0;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      min-width: 180px;
+      z-index: 100000;
+      padding: 8px 0;
+    }
+    
+    .language-menu.show {
+      display: block;
+    }
+    
+    .language-menu a {
+      display: block;
+      padding: 10px 16px;
+      color: #333;
+      text-decoration: none;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+    
+    .language-menu a:hover {
+      background: #f5f5f5;
+    }
+    
+    .language-menu a.active {
+      background: #e8f4f8;
+      color: #0066cc;
+      font-weight: 600;
+    }
+    
+    .debug {
+      margin-top: 30px;
+      padding: 20px;
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>드롭다운 테스트</h1>
+  
+  <div id="user-info">
+    <span class="user-name">강병준</span>
+    <button class="logout-btn">로그아웃</button>
+  </div>
+  
+  <div class="header-icons">
+    <div class="language-dropdown">
+      <button class="text-btn language-btn" id="languageBtn" onclick="toggleLanguageMenu(event)">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-icon">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="2" y1="12" x2="22" y2="12"></line>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+        </svg>
+        <span class="btn-text">Language</span>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-arrow">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+      <div class="language-menu" id="languageMenu">
+        <a href="javascript:void(0)" onclick="selectLanguage('ko')" data-lang="ko">🇰🇷 한국어</a>
+        <a href="javascript:void(0)" onclick="selectLanguage('en')" data-lang="en">🇺🇸 English</a>
+        <a href="javascript:void(0)" onclick="selectLanguage('zh-CN')" data-lang="zh-CN">🇨🇳 中文</a>
+        <a href="javascript:void(0)" onclick="selectLanguage('ja')" data-lang="ja">🇯🇵 日本語</a>
+        <a href="javascript:void(0)" onclick="selectLanguage('es')" data-lang="es">🇪🇸 Español</a>
+        <a href="javascript:void(0)" onclick="selectLanguage('fr')" data-lang="fr">🇫🇷 Français</a>
+        <a href="javascript:void(0)" onclick="selectLanguage('ru')" data-lang="ru">🇷🇺 Русский</a>
+        <a href="javascript:void(0)" onclick="selectLanguage('ar')" data-lang="ar">🇸🇦 عربي</a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="debug">
+    <h3>디버그 로그:</h3>
+    <div id="log"></div>
+  </div>
+  
+  <script>
+    function log(msg) {
+      const logEl = document.getElementById('log');
+      const time = new Date().toLocaleTimeString();
+      logEl.innerHTML += `<div>[${time}] ${msg}</div>`;
+      console.log(msg);
+    }
+    
+    function toggleLanguageMenu(event) {
+      log('🔘 toggleLanguageMenu 호출됨');
+      if (event) {
+        event.stopPropagation();
+        log('✅ event.stopPropagation() 실행');
+      }
+      
+      const menu = document.getElementById('languageMenu');
+      const btn = document.getElementById('languageBtn');
+      
+      if (!menu || !btn) {
+        log('❌ 언어 메뉴 요소를 찾을 수 없음');
+        return;
+      }
+      
+      const isShowing = menu.classList.contains('show');
+      log(`📊 현재 상태: ${isShowing ? '열림' : '닫힘'} → ${!isShowing ? '열림' : '닫힘'}`);
+      
+      menu.classList.toggle('show');
+      btn.classList.toggle('active');
+      
+      if (menu.classList.contains('show')) {
+        log('✅ 드롭다운 열림');
+        setTimeout(() => {
+          document.addEventListener('click', closeLanguageMenu);
+        }, 0);
+      } else {
+        log('✅ 드롭다운 닫힘');
+        document.removeEventListener('click', closeLanguageMenu);
+      }
+    }
+    
+    function closeLanguageMenu(e) {
+      const menu = document.getElementById('languageMenu');
+      const btn = document.getElementById('languageBtn');
+      
+      if (!menu.contains(e.target) && !btn.contains(e.target)) {
+        log('🔄 외부 클릭으로 메뉴 닫기');
+        menu.classList.remove('show');
+        btn.classList.remove('active');
+        document.removeEventListener('click', closeLanguageMenu);
+      }
+    }
+    
+    function selectLanguage(lang) {
+      log(`🌐 언어 선택: ${lang}`);
+      
+      const items = document.querySelectorAll('.language-menu a');
+      items.forEach(item => {
+        if (item.getAttribute('data-lang') === lang) {
+          item.classList.add('active');
+        } else {
+          item.classList.remove('active');
+        }
+      });
+      
+      const menu = document.getElementById('languageMenu');
+      const btn = document.getElementById('languageBtn');
+      menu.classList.remove('show');
+      btn.classList.remove('active');
+      document.removeEventListener('click', closeLanguageMenu);
+    }
+    
+    log('✅ 페이지 로드 완료');
+  </script>
+</body>
+</html>

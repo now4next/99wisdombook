@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>언어 전환 수동 테스트 가이드</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        h2 {
+            color: #5d4037;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .step {
+            background: #f7fafc;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .step-title {
+            font-weight: 600;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            color: #2d3748;
+        }
+
+        .step-content {
+            color: #4a5568;
+            line-height: 1.6;
+        }
+
+        .checklist {
+            list-style: none;
+            margin: 15px 0;
+        }
+
+        .checklist li {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+        }
+
+        .checklist li::before {
+            content: "☐";
+            font-size: 1.5em;
+            margin-right: 10px;
+            color: #cbd5e0;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #48bb78;
+        }
+
+        .btn-secondary:hover {
+            background: #38a169;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .alert-info {
+            background: #bee3f8;
+            border-left: 4px solid #3182ce;
+            color: #2c5282;
+        }
+
+        .alert-warning {
+            background: #feebc8;
+            border-left: 4px solid #ed8936;
+            color: #7c2d12;
+        }
+
+        .alert-success {
+            background: #c6f6d5;
+            border-left: 4px solid #38a169;
+            color: #22543d;
+        }
+
+        .language-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .language-card {
+            background: #f7fafc;
+            padding: 15px;
+            text-align: center;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s;
+        }
+
+        .language-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .language-name {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .language-code {
+            font-size: 0.9em;
+            color: #718096;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        code {
+            background: #2d3748;
+            color: #68d391;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .console-tip {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 언어 전환 수동 테스트 가이드</h1>
+        <p style="text-align: center; color: #666; margin-bottom: 30px;">아래 단계를 따라 각 언어가 정상적으로 작동하는지 확인하세요</p>
+
+        <div class="alert alert-info">
+            <strong>ℹ️ 테스트 목적:</strong> Google Translate 기능이 각 언어에서 정상적으로 작동하는지 확인합니다.
+        </div>
+
+        <h2>📋 테스트 준비</h2>
+        
+        <div class="step">
+            <div class="step-title">
+                <span class="step-number">1</span>
+                브라우저 개발자 도구 열기
+            </div>
+            <div class="step-content">
+                <p>키보드 단축키로 개발자 도구를 엽니다:</p>
+                <ul style="margin-top: 10px;">
+                    <li><strong>Windows/Linux:</strong> <code>F12</code> 또는 <code>Ctrl + Shift + I</code></li>
+                    <li><strong>Mac:</strong> <code>Cmd + Option + I</code></li>
+                </ul>
+                <p style="margin-top: 10px;">개발자 도구에서 <strong>Console</strong> 탭을 클릭합니다.</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-title">
+                <span class="step-number">2</span>
+                책 페이지 열기 및 로그인
+            </div>
+            <div class="step-content">
+                <p>아래 버튼을 클릭하여 책 페이지를 엽니다:</p>
+                <div style="margin: 15px 0;">
+                    <a href="https://8080-idqfnd1t6em6blrmi76he-c07dda5e.sandbox.novita.ai/" class="btn" target="_blank">
+                        📖 로그인 페이지 열기
+                    </a>
+                </div>
+                <p style="margin-top: 15px;"><strong>게스트 로그인:</strong> "게스트로 둘러보기" 링크를 클릭합니다.</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-title">
+                <span class="step-number">3</span>
+                Google Translate 로드 확인
+            </div>
+            <div class="step-content">
+                <p>콘솔에서 다음 메시지를 확인하세요:</p>
+                <div class="console-tip">
+                    ✅ Google Translate 준비 완료<br>
+                    📄 페이지 로드 완료<br>
+                    🌐 프로토콜: https:<br>
+                    ✅ HTTP/HTTPS 모드: 번역 기능 사용 가능
+                </div>
+                <p style="margin-top: 10px;">약 3-5초 정도 기다려야 할 수 있습니다.</p>
+            </div>
+        </div>
+
+        <h2>🌐 언어별 테스트 체크리스트</h2>
+
+        <div class="alert alert-warning">
+            <strong>⚠️ 중요:</strong> 각 언어를 클릭한 후 <strong>3-5초</strong> 정도 기다려주세요. 번역이 적용되는 데 시간이 걸립니다.
+        </div>
+
+        <div class="language-grid">
+            <div class="language-card">
+                <div class="language-name">عربي</div>
+                <div class="language-code">ar</div>
+            </div>
+            <div class="language-card">
+                <div class="language-name">中文</div>
+                <div class="language-code">zh-CN</div>
+            </div>
+            <div class="language-card">
+                <div class="language-name">English</div>
+                <div class="language-code">en</div>
+            </div>
+            <div class="language-card">
+                <div class="language-name">Français</div>
+                <div class="language-code">fr</div>
+            </div>
+            <div class="language-card">
+                <div class="language-name">Русский</div>
+                <div class="language-code">ru</div>
+            </div>
+            <div class="language-card">
+                <div class="language-name">Español</div>
+                <div class="language-code">es</div>
+            </div>
+            <div class="language-card">
+                <div class="language-name">日本語</div>
+                <div class="language-code">ja</div>
+            </div>
+            <div class="language-card">
+                <div class="language-name">한국어</div>
+                <div class="language-code">ko</div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-title">
+                <span class="step-number">4</span>
+                각 언어 테스트 방법
+            </div>
+            <div class="step-content">
+                <p>각 언어에 대해 다음을 확인하세요:</p>
+                <ul class="checklist">
+                    <li>상단 메뉴에서 언어 링크 클릭</li>
+                    <li>콘솔에서 "🔄 언어 전환 시도: [언어코드]" 메시지 확인</li>
+                    <li>3-5초 대기</li>
+                    <li>콘솔에서 "✅ 언어 전환 완료: [언어코드]" 메시지 확인</li>
+                    <li>페이지 내용이 선택한 언어로 번역되었는지 확인</li>
+                    <li>선택한 언어가 상단 메뉴에서 파란색으로 강조되는지 확인</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>🔍 문제 해결 (Troubleshooting)</h2>
+
+        <div class="step">
+            <div class="step-title">번역이 작동하지 않는 경우</div>
+            <div class="step-content">
+                <p><strong>1. Google Translate 상태 확인</strong></p>
+                <p>콘솔에 다음 명령을 입력하세요:</p>
+                <div class="console-tip">
+                    console.log('번역 준비:', translationReady);<br>
+                    console.log('셀렉트 박스:', document.querySelector('.goog-te-combo'));
+                </div>
+
+                <p style="margin-top: 15px;"><strong>2. 수동으로 번역 트리거</strong></p>
+                <p>콘솔에 다음 명령을 입력하세요 (예: 영어로 전환):</p>
+                <div class="console-tip">
+                    switchLanguage('en');
+                </div>
+
+                <p style="margin-top: 15px;"><strong>3. 페이지 새로고침</strong></p>
+                <p><code>Ctrl + F5</code> (또는 <code>Cmd + Shift + R</code>)로 강력 새로고침</p>
+
+                <p style="margin-top: 15px;"><strong>4. 브라우저 캐시 삭제</strong></p>
+                <p>브라우저 설정에서 캐시를 삭제한 후 다시 시도</p>
+            </div>
+        </div>
+
+        <h2>✅ 테스트 성공 기준</h2>
+
+        <div class="alert alert-success">
+            <strong>✓ 성공:</strong> 다음 조건을 모두 만족해야 합니다:
+            <ul style="margin-top: 10px; margin-left: 20px;">
+                <li>언어 클릭 시 즉시 반응 (로딩 표시 또는 콘솔 로그)</li>
+                <li>3-5초 내에 페이지 내용이 선택한 언어로 번역됨</li>
+                <li>선택한 언어가 메뉴에서 파란색으로 강조됨</li>
+                <li>콘솔에 에러 메시지가 없음</li>
+                <li>다른 언어로 전환 시에도 동일하게 작동</li>
+            </ul>
+        </div>
+
+        <div class="button-group">
+            <a href="https://8080-idqfnd1t6em6blrmi76he-c07dda5e.sandbox.novita.ai/" class="btn" target="_blank">
+                🚀 지금 테스트 시작
+            </a>
+            <a href="test.html" class="btn btn-secondary">
+                🤖 자동 테스트 도구
+            </a>
+        </div>
+
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #e2e8f0; text-align: center; color: #718096;">
+            <p>테스트 중 문제가 발견되면 콘솔 로그를 캡처하여 보고해주세요.</p>
+        </div>
+    </div>
+</body>
+</html>

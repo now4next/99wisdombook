@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>언어 전환 테스트 페이지</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .test-controls {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+        }
+
+        .status-box {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .status-item:last-child {
+            border-bottom: none;
+        }
+
+        .status-label {
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .status-value {
+            color: #2d3748;
+        }
+
+        .status-ok {
+            color: #38a169;
+            font-weight: bold;
+        }
+
+        .status-error {
+            color: #e53e3e;
+            font-weight: bold;
+        }
+
+        .log-container {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+        }
+
+        .log-success {
+            color: #68d391;
+        }
+
+        .log-error {
+            color: #fc8181;
+        }
+
+        .log-warning {
+            color: #f6ad55;
+        }
+
+        .log-info {
+            color: #63b3ed;
+        }
+
+        .test-results {
+            margin-top: 30px;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .result-card {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .result-success {
+            background: #c6f6d5;
+            border: 2px solid #38a169;
+            color: #22543d;
+        }
+
+        .result-failure {
+            background: #fed7d7;
+            border: 2px solid #e53e3e;
+            color: #742a2a;
+        }
+
+        .result-pending {
+            background: #feebc8;
+            border: 2px solid #ed8936;
+            color: #7c2d12;
+        }
+
+        .iframe-container {
+            margin-top: 30px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .iframe-container iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 언어 전환 기능 테스트</h1>
+        <p class="subtitle">실시간으로 각 언어를 테스트하고 결과를 확인합니다</p>
+
+        <div class="test-controls">
+            <button class="btn btn-primary" onclick="startTest()">🚀 자동 테스트 시작</button>
+            <button class="btn btn-secondary" onclick="openBookPage()">📖 책 페이지 열기</button>
+        </div>
+
+        <div class="status-box">
+            <h3 style="margin-bottom: 15px;">📊 테스트 상태</h3>
+            <div class="status-item">
+                <span class="status-label">진행 상황:</span>
+                <span class="status-value" id="progress">대기 중</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">성공:</span>
+                <span class="status-value status-ok" id="successCount">0</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">실패:</span>
+                <span class="status-value status-error" id="failureCount">0</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">전체:</span>
+                <span class="status-value" id="totalCount">8</span>
+            </div>
+        </div>
+
+        <div class="test-results">
+            <h3>언어별 테스트 결과</h3>
+            <div class="result-grid" id="resultGrid">
+                <div class="result-card result-pending">عربي (ar)</div>
+                <div class="result-card result-pending">中文 (zh-CN)</div>
+                <div class="result-card result-pending">English (en)</div>
+                <div class="result-card result-pending">Français (fr)</div>
+                <div class="result-card result-pending">Русский (ru)</div>
+                <div class="result-card result-pending">Español (es)</div>
+                <div class="result-card result-pending">日本語 (ja)</div>
+                <div class="result-card result-pending">한국어 (ko)</div>
+            </div>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <h3>📋 테스트 로그</h3>
+            <div class="log-container" id="logContainer">
+                <div class="log-entry log-info">테스트를 시작하려면 '자동 테스트 시작' 버튼을 클릭하세요.</div>
+            </div>
+        </div>
+
+        <div class="iframe-container" style="display: none;">
+            <iframe id="testFrame" src=""></iframe>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = 'https://8080-idqfnd1t6em6blrmi76he-c07dda5e.sandbox.novita.ai';
+        
+        const LANGUAGES = [
+            { code: 'ar', name: 'عربي' },
+            { code: 'zh-CN', name: '中文' },
+            { code: 'en', name: 'English' },
+            { code: 'fr', name: 'Français' },
+            { code: 'ru', name: 'Русский' },
+            { code: 'es', name: 'Español' },
+            { code: 'ja', name: '日本語' },
+            { code: 'ko', name: '한국어' }
+        ];
+
+        let successCount = 0;
+        let failureCount = 0;
+        let testWindow = null;
+
+        function addLog(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function updateProgress(current, total) {
+            document.getElementById('progress').textContent = `${current}/${total}`;
+            document.getElementById('successCount').textContent = successCount;
+            document.getElementById('failureCount').textContent = failureCount;
+        }
+
+        function updateResultCard(langCode, success) {
+            const cards = document.querySelectorAll('.result-card');
+            const index = LANGUAGES.findIndex(l => l.code === langCode);
+            
+            if (index >= 0 && cards[index]) {
+                cards[index].className = success ? 'result-card result-success' : 'result-card result-failure';
+            }
+        }
+
+        function openBookPage() {
+            window.open(BASE_URL + '/book.html', '_blank');
+        }
+
+        async function startTest() {
+            addLog('🚀 자동 테스트 시작...', 'info');
+            successCount = 0;
+            failureCount = 0;
+            updateProgress(0, LANGUAGES.length);
+
+            // 새 창에서 book.html 열기
+            addLog('📖 책 페이지를 새 창에서 엽니다...', 'info');
+            addLog('⚠️ 팝업 차단이 되어있다면 해제해주세요.', 'warning');
+            
+            testWindow = window.open(BASE_URL + '/book.html', 'testWindow', 'width=1200,height=800');
+            
+            if (!testWindow) {
+                addLog('❌ 팝업이 차단되었습니다. 팝업을 허용하고 다시 시도하세요.', 'error');
+                return;
+            }
+
+            // 페이지 로드 대기
+            addLog('⏳ 페이지 로드 대기 중... (10초)', 'info');
+            await sleep(10000);
+
+            addLog('✅ 페이지 로드 완료', 'success');
+            
+            // 각 언어 테스트
+            for (let i = 0; i < LANGUAGES.length; i++) {
+                const lang = LANGUAGES[i];
+                addLog(`\n🔄 [${i+1}/${LANGUAGES.length}] ${lang.name} (${lang.code}) 테스트 중...`, 'info');
+                
+                try {
+                    // 언어 링크 클릭 (새 창에서)
+                    testWindow.focus();
+                    const clicked = testWindow.eval(`
+                        try {
+                            const link = document.querySelector('a[data-lang="${lang.code}"]');
+                            if (link) {
+                                link.click();
+                                console.log('언어 클릭: ${lang.code}');
+                                true;
+                            } else {
+                                console.error('언어 링크 없음: ${lang.code}');
+                                false;
+                            }
+                        } catch(e) {
+                            console.error('클릭 오류:', e);
+                            false;
+                        }
+                    `);
+
+                    if (clicked) {
+                        addLog(`  ✓ ${lang.name} 링크 클릭 완료`, 'info');
+                        
+                        // 번역 적용 대기
+                        await sleep(3000);
+                        
+                        // 결과 확인
+                        const selectValue = testWindow.eval(`
+                            document.querySelector('.goog-te-combo') ? document.querySelector('.goog-te-combo').value : null
+                        `);
+                        
+                        addLog(`  📝 번역 셀렉트 값: ${selectValue}`, 'info');
+                        
+                        if (selectValue === lang.code) {
+                            addLog(`  ✅ ${lang.name} 전환 성공!`, 'success');
+                            successCount++;
+                            updateResultCard(lang.code, true);
+                        } else {
+                            addLog(`  ❌ ${lang.name} 전환 실패 (예상: ${lang.code}, 실제: ${selectValue})`, 'error');
+                            failureCount++;
+                            updateResultCard(lang.code, false);
+                        }
+                    } else {
+                        addLog(`  ❌ ${lang.name} 링크를 찾을 수 없습니다`, 'error');
+                        failureCount++;
+                        updateResultCard(lang.code, false);
+                    }
+                    
+                } catch (error) {
+                    addLog(`  ❌ ${lang.name} 테스트 오류: ${error.message}`, 'error');
+                    failureCount++;
+                    updateResultCard(lang.code, false);
+                }
+                
+                updateProgress(i + 1, LANGUAGES.length);
+                await sleep(1000);
+            }
+
+            // 최종 결과
+            addLog('\n' + '='.repeat(50), 'info');
+            addLog(`📊 테스트 완료: 성공 ${successCount}/${LANGUAGES.length}`, 'info');
+            
+            if (successCount === LANGUAGES.length) {
+                addLog('🎉 모든 언어 전환 테스트 통과!', 'success');
+            } else if (successCount >= LANGUAGES.length * 0.7) {
+                addLog(`⚠️ 일부 언어 테스트 실패 (${successCount}/${LANGUAGES.length})`, 'warning');
+            } else {
+                addLog(`❌ 대부분의 언어 테스트 실패 (${successCount}/${LANGUAGES.length})`, 'error');
+            }
+            addLog('='.repeat(50), 'info');
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // 페이지 언로드 시 테스트 창 닫기
+        window.addEventListener('beforeunload', () => {
+            if (testWindow && !testWindow.closed) {
+                testWindow.close();
+            }
+        });
+    </script>
+</body>
+</html>

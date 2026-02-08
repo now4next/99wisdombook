@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>자동 게스트 로그인</title>
+</head>
+<body>
+    <h1>게스트 로그인 중...</h1>
+    <script>
+        // 게스트 사용자 정보 생성
+        const guestUser = {
+            name: '게스트',
+            email: 'guest@example.com',
+            isGuest: true
+        };
+        
+        // localStorage에 저장
+        localStorage.setItem('currentUser', JSON.stringify(guestUser));
+        
+        // book.html로 리다이렉트
+        window.location.href = 'book.html';
+    </script>
+</body>
+</html>

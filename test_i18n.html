@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>i18n 번역 시스템 테스트</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <script src="js/i18n.js"></script>
+    <style>
+        body {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+        .test-section {
+            background: #f8f9fa;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 20px 0;
+        }
+        .language-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .language-buttons button {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .language-buttons button:hover {
+            background: #667eea;
+            color: white;
+        }
+        .language-buttons button.active {
+            background: #667eea;
+            color: white;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            font-weight: 600;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .translated-content {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            margin: 20px 0;
+        }
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        h1 {
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌐 자체 i18n 번역 시스템 테스트</h1>
+    
+    <div class="test-section">
+        <h2>📝 테스트 개요</h2>
+        <p>Google Translate 대신 자체 i18n 번역 시스템을 사용합니다.</p>
+        <ul>
+            <li><strong>지원 언어:</strong> 한국어, English, 日本語, 中文, Español, Français, Русский, العربية</li>
+            <li><strong>번역 방식:</strong> JSON 파일 기반 키-값 매칭</li>
+            <li><strong>장점:</strong> 즉시 번역, 안정적, 오류 없음, 완전한 제어</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 언어 선택</h2>
+        <p>아래 버튼을 클릭하여 언어를 전환하세요:</p>
+        
+        <div class="language-buttons">
+            <button onclick="testLanguage('ko')" data-lang="ko" class="active">한국어</button>
+            <button onclick="testLanguage('en')" data-lang="en">English</button>
+            <button onclick="testLanguage('ja')" data-lang="ja">日本語</button>
+            <button onclick="testLanguage('zh-CN')" data-lang="zh-CN">中文</button>
+            <button onclick="testLanguage('es')" data-lang="es">Español</button>
+            <button onclick="testLanguage('fr')" data-lang="fr">Français</button>
+            <button onclick="testLanguage('ru')" data-lang="ru">Русский</button>
+            <button onclick="testLanguage('ar')" data-lang="ar">العربية</button>
+        </div>
+
+        <div id="statusMessage" class="status info">
+            🔄 i18n 시스템 로딩 중...
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>📖 번역된 콘텐츠</h2>
+        
+        <div class="translated-content">
+            <h3 data-i18n="book_title">살아본 뒤에야 비로소 읽히는 문장들</h3>
+            <p data-i18n="book_subtitle">Lines Life Taught Me</p>
+            <p data-i18n="author">강림선생 지음</p>
+            
+            <hr>
+            
+            <h4 data-i18n="section_opening">여는 말</h4>
+            <p data-i18n="opening_text">
+                이 책은 인생의 지혜를 담은 99가지 문장들을 소개합니다. 
+                살면서 경험하게 되는 다양한 상황에서 우리에게 필요한 통찰을 제공합니다.
+            </p>
+            
+            <h4 data-i18n="part1_title">제1부. 경제와 거래의 법칙</h4>
+            
+            <h5 data-i18n="chapter1_title">1. 세상에 공짜는 없다</h5>
+            <p data-i18n="chapter1_text">
+                모든 것에는 대가가 있습니다. 공짜처럼 보이는 것도 어딘가에서 비용을 지불하고 있습니다.
+            </p>
+
+            <h5 data-i18n="chapter2_title">2. 하이 리스크, 하이 리턴</h5>
+            <p data-i18n="chapter2_text">
+                큰 이익을 얻으려면 큰 위험을 감수해야 합니다. 투자와 인생의 기본 원칙입니다.
+            </p>
+
+            <p style="text-align: center; color: #999; font-style: italic;" data-i18n="content_omitted">
+                ※ 제3~99장 생략 ※
+            </p>
+            
+            <hr>
+            
+            <h4 data-i18n="section_closing">맺음 말</h4>
+            <p data-i18n="closing_text">
+                이 문장들이 여러분의 삶에 작은 지혜를 더하길 바랍니다. 
+                인생은 경험을 통해 배우는 것이며, 이 문장들이 그 경험을 이해하는 데 도움이 되기를 바랍니다.
+            </p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔍 콘솔 로그 확인</h2>
+        <p>브라우저 개발자 도구(F12)를 열어 콘솔 로그를 확인하세요:</p>
+        <div class="code-block">
+            <div>✅ 예상 로그:</div>
+            <div>🚀 i18n 시스템 초기화...</div>
+            <div>📥 언어 파일 로드 중: ko</div>
+            <div>✅ 언어 로드 완료: ko</div>
+            <div>🔄 언어 전환: ko → en</div>
+            <div>📥 언어 파일 로드 중: en</div>
+            <div>✅ 언어 로드 완료: en</div>
+            <div>📝 번역 적용 중...</div>
+            <div>✅ N개 요소 번역 완료</div>
+            <div>✅ 언어 전환 완료: en</div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>✅ 성공 기준</h2>
+        <ol>
+            <li><strong>언어 버튼 클릭 시:</strong> 즉시 페이지 콘텐츠가 해당 언어로 번역됨</li>
+            <li><strong>로딩 시간:</strong> 1초 이내 번역 완료</li>
+            <li><strong>오류 없음:</strong> 콘솔에 에러 메시지 없음</li>
+            <li><strong>아랍어 테스트:</strong> 아랍어 선택 시 텍스트 방향이 오른쪽에서 왼쪽(RTL)으로 변경됨</li>
+        </ol>
+    </div>
+
+    <script>
+        let isReady = false;
+
+        // i18n 준비 대기
+        function waitForI18n() {
+            if (window.i18n) {
+                isReady = true;
+                updateStatus('success', '✅ i18n 시스템 준비 완료! 언어를 선택하세요.');
+            } else {
+                setTimeout(waitForI18n, 100);
+            }
+        }
+
+        // 언어 테스트
+        async function testLanguage(lang) {
+            if (!isReady) {
+                updateStatus('error', '❌ i18n 시스템이 아직 준비되지 않았습니다.');
+                return;
+            }
+
+            updateStatus('info', `🔄 ${lang} 번역 중...`);
+            
+            try {
+                const success = await window.i18n.switchLanguage(lang);
+                
+                if (success) {
+                    updateStatus('success', `✅ ${lang} 번역 완료!`);
+                    updateActiveButton(lang);
+                } else {
+                    updateStatus('error', `❌ ${lang} 번역 실패`);
+                }
+            } catch (error) {
+                updateStatus('error', `❌ 오류: ${error.message}`);
+                console.error(error);
+            }
+        }
+
+        // 상태 메시지 업데이트
+        function updateStatus(type, message) {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.className = `status ${type}`;
+            statusEl.textContent = message;
+        }
+
+        // 활성 버튼 업데이트
+        function updateActiveButton(lang) {
+            const buttons = document.querySelectorAll('.language-buttons button');
+            buttons.forEach(btn => {
+                if (btn.getAttribute('data-lang') === lang) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        // 페이지 로드 시
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('📖 테스트 페이지 로드 완료');
+            waitForI18n();
+        });
+    </script>
+</body>
+</html>
