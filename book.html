@@ -623,117 +623,44 @@
       
       /* 모바일 (최대 768px) */
       @media screen and (max-width: 768px) {
-        /* 모바일에서 텍스트 버튼 최적화 */
+        /* 모바일 버튼 최적화 */
         .header-icons {
           display: flex !important;
           gap: 8px;
         }
         
         .text-btn {
-          padding: 8px 16px !important;
-          font-size: 14px !important;
-          gap: 6px !important;
-        }
-        
-        .text-btn .btn-icon {
-          width: 18px !important;
-          height: 18px !important;
-        }
-        
-        .text-btn .btn-text {
-          font-size: 14px !important;
-        }
-        
-        .text-btn .btn-arrow {
-          width: 14px !important;
-          height: 14px !important;
-        }
-        
-        .language-btn {
-          padding: 8px 14px 8px 16px !important;
-        }
-        
-        .contents-btn {
-          padding: 8px 16px !important;
-        }
-        
-        .language-menu {
-          top: 48px;
-          min-width: 180px;
-          right: 0;
-        }
-        
-        .language-menu a {
-          padding: 10px 16px;
-          font-size: 14px;
-        }
-        
-
-        
-        #floating-toc-panel {
-          top: 50px;
-          width: 85%;
-          max-width: 320px;
-          padding: 16px;
-          max-height: calc(100vh - 60px);
-          border-radius: 0;
-        }
-        
-        #floating-toc-panel h3 {
-          font-size: 1.2em;
-          margin-top: 0;
-        }
-        
-        .toc-item {
-          padding: 10px 12px;
-          font-size: 13px;
-        }
-        
-        .toc-close {
-          top: 12px;
-          right: 12px;
-          width: 32px;
-          height: 32px;
-          font-size: 24px;
-        }
-        
-        .book-cover { max-width: 100%; height: auto; }
-        .chapter { padding: 16px 0; }
-        .chapter-header { margin-bottom: 12px; }
-        .chapter-number { font-size: 0.9em; }
-        .chapter-title { font-size: 1.1em; }
-        .toc-page { padding: 16px 0; }
-        .toc-title { font-size: 1.4em; }
-        .toc-part { margin: 16px 0; }
-        .toc-chapter { padding: 8px 0; font-size: 13px; }
-      }
-      
-      /* 소형 모바일 (최대 480px) */
-      @media screen and (max-width: 480px) {
-        /* 초소형 모바일에서 텍스트 버튼 최적화 */
-        .text-btn {
-          padding: 7px 14px !important;
-          font-size: 13px !important;
+          height: 30px !important;
+          padding: 5px 12px !important;
+          font-size: 12px !important;
           gap: 5px !important;
         }
         
         .text-btn .btn-icon {
-          width: 16px !important;
-          height: 16px !important;
+          width: 14px !important;
+          height: 14px !important;
         }
         
         .text-btn .btn-text {
-          font-size: 13px !important;
+          font-size: 12px !important;
         }
         
         .text-btn .btn-arrow {
-          width: 12px !important;
-          height: 12px !important;
+          width: 10px !important;
+          height: 10px !important;
         }
         
         .language-menu {
+          top: 36px;
           min-width: 160px;
         }
+        
+        .language-menu a {
+          padding: 7px 12px;
+          font-size: 12px;
+        }
+        
+        
         
 
         
@@ -874,139 +801,44 @@
       }
       /* 모바일 반응형 */
       @media screen and (max-width: 768px) {
-        /* 모바일에서 텍스트 버튼 최적화 */
+        /* 모바일 버튼 최적화 */
         .header-icons {
           display: flex !important;
           gap: 8px;
         }
         
         .text-btn {
-          padding: 8px 16px !important;
-          font-size: 14px !important;
-          gap: 6px !important;
-        }
-        
-        .text-btn .btn-icon {
-          width: 18px !important;
-          height: 18px !important;
-        }
-        
-        .text-btn .btn-text {
-          font-size: 14px !important;
-        }
-        
-        .text-btn .btn-arrow {
-          width: 14px !important;
-          height: 14px !important;
-        }
-        
-        .language-btn {
-          padding: 8px 14px 8px 16px !important;
-        }
-        
-        .contents-btn {
-          padding: 8px 16px !important;
-        }
-        
-        .language-menu {
-          top: 48px;
-          min-width: 180px;
-          right: 0;
-        }
-        
-        .language-menu a {
-          padding: 10px 16px;
-          font-size: 14px;
-        }
-        
-
-        /* 모바일에서도 아이콘 명확하게 유지 */
-        .header-icons {
-          display: flex !important;
-          gap: 10px;
-        }
-        
-        .icon-btn {
-          width: 40px !important;
-          height: 40px !important;
-          border: 2px solid #333 !important;
-        }
-        
-        .icon-btn svg {
-          width: 22px !important;
-          height: 22px !important;
-          stroke: #333 !important;
-        }
-        
-        .icon-btn:hover svg {
-          stroke: #fff !important;
-        }
-        
-        .language-menu {
-          top: 50px;
-          min-width: 180px;
-          right: 0;
-        }
-        
-        .language-menu a {
-          padding: 10px 16px;
-          font-size: 14px;
-        }
-        
-
-        #language-selector {
-          padding: 10px 16px;
-          height: 55px;
-        }
-        
-        #user-info {
-          display: none;  /* 모바일에서 사용자 정보 숨김 */
-        }
-        
-        .header-icons {
-          gap: 8px;
-        }
-        
-        .icon-btn {
-          width: 36px;
-          height: 36px;
-        }
-        
-        .icon-btn svg {
-          width: 20px;
-          height: 20px;
-        }
-        
-        .language-menu {
-          right: -8px;
-        }
-      }
-      
-      @media screen and (max-width: 480px) {
-        /* 초소형 모바일에서 텍스트 버튼 최적화 */
-        .text-btn {
-          padding: 7px 14px !important;
-          font-size: 13px !important;
+          height: 30px !important;
+          padding: 5px 12px !important;
+          font-size: 12px !important;
           gap: 5px !important;
         }
         
         .text-btn .btn-icon {
-          width: 16px !important;
-          height: 16px !important;
+          width: 14px !important;
+          height: 14px !important;
         }
         
         .text-btn .btn-text {
-          font-size: 13px !important;
+          font-size: 12px !important;
         }
         
         .text-btn .btn-arrow {
-          width: 12px !important;
-          height: 12px !important;
+          width: 10px !important;
+          height: 10px !important;
         }
         
         .language-menu {
+          top: 36px;
           min-width: 160px;
         }
+        
+        .language-menu a {
+          padding: 7px 12px;
+          font-size: 12px;
+        }
+        
+        
         
 
         
