@@ -1059,6 +1059,101 @@
   
 
 
+
+  <script>
+    // 사용자 정보 표시 및 로그아웃
+    (function() {
+      // 사용자 정보 표시
+      function displayUserInfo() {
+        const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+        if (currentUser) {
+          try {
+            const user = JSON.parse(currentUser);
+            const userNameElement = document.getElementById('userName');
+            if (userNameElement) {
+              userNameElement.textContent = user.name || '사용자';
+            }
+          } catch (e) {
+            console.error('사용자 정보 파싱 오류:', e);
+          }
+        }
+      }
+      
+      // 로그아웃 함수 (전역)
+      window.logout = function() {
+        if (confirm('로그아웃하시겠습니까?')) {
+          localStorage.removeItem('currentUser');
+          sessionStorage.removeItem('currentUser');
+          window.location.href = 'index.html';
+        }
+      };
+      
+      // 목차 토글 함수 (전역)
+      window.toggleTOC = function() {
+        const panel = document.getElementById('floating-toc-panel');
+        const overlay = document.getElementById('toc-overlay');
+        
+        if (panel && overlay) {
+          const isActive = panel.classList.contains('active');
+          
+          if (isActive) {
+            // 닫기
+            panel.classList.remove('active');
+            overlay.classList.remove('active');
+          } else {
+            // 열기
+            panel.classList.add('active');
+            overlay.classList.add('active');
+          }
+        }
+      };
+      
+      // 목차 닫기 함수 (전역)
+      window.closeTOC = function() {
+        const panel = document.getElementById('floating-toc-panel');
+        const overlay = document.getElementById('toc-overlay');
+        
+        if (panel && overlay) {
+          panel.classList.remove('active');
+          overlay.classList.remove('active');
+        }
+      };
+      
+      // 목차 아이템 클릭 시 스크롤 및 닫기
+      window.scrollToSection = function(sectionId) {
+        const section = document.getElementById(sectionId);
+        if (section) {
+          // 목차 닫기
+          closeTOC();
+          
+          // 스크롤 (부드럽게)
+          setTimeout(function() {
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 300);
+        }
+      };
+      
+      // 페이지 로드 시 사용자 정보 표시
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+          displayUserInfo();
+          console.log('✅ 사용자 정보 표시 완료');
+        });
+      } else {
+        displayUserInfo();
+        console.log('✅ 사용자 정보 표시 완료');
+      }
+      
+      // 오버레이 클릭 시 목차 닫기
+      document.addEventListener('DOMContentLoaded', function() {
+        const overlay = document.getElementById('toc-overlay');
+        if (overlay) {
+          overlay.addEventListener('click', closeTOC);
+        }
+      });
+    })();
+  </script>
+
   <script>
     // Google Translate 언어 전환
     (function() {
