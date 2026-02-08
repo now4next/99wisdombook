@@ -2,7 +2,7 @@
 <html lang="ko" data-theme="light" style="height: 100%;"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="google" content="notranslate">
+    <meta name="google" content="translate">
     <meta http-equiv="content-language" content="ko">
     <title>살아본 뒤에야 비로소 읽히는 문장들</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
@@ -1069,47 +1069,450 @@
         console.log('   URL에 ?translate=true를 추가해보세요.');
       }
 
-            // 언어 전환 - Google Translate URL 사용
-      // 언어 전환 - Google Translate URL 사용
+            // 언어 전환 - 브라우저 번역 안내
+      // 언어 전환 - 브라우저 번역 안내
       function switchLanguage(lang) {
-        console.log('🔄 언어 전환:', lang);
+        console.log('🔄 언어 선택:', lang);
         
-        // 현재 페이지 URL
-        const currentUrl = window.location.href;
-        
-        // 언어 코드 매핑 (i18n -> Google Translate)
-        const langMap = {
-          'ko': 'ko',
-          'en': 'en',
-          'ja': 'ja',
-          'zh-CN': 'zh-CN',
-          'es': 'es',
-          'fr': 'fr',
-          'ru': 'ru',
-          'ar': 'ar'
-        };
-        
-        const targetLang = langMap[lang] || lang;
-        
-        // 한국어로 돌아가기
+        // 한국어 원본
         if (lang === 'ko') {
-          // 원본 페이지로
-          if (currentUrl.includes('translate.goog') || currentUrl.includes('translate.google.com')) {
-            window.location.href = currentUrl.split('?')[0].replace(/\/\/.*?-/, '//');
-          }
           updateActiveLanguage('ko');
+          showTranslationGuide('ko');
           return;
         }
         
-        // Google Translate URL 생성
-        const translateUrl = `https://translate.google.com/translate?sl=ko&tl=${targetLang}&u=${encodeURIComponent(currentUrl)}`;
-        
-        // 번역 페이지로 이동
-        window.location.href = translateUrl;
-        
-        console.log('✅ Google Translate로 리다이렉트:', targetLang);
+        // 다른 언어 선택 시 안내
+        updateActiveLanguage(lang);
+        showTranslationGuide(lang);
       }
 
+      // 활성 언어 메뉴 업데이트
+      function updateActiveLanguage(lang) {
+        document.querySelectorAll('.language-links a').forEach(link => {
+          link.classList.toggle('active', link.getAttribute('data-lang') === lang);
+        });
+      }
+      
+      // 번역 안내 표시
+      function showTranslationGuide(lang) {
+        const langNames = {
+          'en': 'English',
+          'ja': '日本語',
+          'zh-CN': '中文',
+          'es': 'Español',
+          'fr': 'Français',
+          'ru': 'Русский',
+          'ar': 'العربية'
+        };
+        
+        if (lang === 'ko') {
+          // 한국어 원본으로 복귀
+          const overlay = document.getElementById('translation-overlay');
+          if (overlay) overlay.remove();
+          return;
+        }
+        
+        // 번역 안내 오버레이 생성
+        let overlay = document.getElementById('translation-overlay');
+        if (!overlay) {
+          overlay = document.createElement('div');
+          overlay.id = 'translation-overlay';
+          overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: 'Noto Sans KR', sans-serif;
+          `;
+          document.body.appendChild(overlay);
+        }
+        
+        const targetLang = langNames[lang] || lang;
+        
+        overlay.innerHTML = `
+          <div style="max-width: 600px; padding: 40px; text-align: center;">
+            <h2 style="color: white; font-size: 2em; margin-bottom: 20px;">
+              🌐 ${targetLang} 번역 방법
+            </h2>
+            
+            <div style="background: rgba(255,255,255,0.1); padding: 30px; border-radius: 12px; margin: 20px 0;">
+              <h3 style="color: #ffd700; margin-top: 0;">📱 방법 1: Chrome/Edge 브라우저</h3>
+              <ol style="text-align: left; line-height: 1.8; font-size: 1.1em;">
+                <li>주소창 오른쪽의 <strong style="color: #4facfe;">번역 아이콘 (🌐)</strong>을 클릭하세요</li>
+                <li>또는 페이지에서 <strong>우클릭</strong> → <strong>"한국어 번역"</strong> 선택</li>
+                <li>언어를 <strong>${targetLang}</strong>으로 선택하세요</li>
+              </ol>
+            </div>
+            
+            <div style="background: rgba(255,255,255,0.1); padding: 30px; border-radius: 12px; margin: 20px 0;">
+              <h3 style="color: #ffd700; margin-top: 0;">🧭 방법 2: Safari</h3>
+              <ol style="text-align: left; line-height: 1.8; font-size: 1.1em;">
+                <li>주소창의 <strong style="color: #4facfe;">aA</strong> 아이콘을 클릭하세요</li>
+                <li><strong>"Translate to ${targetLang}"</strong>을 선택하세요</li>
+              </ol>
+            </div>
+            
+            <div style="background: rgba(255,255,255,0.1); padding: 30px; border-radius: 12px; margin: 20px 0;">
+              <h3 style="color: #ffd700; margin-top: 0;">🌐 방법 3: Google Translate 앱</h3>
+              <ol style="text-align: left; line-height: 1.8; font-size: 1.1em;">
+                <li>Google Translate 앱 실행</li>
+                <li><strong>"카메라"</strong> 또는 <strong>"이미지"</strong> 기능 사용</li>
+                <li>화면을 스캔하여 번역</li>
+              </ol>
+            </div>
+            
+            <p style="color: #999; margin-top: 30px; font-size: 0.95em;">
+              💡 팁: Chrome/Edge를 사용하시면 자동으로 번역 제안이 나타납니다!
+            </p>
+            
+            <button onclick="document.getElementById('translation-overlay').remove()" 
+                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                           color: white; 
+                           border: none; 
+                           padding: 15px 40px; 
+                           border-radius: 8px; 
+                           font-size: 1.1em; 
+                           cursor: pointer; 
+                           margin-top: 20px;
+                           font-weight: 600;">
+              ✕ 닫기
+            </button>
+          </div>
+        `;
+      }
+
+      
+      function updateActiveLanguage(lang) {
+        document.querySelectorAll('.language-links a').forEach(link => {
+          link.classList.toggle('active', link.getAttribute('data-lang') === lang);
+        });
+      }
+      
+      // 번역 안내 표시
+      function showTranslationGuide(lang) {
+        const langNames = {
+          'en': 'English',
+          'ja': '日本語',
+          'zh-CN': '中文',
+          'es': 'Español',
+          'fr': 'Français',
+          'ru': 'Русский',
+          'ar': 'العربية'
+        };
+        
+        if (lang === 'ko') {
+          // 한국어 원본으로 복귀
+          const overlay = document.getElementById('translation-overlay');
+          if (overlay) overlay.remove();
+          return;
+        }
+        
+        // 번역 안내 오버레이 생성
+        let overlay = document.getElementById('translation-overlay');
+        if (!overlay) {
+          overlay = document.createElement('div');
+          overlay.id = 'translation-overlay';
+          overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: 'Noto Sans KR', sans-serif;
+          `;
+          document.body.appendChild(overlay);
+        }
+        
+        const targetLang = langNames[lang] || lang;
+        
+        overlay.innerHTML = `
+          <div style="max-width: 600px; padding: 40px; text-align: center;">
+            <h2 style="color: white; font-size: 2em; margin-bottom: 20px;">
+              🌐 ${targetLang} 번역 방법
+            </h2>
+            
+            <div style="background: rgba(255,255,255,0.1); padding: 30px; border-radius: 12px; margin: 20px 0;">
+              <h3 style="color: #ffd700; margin-top: 0;">📱 방법 1: Chrome/Edge 브라우저</h3>
+              <ol style="text-align: left; line-height: 1.8; font-size: 1.1em;">
+                <li>주소창 오른쪽의 <strong style="color: #4facfe;">번역 아이콘 (🌐)</strong>을 클릭하세요</li>
+                <li>또는 페이지에서 <strong>우클릭</strong> → <strong>"한국어 번역"</strong> 선택</li>
+                <li>언어를 <strong>${targetLang}</strong>으로 선택하세요</li>
+              </ol>
+            </div>
+            
+            <div style="background: rgba(255,255,255,0.1); padding: 30px; border-radius: 12px; margin: 20px 0;">
+              <h3 style="color: #ffd700; margin-top: 0;">🧭 방법 2: Safari</h3>
+              <ol style="text-align: left; line-height: 1.8; font-size: 1.1em;">
+                <li>주소창의 <strong style="color: #4facfe;">aA</strong> 아이콘을 클릭하세요</li>
+                <li><strong>"Translate to ${targetLang}"</strong>을 선택하세요</li>
+              </ol>
+            </div>
+            
+            <div style="background: rgba(255,255,255,0.1); padding: 30px; border-radius: 12px; margin: 20px 0;">
+              <h3 style="color: #ffd700; margin-top: 0;">🌐 방법 3: Google Translate 앱</h3>
+              <ol style="text-align: left; line-height: 1.8; font-size: 1.1em;">
+                <li>Google Translate 앱 실행</li>
+                <li><strong>"카메라"</strong> 또는 <strong>"이미지"</strong> 기능 사용</li>
+                <li>화면을 스캔하여 번역</li>
+              </ol>
+            </div>
+            
+            <p style="color: #999; margin-top: 30px; font-size: 0.95em;">
+              💡 팁: Chrome/Edge를 사용하시면 자동으로 번역 제안이 나타납니다!
+            </p>
+            
+            <button onclick="document.getElementById('translation-overlay').remove()" 
+                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                           color: white; 
+                           border: none; 
+                           padding: 15px 40px; 
+                           border-radius: 8px; 
+                           font-size: 1.1em; 
+                           cursor: pointer; 
+                           margin-top: 20px;
+                           font-weight: 600;">
+              ✕ 닫기
+            </button>
+          </div>
+        `;
+      }
+
+      // 
+      // 언어 전환 - 브라우저 번역 안내
+      // 언어 전환 - 브라우저 번역 안내
+      function switchLanguage(lang) {
+        console.log('🔄 언어 선택:', lang);
+        
+        // 한국어 원본
+        if (lang === 'ko') {
+          updateActiveLanguage('ko');
+          showTranslationGuide('ko');
+          return;
+        }
+        
+        // 다른 언어 선택 시 안내
+        updateActiveLanguage(lang);
+        showTranslationGuide(lang);
+      }
+
+      // 활성 언어 메뉴 업데이트
+      function updateActiveLanguage(lang) {
+        document.querySelectorAll('.language-links a').forEach(link => {
+          link.classList.toggle('active', link.getAttribute('data-lang') === lang);
+        });
+      }
+      
+      // 번역 안내 표시
+      function showTranslationGuide(lang) {
+        const langNames = {
+          'en': 'English',
+          'ja': '日本語',
+          'zh-CN': '中文',
+          'es': 'Español',
+          'fr': 'Français',
+          'ru': 'Русский',
+          'ar': 'العربية'
+        };
+        
+        if (lang === 'ko') {
+          // 한국어 원본으로 복귀
+          const overlay = document.getElementById('translation-overlay');
+          if (overlay) overlay.remove();
+          return;
+        }
+        
+        // 번역 안내 오버레이 생성
+        let overlay = document.getElementById('translation-overlay');
+        if (!overlay) {
+          overlay = document.createElement('div');
+          overlay.id = 'translation-overlay';
+          overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: 'Noto Sans KR', sans-serif;
+          `;
+          document.body.appendChild(overlay);
+        }
+        
+        const targetLang = langNames[lang] || lang;
+        
+        overlay.innerHTML = `
+          <div style="max-width: 600px; padding: 40px; text-align: center;">
+            <h2 style="color: white; font-size: 2em; margin-bottom: 20px;">
+              🌐 ${targetLang} 번역 방법
+            </h2>
+            
+            <div style="background: rgba(255,255,255,0.1); padding: 30px; border-radius: 12px; margin: 20px 0;">
+              <h3 style="color: #ffd700; margin-top: 0;">📱 방법 1: Chrome/Edge 브라우저</h3>
+              <ol style="text-align: left; line-height: 1.8; font-size: 1.1em;">
+                <li>주소창 오른쪽의 <strong style="color: #4facfe;">번역 아이콘 (🌐)</strong>을 클릭하세요</li>
+                <li>또는 페이지에서 <strong>우클릭</strong> → <strong>"한국어 번역"</strong> 선택</li>
+                <li>언어를 <strong>${targetLang}</strong>으로 선택하세요</li>
+              </ol>
+            </div>
+            
+            <div style="background: rgba(255,255,255,0.1); padding: 30px; border-radius: 12px; margin: 20px 0;">
+              <h3 style="color: #ffd700; margin-top: 0;">🧭 방법 2: Safari</h3>
+              <ol style="text-align: left; line-height: 1.8; font-size: 1.1em;">
+                <li>주소창의 <strong style="color: #4facfe;">aA</strong> 아이콘을 클릭하세요</li>
+                <li><strong>"Translate to ${targetLang}"</strong>을 선택하세요</li>
+              </ol>
+            </div>
+            
+            <div style="background: rgba(255,255,255,0.1); padding: 30px; border-radius: 12px; margin: 20px 0;">
+              <h3 style="color: #ffd700; margin-top: 0;">🌐 방법 3: Google Translate 앱</h3>
+              <ol style="text-align: left; line-height: 1.8; font-size: 1.1em;">
+                <li>Google Translate 앱 실행</li>
+                <li><strong>"카메라"</strong> 또는 <strong>"이미지"</strong> 기능 사용</li>
+                <li>화면을 스캔하여 번역</li>
+              </ol>
+            </div>
+            
+            <p style="color: #999; margin-top: 30px; font-size: 0.95em;">
+              💡 팁: Chrome/Edge를 사용하시면 자동으로 번역 제안이 나타납니다!
+            </p>
+            
+            <button onclick="document.getElementById('translation-overlay').remove()" 
+                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                           color: white; 
+                           border: none; 
+                           padding: 15px 40px; 
+                           border-radius: 8px; 
+                           font-size: 1.1em; 
+                           cursor: pointer; 
+                           margin-top: 20px;
+                           font-weight: 600;">
+              ✕ 닫기
+            </button>
+          </div>
+        `;
+      }
+
+      
+      function updateActiveLanguage(lang) {
+        document.querySelectorAll('.language-links a').forEach(link => {
+          link.classList.toggle('active', link.getAttribute('data-lang') === lang);
+        });
+      }
+      
+      // 번역 안내 표시
+      function showTranslationGuide(lang) {
+        const langNames = {
+          'en': 'English',
+          'ja': '日本語',
+          'zh-CN': '中文',
+          'es': 'Español',
+          'fr': 'Français',
+          'ru': 'Русский',
+          'ar': 'العربية'
+        };
+        
+        if (lang === 'ko') {
+          // 한국어 원본으로 복귀
+          const overlay = document.getElementById('translation-overlay');
+          if (overlay) overlay.remove();
+          return;
+        }
+        
+        // 번역 안내 오버레이 생성
+        let overlay = document.getElementById('translation-overlay');
+        if (!overlay) {
+          overlay = document.createElement('div');
+          overlay.id = 'translation-overlay';
+          overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: 'Noto Sans KR', sans-serif;
+          `;
+          document.body.appendChild(overlay);
+        }
+        
+        const targetLang = langNames[lang] || lang;
+        
+        overlay.innerHTML = `
+          <div style="max-width: 600px; padding: 40px; text-align: center;">
+            <h2 style="color: white; font-size: 2em; margin-bottom: 20px;">
+              🌐 ${targetLang} 번역 방법
+            </h2>
+            
+            <div style="background: rgba(255,255,255,0.1); padding: 30px; border-radius: 12px; margin: 20px 0;">
+              <h3 style="color: #ffd700; margin-top: 0;">📱 방법 1: Chrome/Edge 브라우저</h3>
+              <ol style="text-align: left; line-height: 1.8; font-size: 1.1em;">
+                <li>주소창 오른쪽의 <strong style="color: #4facfe;">번역 아이콘 (🌐)</strong>을 클릭하세요</li>
+                <li>또는 페이지에서 <strong>우클릭</strong> → <strong>"한국어 번역"</strong> 선택</li>
+                <li>언어를 <strong>${targetLang}</strong>으로 선택하세요</li>
+              </ol>
+            </div>
+            
+            <div style="background: rgba(255,255,255,0.1); padding: 30px; border-radius: 12px; margin: 20px 0;">
+              <h3 style="color: #ffd700; margin-top: 0;">🧭 방법 2: Safari</h3>
+              <ol style="text-align: left; line-height: 1.8; font-size: 1.1em;">
+                <li>주소창의 <strong style="color: #4facfe;">aA</strong> 아이콘을 클릭하세요</li>
+                <li><strong>"Translate to ${targetLang}"</strong>을 선택하세요</li>
+              </ol>
+            </div>
+            
+            <div style="background: rgba(255,255,255,0.1); padding: 30px; border-radius: 12px; margin: 20px 0;">
+              <h3 style="color: #ffd700; margin-top: 0;">🌐 방법 3: Google Translate 앱</h3>
+              <ol style="text-align: left; line-height: 1.8; font-size: 1.1em;">
+                <li>Google Translate 앱 실행</li>
+                <li><strong>"카메라"</strong> 또는 <strong>"이미지"</strong> 기능 사용</li>
+                <li>화면을 스캔하여 번역</li>
+              </ol>
+            </div>
+            
+            <p style="color: #999; margin-top: 30px; font-size: 0.95em;">
+              💡 팁: Chrome/Edge를 사용하시면 자동으로 번역 제안이 나타납니다!
+            </p>
+            
+            <button onclick="document.getElementById('translation-overlay').remove()" 
+                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                           color: white; 
+                           border: none; 
+                           padding: 15px 40px; 
+                           border-radius: 8px; 
+                           font-size: 1.1em; 
+                           cursor: pointer; 
+                           margin-top: 20px;
+                           font-weight: 600;">
+              ✕ 닫기
+            </button>
+          </div>
+        `;
+      }
+
+      // 
       // 활성 언어 메뉴 업데이트
       function updateActiveLanguage(lang) {
         document.querySelectorAll('.language-links a').forEach(link => {
