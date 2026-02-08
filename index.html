@@ -316,12 +316,6 @@
                     </div>
 
                     <button type="submit" class="submit-btn">로그인</button>
-
-                    <div class="divider">또는</div>
-
-                    <div class="guest-link">
-                        <a href="#" onclick="guestLogin(event)">게스트로 둘러보기</a>
-                    </div>
                 </form>
             </div>
 
@@ -487,21 +481,6 @@
                 document.querySelector('[data-tab="login"]').click();
                 document.getElementById('login-email').value = email;
             }, 2000);
-        }
-
-        // 게스트 로그인
-        function guestLogin(event) {
-            event.preventDefault();
-            
-            const guestData = {
-                email: 'guest@temporary.com',
-                name: '게스트',
-                isGuest: true,
-                loginTime: new Date().toISOString()
-            };
-
-            sessionStorage.setItem('currentUser', JSON.stringify(guestData));
-            window.location.href = 'book.html';
         }
 
         // 에러 메시지 표시
