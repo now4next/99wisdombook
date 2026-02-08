@@ -1,0 +1,1940 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light" style="height: 100%;"><head>
+  <!-- 🔴 초강력 캐시 무효화 -->
+  <script>
+    (function() {
+      const currentVersion = '1770544793';
+      
+      // 1. Service Worker 무효화
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for(let registration of registrations) {
+            registration.unregister();
+            console.log('🗑️ Service Worker 제거됨');
+          }
+        });
+      }
+      
+      // 2. 모든 캐시 삭제
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          for (let name of names) {
+            caches.delete(name);
+            console.log('🗑️ 캐시 삭제됨:', name);
+          }
+        });
+      }
+      
+      // 3. URL 버전 체크 및 리다이렉트
+      const url = new URL(window.location.href);
+      const hasVersion = url.searchParams.get('v');
+      
+      if (!hasVersion || hasVersion !== currentVersion) {
+        console.log('🔄 최신 버전으로 강제 리다이렉트 중... v=' + currentVersion);
+        url.searchParams.set('v', currentVersion);
+        url.searchParams.set('_', Date.now());
+        
+        // location.replace 대신 location.href 사용 (더 강력한 리로드)
+        window.location.href = url.href;
+      } else {
+        console.log('✅ 최신 버전 로드됨: v=' + currentVersion);
+      }
+    })();
+  </script>
+
+    <meta charset="UTF-8">
+  <!-- 브라우저 번역 허용 -->
+  <meta name="google" content="translate">
+  <meta http-equiv="content-language" content="ko">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google" content="translate">
+    <meta http-equiv="content-language" content="ko">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="version" content="1770544793">
+  <title>살아본 뒤에야 비로소 읽히는 문장들</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&amp;family=Noto+Sans+KR:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
+    
+    <!-- 인증 체크 비활성화 (데모 버전) -->
+    <style>
+      :root {
+        --font-main: 'Nanum Myeongjo', serif;
+        --font-sans: 'Noto Sans KR', sans-serif;
+        --color-text: #1a1a1a;
+        --color-heading: #000000;
+        --color-accent: #5d4037;
+        --color-link: #3d5afe;
+        --page-width: 880px;
+      }
+
+      body {
+        max-width: var(--page-width);
+        margin: 0 auto;
+        padding: 40px 80px;
+        padding-top: 65px; /* Space for fixed language menu */
+        color: var(--color-text);
+        font-family: var(--font-main);
+        line-height: 1.8;
+        font-size: 16px;
+        background-color: #ffffff;
+        word-break: keep-all;
+        text-align: justify;
+        position: relative;
+        box-sizing: border-box;
+      }
+
+      /* Typography */
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        font-family: var(--font-sans);
+        color: var(--color-heading);
+        margin-top: 2em;
+        margin-bottom: 1em;
+        font-weight: 700;
+      }
+
+      h1 {
+        font-size: 2.4em;
+        text-align: center;
+        margin-bottom: 0.5em;
+        line-height: 1.2;
+      }
+      h2 {
+        font-size: 1.8em;
+        border-bottom: 2px solid var(--color-accent);
+        padding-bottom: 0.5em;
+        margin-top: 3em;
+      }
+      h3 {
+        font-size: 1.4em;
+        margin-top: 2.5em;
+        color: var(--color-accent);
+      }
+      h4 {
+        font-size: 1.2em;
+        margin-top: 1.5em;
+        margin-bottom: 0.8em;
+        color: #333;
+      }
+
+      p {
+        margin-bottom: 1.2em;
+      }
+
+      a {
+        text-decoration: none;
+        color: var(--color-text);
+        transition: color 0.2s;
+      }
+      a:hover {
+        color: var(--color-link);
+        text-decoration: underline;
+      }
+
+      /* UN Style Language Selector */
+      #language-selector {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background-color: #f5f5f5;
+        border-bottom: 1px solid #e0e0e0;
+        padding: 12px 40px;
+        z-index: 10000;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-family: var(--font-sans);
+        font-size: 13px;
+        height: 50px;
+        box-sizing: border-box;
+      }
+
+      /* User Info Section */
+      #user-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      #user-info .user-name {
+        color: #333;
+        font-weight: 500;
+        line-height: 32px; /* 로그아웃 버튼 높이와 동일 */
+        display: flex;
+        align-items: center;
+      }
+
+      #user-info .logout-btn {
+        background: var(--color-accent);
+        color: white;
+        border: none;
+        padding: 6px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-family: var(--font-sans);
+        transition: background 0.3s;
+      }
+
+      #user-info .logout-btn:hover {
+        background: #4a332c;
+      }
+
+      
+
+      /* Header Icons */
+      .header-icons {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-left: auto;
+      }
+      
+      .language-dropdown {
+        position: relative;
+      }
+      
+      .text-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        background: #f5f5f5;
+        color: #333;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        height: 32px;
+      }
+      
+      .text-btn:hover {
+        background: #e8e8e8;
+        border-color: #999;
+        color: #000;
+      }
+      
+      .text-btn:active {
+        background: #ddd;
+        transform: scale(0.98);
+      }
+      
+      .text-btn .btn-icon {
+        width: 16px;
+        height: 16px;
+        stroke: #666;
+        flex-shrink: 0;
+      }
+      
+      .text-btn:hover .btn-icon {
+        stroke: #000;
+      }
+      
+      .text-btn .btn-text {
+        color: #333;
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1;
+      }
+      
+      .text-btn:hover .btn-text {
+        color: #000;
+      }
+      
+      .text-btn .btn-arrow {
+        width: 12px;
+        height: 12px;
+        stroke: #666;
+        flex-shrink: 0;
+        transition: transform 0.2s ease;
+        margin-left: 2px;
+      }
+      
+      .text-btn:hover .btn-arrow {
+        stroke: #000;
+      }
+      
+      /* 드롭다운 열릴 때 화살표 회전 */
+      .language-btn.active .btn-arrow {
+        transform: rotate(180deg);
+      }
+      
+      .icon-btn svg {
+        fill: var(--color-accent);
+        width: 24px;
+        height: 24px;
+      }
+      
+      /* Language Dropdown */
+      .language-dropdown {
+        position: relative;
+      }
+      
+      .language-menu {
+        display: none;
+        position: absolute;
+        top: 50px;
+        right: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        min-width: 180px;
+        z-index: 100000;
+        padding: 8px 0;
+      }
+      
+      .language-menu.show {
+        display: block;
+      }
+      
+      .language-menu a {
+        display: block;
+        padding: 10px 16px;
+        color: #333;
+        text-decoration: none;
+        font-size: 14px;
+        transition: background 0.2s;
+      }
+      
+      .language-menu a:hover {
+        background: #f5f5f5;
+      }
+      
+      .language-menu a.active {
+        background: #e8f4f8;
+        color: #0066cc;
+        font-weight: 600;
+      }
+/* Language Links Section */
+      #language-links {
+        display: flex;
+        align-items: center;
+      }
+
+      #language-selector a {
+        color: #333;
+        text-decoration: none;
+        padding: 0 8px;
+        cursor: pointer;
+      }
+
+      #language-selector a:hover {
+        text-decoration: underline;
+      }
+
+      #language-selector span.divider {
+        color: #ccc;
+        font-size: 10px;
+      }
+
+      #language-selector a.active {
+        color: #0066cc;
+        font-weight: 700;
+      }
+
+      /* Hide Google Translate Widget */
+      .goog-te-banner-frame {
+        display: none !important;
+      }
+      .goog-te-gadget {
+        display: none !important;
+      }
+      body {
+        top: 0px !important;
+        position: relative !important;
+      }
+      
+      /* Prevent Google Translate from moving body */
+      body.translated-ltr {
+        top: 0px !important;
+      }
+      
+      /* Hide Google Translate tooltip and popup */
+      #goog-gt-tt, .goog-te-balloon-frame {
+        display: none !important;
+      }
+      
+      .goog-text-highlight {
+        background-color: transparent !important;
+        box-shadow: none !important;
+      }
+
+      /* Floating TOC Button */
+      
+
+      
+
+      
+
+      /* TOC Panel */
+      #floating-toc-panel {
+        position: fixed;
+        top: 60px;
+        right: -400px;
+        width: 380px;
+        max-height: 85vh;
+        background: white;
+        border-radius: 12px 0 0 12px;
+        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+        z-index: 9997;
+        overflow-y: auto;
+        transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        padding: 20px;
+      }
+
+      #floating-toc-panel.active {
+        right: 0;
+      }
+
+      #floating-toc-panel h3 {
+        margin: 0 0 24px 0;
+        font-size: 1.1em;
+        font-weight: 600;
+        color: #000;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid #e0e0e0;
+        padding-bottom: 12px;
+      }
+
+      .toc-section {
+        margin-bottom: 16px;
+      }
+
+      .toc-section-title {
+        font-weight: 600;
+        font-size: 0.9em;
+        color: #666;
+        margin-bottom: 8px;
+        padding-left: 0;
+        letter-spacing: 0.03em;
+      }
+
+      .toc-item {
+        display: block;
+        padding: 6px 0;
+        margin: 2px 0;
+        color: #444;
+        text-decoration: none;
+        transition: all 0.2s;
+        font-size: 0.9em;
+        line-height: 1.5;
+      }
+
+      .toc-item:hover {
+        color: #000;
+        font-weight: 500;
+      }
+
+      .toc-close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 32px;
+        height: 32px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        font-size: 24px;
+        font-weight: 300;
+        color: #999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        line-height: 1;
+      }
+
+      .toc-close:hover {
+        color: #000;
+        transform: scale(1.1);
+      }
+
+      /* Overlay */
+      #toc-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.3);
+        z-index: 9996;
+        display: none;
+        transition: opacity 0.3s;
+      }
+
+      #toc-overlay.active {
+        display: block;
+      }
+
+      /* Page Layouts */
+      .cover-page {
+        height: 800px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        page-break-after: always;
+        border-bottom: 1px solid #eee;
+        margin-bottom: 40px;
+      }
+
+      .cover-title {
+        font-size: 3.5em;
+        font-weight: 700;
+        margin-bottom: 0.2em;
+        font-family: var(--font-sans);
+      }
+      .cover-subtitle {
+        font-size: 1.5em;
+        font-style: italic;
+        margin-bottom: 3em;
+        color: #555;
+      }
+      .cover-author {
+        font-size: 1.4em;
+        font-weight: 500;
+      }
+
+      .copyright-page,
+      .dedication-page,
+      .toc-page {
+        page-break-after: always;
+        margin-bottom: 60px;
+      }
+
+      .copyright-page {
+        padding-top: 100px;
+        font-size: 0.9em;
+        color: #444;
+      }
+      .copyright-info {
+        border-top: 1px solid #ddd;
+        padding-top: 2em;
+        margin-top: 2em;
+      }
+      .copyright-row {
+        display: flex;
+        margin-bottom: 0.5em;
+      }
+      .copyright-label {
+        width: 120px;
+        font-weight: bold;
+      }
+
+      .dedication-box {
+        border: 1px solid #ddd;
+        padding: 40px;
+        background-color: #fcfcfc;
+        margin: 100px 0;
+        font-style: italic;
+      }
+
+      /* TOC Styling */
+      .toc-title {
+        text-align: center;
+        font-size: 2em;
+        margin-bottom: 2em;
+        font-family: var(--font-sans);
+      }
+      .toc-part {
+        margin-top: 1.5em;
+        font-weight: bold;
+        font-size: 1.1em;
+        color: var(--color-accent);
+        border-bottom: 1px solid #eee;
+        padding-bottom: 0.3em;
+        margin-bottom: 0.5em;
+      }
+      .toc-chapter {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5em;
+        font-size: 0.95em;
+        padding-left: 10px;
+      }
+      .toc-chapter a:hover {
+        color: var(--color-link);
+      }
+
+      /* Content Elements */
+      .part-header {
+        text-align: center;
+        padding: 80px 0;
+        background-color: #f9f9f9;
+        margin: 4em 0;
+        border-top: 1px solid #eee;
+        border-bottom: 1px solid #eee;
+      }
+      .part-number {
+        font-size: 1.2em;
+        color: #777;
+        display: block;
+        margin-bottom: 0.5em;
+      }
+      .part-title {
+        font-size: 2em;
+        margin: 0;
+        color: var(--color-text);
+      }
+
+      .chapter-header {
+        margin-top: 4em;
+        margin-bottom: 2em;
+        text-align: left;
+      }
+      .chapter-number {
+        font-size: 1em;
+        color: var(--color-accent);
+        display: block;
+        margin-bottom: 0.5em;
+        font-weight: bold;
+      }
+      .chapter-title {
+        font-size: 1.8em;
+        margin: 0 0 0.5em 0;
+        line-height: 1.3;
+        color: #000;
+      }
+      .chapter-subtitle {
+        font-size: 1.1em;
+        color: #555;
+        font-weight: 500;
+        font-family: var(--font-main);
+      }
+
+      .blank-page-container {
+        border: 2px dashed #e0e0e0;
+        height: 500px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 2em;
+        background-color: #fafafa;
+        border-radius: 8px;
+      }
+      .blank-page-text {
+        color: #aaa;
+        font-style: italic;
+      }
+
+      /* Helper for placeholders */
+      .placeholder-content {
+        color: #888;
+        font-style: italic;
+        padding: 20px 0;
+        border-bottom: 1px solid #eee;
+      }
+    
+      
+
+    
+      /* ========================================
+         반응형 웹 디자인 (Responsive Web Design)
+         ======================================== */
+      
+      /* 태블릿 (769px ~ 1024px) */
+      @media screen and (min-width: 769px) and (max-width: 1024px) {
+        body {
+          padding: 30px 40px;
+          padding-top: 65px;
+          font-size: 15px;
+        }
+        
+        h1 { font-size: 2em; }
+        h2 { font-size: 1.6em; }
+        h3 { font-size: 1.3em; }
+        
+        #language-selector {
+          padding: 8px 20px;
+          font-size: 12px;
+        }
+
+      /* PC (1025px ~ 1439px) */
+      @media screen and (min-width: 1025px) and (max-width: 1439px) {
+        body {
+          max-width: 960px;
+          padding: 40px 60px;
+          padding-top: 65px;
+          font-size: 16px;
+        }
+        
+        h1 { font-size: 2.2em; }
+        h2 { font-size: 1.7em; }
+        h3 { font-size: 1.35em; }
+        h4 { font-size: 1.15em; }
+        
+        #language-selector {
+          padding: 10px 30px;
+          font-size: 13px;
+        }
+        
+        #language-selector a {
+          padding: 6px 12px;
+          font-size: 13px;
+        }
+        
+        #user-info {
+          font-size: 13px;
+        }
+        
+        
+        
+        #floating-toc-panel {
+          top: 80px;
+          width: 360px;
+          max-height: 80vh;
+          padding: 20px;
+        }
+        
+        .toc-item {
+          padding: 12px 16px;
+          font-size: 14px;
+        }
+        
+        .chapter {
+          padding: 24px 0;
+          margin-bottom: 20px;
+        }
+        
+        .chapter-header {
+          margin-bottom: 16px;
+        }
+      }
+      
+      }
+      
+      /* 모바일 (최대 768px) */
+      @media screen and (max-width: 768px) {
+        /* 모바일 버튼 최적화 */
+        .header-icons {
+          display: flex !important;
+          gap: 8px;
+        }
+        
+        .text-btn {
+          height: 30px !important;
+          padding: 5px 12px !important;
+          font-size: 12px !important;
+          gap: 5px !important;
+        }
+        
+        .text-btn .btn-icon {
+          width: 14px !important;
+          height: 14px !important;
+        }
+        
+        .text-btn .btn-text {
+          font-size: 12px !important;
+        }
+        
+        .text-btn .btn-arrow {
+          width: 10px !important;
+          height: 10px !important;
+        }
+        
+        .language-menu {
+          top: 36px;
+          min-width: 160px;
+        }
+        
+        .language-menu a {
+          padding: 7px 12px;
+          font-size: 12px;
+        }
+        
+        
+        
+
+        
+        
+
+        body {
+          padding: 16px 12px;
+          padding-top: 60px;
+          font-size: 13px;
+        }
+        
+        h1 { font-size: 1.4em; }
+        h2 { font-size: 1.3em; }
+        h3 { font-size: 1.15em; }
+        
+        #language-selector { padding: 6px 8px; }
+        
+        #language-selector a {
+          padding: 3px 5px;
+          font-size: 10px;
+        }
+        
+        #floating-toc-panel {
+          width: 90%;
+          max-width: 280px;
+        }
+      }
+      
+      /* 가로 모드 모바일 */
+      @media screen and (max-width: 768px) and (orientation: landscape) {
+        body { padding-top: 60px; }
+        
+        #language-links {
+          flex-wrap: nowrap;
+          overflow-x: auto;
+        }
+      }
+      
+      /* 대형 화면 (1440px 이상) */
+      @media screen and (min-width: 1440px) {
+        body {
+          max-width: 1000px;
+          padding: 50px 100px;
+          padding-top: 70px;
+          font-size: 17px;
+        }
+        
+        h1 { font-size: 2.6em; }
+        h2 { font-size: 2em; }
+        h3 { font-size: 1.5em; }
+      }
+      
+      /* 인쇄 스타일 */
+      @media print {
+        #language-selector,
+        #floating-toc-button,
+        #mobile-toc-button,
+        #floating-toc-panel,
+        #toc-overlay,
+        #user-info {
+          display: none !important;
+        }
+        
+        body {
+          padding: 20px;
+          max-width: none;
+        }
+        
+        .chapter { page-break-inside: avoid; }
+        h1, h2, h3 { page-break-after: avoid; }
+      }
+      /* Google Translate 모든 UI 요소 완전 숨김 */
+      body > .skiptranslate,
+      body > div[id^="goog-"],
+      .goog-te-banner-frame,
+      .goog-te-balloon-frame,
+      iframe.goog-te-banner-frame,
+      iframe.goog-te-menu-frame,
+      .goog-te-ftab,
+      .goog-te-ftab-float,
+      #goog-gt-tt,
+      .goog-tooltip,
+      .goog-tooltip:hover,
+      .goog-text-highlight {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        position: absolute !important;
+        top: -9999px !important;
+        left: -9999px !important;
+        width: 0 !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+      }
+      
+      /* Body의 모든 번역 관련 인라인 스타일 무시 */
+      body[style*="top"],
+      body[style*="position"] {
+        top: 0 !important;
+        position: relative !important;
+      }
+      
+      html.translated-ltr,
+      html.translated-rtl {
+        margin-top: 0 !important;
+      }
+      
+      body.translated-ltr,
+      body.translated-rtl {
+        top: 0 !important;
+        margin-top: 0 !important;
+      }
+      
+      /* 번역 중 파란색 배경 제거 */
+      body::before,
+      html::before {
+        display: none !important;
+      }
+
+      /* 브라우저 번역 바 숨김 및 body top 여백 제거 */
+      body.translated-ltr {
+        top: 0 !important;
+        margin-top: 0 !important;
+      }
+      
+      body.translated-rtl {
+        top: 0 !important;
+        margin-top: 0 !important;
+      }
+      
+      /* 번역 관련 추가 여백 제거 */
+      html[translate="yes"] body {
+        top: 0 !important;
+      }
+      /* 모바일 반응형 */
+      @media screen and (max-width: 768px) {
+        /* 모바일 버튼 최적화 */
+        .header-icons {
+          display: flex !important;
+          gap: 8px;
+        }
+        
+        .text-btn {
+          height: 30px !important;
+          padding: 5px 12px !important;
+          font-size: 12px !important;
+          gap: 5px !important;
+        }
+        
+        .text-btn .btn-icon {
+          width: 14px !important;
+          height: 14px !important;
+        }
+        
+        .text-btn .btn-text {
+          font-size: 12px !important;
+        }
+        
+        .text-btn .btn-arrow {
+          width: 10px !important;
+          height: 10px !important;
+        }
+        
+        .language-menu {
+          top: 36px;
+          min-width: 160px;
+        }
+        
+        .language-menu a {
+          padding: 7px 12px;
+          font-size: 12px;
+        }
+        
+        
+        
+
+        
+    
+    body {
+      top: 0 !important;
+      position: relative !important;
+    }
+    
+    /* 번역 중 깜빡임 방지 */
+    .translated-ltr {
+      margin-top: 0 !important;
+    }
+    
+    /* iframe 숨김 */
+    iframe.goog-te-banner-frame,
+    iframe.skiptranslate {
+      display: none !important;
+    }
+      /* 모바일 반응형 */
+      @media screen and (max-width: 768px) {
+        /* 모바일에서 텍스트 버튼 최적화 */
+        .header-icons {
+          display: flex !important;
+          gap: 8px;
+        }
+        
+        .text-btn {
+          padding: 8px 16px !important;
+          font-size: 14px !important;
+          gap: 6px !important;
+        }
+        
+        .text-btn .btn-icon {
+          width: 18px !important;
+          height: 18px !important;
+        }
+        
+        .text-btn .btn-text {
+          font-size: 14px !important;
+        }
+        
+        .text-btn .btn-arrow {
+          width: 14px !important;
+          height: 14px !important;
+        }
+        
+        .language-btn {
+          padding: 8px 14px 8px 16px !important;
+        }
+        
+        .contents-btn {
+          padding: 8px 16px !important;
+        }
+        
+        .language-menu {
+          top: 48px;
+          min-width: 180px;
+          right: 0;
+        }
+        
+        .language-menu a {
+          padding: 10px 16px;
+          font-size: 14px;
+        }
+        
+
+        /* 모바일에서도 아이콘 명확하게 유지 */
+        .header-icons {
+          display: flex !important;
+          gap: 10px;
+        }
+        
+        .icon-btn {
+          width: 40px !important;
+          height: 40px !important;
+          border: 2px solid #333 !important;
+        }
+        
+        .icon-btn svg {
+          width: 22px !important;
+          height: 22px !important;
+          stroke: #333 !important;
+        }
+        
+        .icon-btn:hover svg {
+          stroke: #fff !important;
+        }
+        
+        .language-menu {
+          top: 50px;
+          min-width: 180px;
+          right: 0;
+        }
+        
+        .language-menu a {
+          padding: 10px 16px;
+          font-size: 14px;
+        }
+        
+
+        #language-selector {
+          padding: 10px 16px;
+          height: 55px;
+        }
+        
+        #user-info {
+          display: none;  /* 모바일에서 사용자 정보 숨김 */
+        }
+        
+        .header-icons {
+          gap: 8px;
+        }
+        
+        .icon-btn {
+          width: 36px;
+          height: 36px;
+        }
+        
+        .icon-btn svg {
+          width: 20px;
+          height: 20px;
+        }
+        
+        .language-menu {
+          right: -8px;
+        }
+      }
+      
+      @media screen and (max-width: 480px) {
+        /* 초소형 모바일에서 텍스트 버튼 최적화 */
+        .text-btn {
+          padding: 7px 14px !important;
+          font-size: 13px !important;
+          gap: 5px !important;
+        }
+        
+        .text-btn .btn-icon {
+          width: 16px !important;
+          height: 16px !important;
+        }
+        
+        .text-btn .btn-text {
+          font-size: 13px !important;
+        }
+        
+        .text-btn .btn-arrow {
+          width: 12px !important;
+          height: 12px !important;
+        }
+        
+        .language-menu {
+          min-width: 160px;
+        }
+        
+
+        /* 초소형 모바일에서도 아이콘 유지 */
+        .icon-btn {
+          width: 36px !important;
+          height: 36px !important;
+        }
+        
+        .icon-btn svg {
+          width: 20px !important;
+          height: 20px !important;
+        }
+        
+        .language-menu {
+          min-width: 160px;
+        }
+        
+
+        .language-menu {
+          min-width: 160px;
+        }
+        
+        .language-menu a {
+          padding: 8px 12px;
+          font-size: 13px;
+        }
+      }
+
+  </style>
+
+</head>
+  <body>
+    <!-- Language Selector Menu (Fixed Top) -->
+    
+    <!-- Hidden Google Translate Widget -->
+    
+
+    
+    <div id="language-selector">
+      <div id="user-info" style="display: flex; align-items: center; gap: 15px;">
+        <span class="user-name" id="userName" style="color: #333; font-weight: 500; line-height: 32px; display: flex; align-items: center;">강병준 (데모)</span>
+        <button class="logout-btn" onclick="logout()">로그아웃</button>
+      </div>
+      
+      <!-- 언어 선택 드롭다운 -->
+      <div class="header-icons">
+        <div class="language-dropdown" style="position: relative;">
+          <button class="text-btn language-btn" id="languageBtn" onclick="toggleLanguageMenu(event)" title="언어 선택" aria-label="언어 선택">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+            <span class="btn-text">Language</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-arrow">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <div class="language-menu" id="languageMenu" style="display: none; position: absolute; top: 40px; right: 0; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 180px; z-index: 100000; padding: 8px 0;">
+            <a href="javascript:void(0)" onclick="selectLanguage('ko')" data-lang="ko">🇰🇷 한국어</a>
+            <a href="javascript:void(0)" onclick="selectLanguage('en')" data-lang="en">🇺🇸 English</a>
+            <a href="javascript:void(0)" onclick="selectLanguage('zh-CN')" data-lang="zh-CN">🇨🇳 中文</a>
+            <a href="javascript:void(0)" onclick="selectLanguage('ja')" data-lang="ja">🇯🇵 日本語</a>
+            <a href="javascript:void(0)" onclick="selectLanguage('es')" data-lang="es">🇪🇸 Español</a>
+            <a href="javascript:void(0)" onclick="selectLanguage('fr')" data-lang="fr">🇫🇷 Français</a>
+            <a href="javascript:void(0)" onclick="selectLanguage('ru')" data-lang="ru">🇷🇺 Русский</a>
+            <a href="javascript:void(0)" onclick="selectLanguage('ar')" data-lang="ar">🇸🇦 عربي</a>
+          </div>
+        </div>
+        
+        <!-- 목차 버튼 -->
+        <button class="text-btn contents-btn" id="tocBtn" onclick="toggleTOC()" title="목차" aria-label="목차">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+          <span class="btn-text">Contents</span>
+        </button>
+      </div>
+    </div>
+<!-- Language Notice -->
+    <div id="translation-notice" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); color: white; padding: 30px 50px; border-radius: 12px; z-index: 10000; text-align: center; font-family: var(--font-sans);">
+      <h3 style="margin: 0 0 15px 0; color: white;">⚠️ 번역 기능 안내</h3>
+      <p style="margin: 0; line-height: 1.6;">
+        실시간 번역 기능은 웹 서버 환경에서만 작동합니다.<br>
+        로컬 파일에서는 보안 정책(CORS)으로 인해 제한됩니다.
+      </p>
+      <h4 style="margin: 20px 0 10px 0; color: #ffd700;">해결 방법:</h4>
+      <div style="text-align: left; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+        <p style="margin: 5px 0;"><strong>1. 웹 서버 실행 (추천)</strong></p>
+        <code style="background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 4px; display: block; margin: 5px 0;">
+          python -m http.server 8000
+        </code>
+        <p style="margin: 5px 0; font-size: 0.9em;">그 다음: http://localhost:8000 접속</p>
+      </div>
+      <button onclick="closeNotice()" style="background: #667eea; color: white; border: none; padding: 10px 30px; border-radius: 6px; cursor: pointer; font-size: 16px; margin-top: 10px;">확인</button>
+    </div>
+
+    <!-- i18n system replaces Google Translate -->
+
+    <!-- Floating TOC Button -->
+    
+
+    <!-- TOC Overlay -->
+    <div id="toc-overlay" onclick="toggleTOC()"></div>
+
+    <!-- Floating TOC Panel -->
+    <div id="floating-toc-panel">
+      <button class="toc-close" onclick="toggleTOC()">×</button>
+      <h3>CONTENTS</h3>
+      
+      <div class="toc-section">
+        <a href="#opening" class="toc-item" onclick="navigateToSection('opening')">여는 말</a>
+      </div>
+
+      <div class="toc-section">
+        <div class="toc-section-title">제1부. 경제와 거래의 법칙</div>
+        <a href="#chapter-1" class="toc-item" onclick="navigateToSection('chapter-1')">1. 세상에 공짜는 없다</a>
+        <a href="#chapter-2" class="toc-item" onclick="navigateToSection('chapter-2')">2. 하이 리스크, 하이 리턴</a>
+        <a href="#chapter-3" class="toc-item" onclick="navigateToSection('chapter-3')">3. 계란을 한 바구니에 담지 마라</a>
+        <a href="#chapter-4" class="toc-item" onclick="navigateToSection('chapter-4')">4. 수요가 있으면 공급이 있다</a>
+        <a href="#chapter-5" class="toc-item" onclick="navigateToSection('chapter-5')">5. 싼 게 비지떡이다</a>
+        <a href="#chapter-6" class="toc-item" onclick="navigateToSection('chapter-6')">6. 돈은 거짓말을 하지 않는다</a>
+        <a href="#chapter-7" class="toc-item" onclick="navigateToSection('chapter-7')">7. 악화가 양화를 구축한다</a>
+        <a href="#chapter-8" class="toc-item" onclick="navigateToSection('chapter-8')">8. 늦게 배운 도둑질이 날 새는 줄 모른다</a>
+        <a href="#chapter-9" class="toc-item" onclick="navigateToSection('chapter-9')">9. 남의 돈 벌기가 제일 어렵다</a>
+        <a href="#chapter-10" class="toc-item" onclick="navigateToSection('chapter-10')">10. 재주는 곰이 부리고 돈은 왕서방이 받는다</a>
+        <a href="#chapter-11" class="toc-item" onclick="navigateToSection('chapter-11')">11. 밑 빠진 독에 물 붓기</a>
+      </div>
+
+      <div class="toc-section">
+        <div class="toc-section-title">제2부 ~ 제9부</div>
+        <a href="#chapter-12" class="toc-item" onclick="navigateToSection('chapter-12')">12. 아니 땐 굴뚝에 연기 나랴</a>
+        <div style="text-align: center; color: #999; padding: 10px; font-size: 0.85em;">(제13~99장 생략)</div>
+      </div>
+
+      <div class="toc-section">
+        <a href="#chapter-100" class="toc-item" onclick="navigateToSection('chapter-100')">100. 당신만의 지혜</a>
+        <a href="#closing" class="toc-item" onclick="navigateToSection('closing')">맺음 말</a>
+      </div>
+    </div>
+
+    <!-- Cover Page -->
+    <div class="cover-page">
+      <div class="cover-title" style="line-height: 1.3; margin-bottom: 0.3em;">
+        살아본<br>뒤에야<br>비로소<br>읽히는<br>문장들
+      </div>
+      <div class="cover-subtitle"><span style="font-size: 28px; line-height: 2.7;">Lines Life Taught Me</span></div>
+      <div class="cover-author"><span style="font-size: 16px;">강림선생 지음</span></div>
+    </div>
+
+    <!-- Copyright Page -->
+    <div class="copyright-page">
+      <h3>살아본 뒤에야 비로소 읽히는 문장들</h3>
+      <div class="copyright-info">
+        <div class="copyright-row"><span class="copyright-label">발 행</span><span>2026년 01월 29일</span></div>
+        <div class="copyright-row"><span class="copyright-label">저 자</span><span>강림선생 (Forest Kang)</span></div>
+        <div class="copyright-row"><span class="copyright-label">펴낸이</span><span>한건희</span></div>
+        <div class="copyright-row"><span class="copyright-label">펴낸곳</span><span>주식회사 부크크</span></div>
+        <div class="copyright-row"><span class="copyright-label">ISBN</span><span>979-11-12-13569-8</span></div>
+        <br>
+        <p>ⓒ 강림선생 2026</p>
+        <p>본 책은 저작자의 지적 재산으로서 무단 전재와 복제를 금합니다.</p>
+      </div>
+    </div>
+
+    <!-- Dedication Page -->
+    <div class="dedication-page">
+      <div class="dedication-box">
+        <p style="text-align: center; margin-bottom: 2em; font-weight: bold">
+          “선물하고 싶은 사람에게 당신의 이름으로 마음을 전해보세요!”
+        </p>
+        <p>
+          "살아온 날들 속 모든 경험이 당신의 마음에 온전한 지혜의 문장으로 스며들기를. 그리하여 당신의 삶이 세상에서
+          가장 가치있는 이야기로 기억되기를 바라며, ____________________ 님께 사랑을 담아 드립니다."
+        </p>
+        <p style="text-align: right; margin-top: 2em">____________________ 드림.</p>
+      </div>
+    </div>
+
+    <!-- Table of Contents -->
+    <div class="toc-page">
+      <div class="toc-title">CONTENT</div>
+      <div class="toc-chapter"><a href="#opening">여는 말</a></div>
+
+      <div class="toc-part">제1부. 경제와 거래의 법칙: 세상에 공짜는 없다</div>
+      <div class="toc-chapter"><a href="#chapter-1">1. 세상에 공짜는 없다. (기회비용과 대가)</a></div>
+      <div class="toc-chapter"><a href="#chapter-2">2. 하이 리스크, 하이 리턴. (위험과 보상의 비례 관계)</a></div>
+      <div class="toc-chapter">
+        <a href="#chapter-3">3. 계란을 한 바구니에 담지 마라. (리스크 분산과 포트폴리오)</a>
+      </div>
+      <div class="toc-chapter"><a href="#chapter-4">4. 수요가 있으면 공급이 있다.</a></div>
+      <div class="toc-chapter"><a href="#chapter-5">5. 싼 게 비지떡이다.</a></div>
+      <div class="toc-chapter"><a href="#chapter-6">6. 돈은 거짓말을 하지 않는다.</a></div>
+      <div class="toc-chapter"><a href="#chapter-7">7. 악화가 양화를 구축한다.</a></div>
+      <div class="toc-chapter"><a href="#chapter-8">8. 늦게 배운 도둑질이 날 새는 줄 모른다.</a></div>
+      <div class="toc-chapter"><a href="#chapter-9">9. 남의 돈 벌기가 제일 어렵다.</a></div>
+      <div class="toc-chapter"><a href="#chapter-10">10. 재주는 곰이 부리고 돈은 왕서방이 받는다.</a></div>
+      <div class="toc-chapter"><a href="#chapter-11">11. 밑 빠진 독에 물 붓기.</a></div>
+
+      <div class="toc-part">제2부. 인과와 자연의 법칙: 아니 땐 굴뚝에 연기 나랴</div>
+      <!-- 12-22 -->
+      <div class="toc-chapter"><a href="#chapter-12">12. 아니 땐 굴뚝에 연기 나랴.</a></div>
+      <div class="toc-chapter"><a href="#chapter-13">13. 뿌린 대로 거둔다.</a></div>
+      <div class="toc-chapter"><a href="#chapter-100">... (중략) ...</a></div>
+
+      <!-- Abbreviated TOC for readability in code, but links function via ID logic below -->
+      <div class="toc-part">제3부 ~ 제9부</div>
+      <div class="toc-chapter"><a href="#chapter-100">100. 오롯한 당신만의 삶의 경험과 지혜의 말</a></div>
+      <div class="toc-chapter"><a href="#closing">맺음 말</a></div>
+    </div>
+
+    <!-- Opening Remarks -->
+    <div id="opening">
+      <h2>여는 말</h2>
+      <h3>복잡한 세상, 단순한 진실의 힘</h3>
+      <p>
+        우리는 매일같이 쏟아지는 정보의 홍수와 복잡한 이론들 속에서 살아갑니다. 하지만 인류의 역사를 수천 년 동안 관통해
+        온 진짜 지혜들은, 결코 어렵거나 난해한 말로 포장되어 있지 않았습니다.
+      </p>
+      <p>
+        ‘진리’란 복잡한 미로가 아닙니다. 그것은 듣는 순간 직관적으로 이해되고, 가슴으로 바로 공감할 수 있는 명쾌한
+        문장들로 이루어져 있습니다.
+      </p>
+      <p>
+        이 책은 바로 그런 이야기들을 담았습니다. 살면서 한 번쯤은 들어봤을 속담, 격언, 그리고 우리가 알게 모르게 직접
+        겪거나 간접적으로 체험해 온 삶의 법칙들입니다.
+      </p>
+      <p>
+        이 책에는 99가지의 지혜만이 담겨 있습니다. 숫자 100을 채우지 않고 99에서 멈춘 데에는 특별한 이유가 있습니다.
+        그것은 바로 우리 모두가 가진 각자의 '삶의 경험'은 특별히 존중되어야 하기 때문입니다.
+      </p>
+    </div>
+
+    <!-- PART 1 -->
+    <div class="part-header">
+      <span style="font-size: 24px;">제1부</span>
+      <h2 class="part-title" style="border-bottom: none; padding-bottom: 0;">경제와 거래의 법칙: 세상에 공짜는 없다</h2>
+      <div class="part-subtitle"><span style="font-size: 22px;">(경제학, 경영, 게임이론, 인간의 욕망)</span></div>
+    </div>
+
+    <!-- Chapter 1 (Full Content) -->
+    <div id="chapter-1">
+      <div class="chapter-header">
+        <span style="font-size: 24px;">제1장</span>
+        <h3 class="chapter-title">세상에 공짜는 없다.</h3>
+        <div class="chapter-subtitle">보이지 않는 청구서, 기회비용과 대가의 법칙</div>
+      </div>
+      <h4>달콤한 미끼와 청구서의 필연성</h4>
+      <p>
+        인간은 태어나는 순간부터 거래를 시작한다. 첫 울음을 터뜨려 폐 속에 공기를 채우는 순간조차 에너지를 소모한다.
+        우리는 무언가를 얻기 위해 끊임없이 무언가를 내어놓는다. 시간을 내어 돈을 벌고, 돈을 내어 안락함을 산다. 젊음을
+        바쳐 지혜를 얻고, 건강을 담보로 성공을 쫓기도 한다. 하지만 이 냉정한 교환의 법칙 앞에서 인간은 늘 헛된 꿈을
+        꾼다. 바로 ‘공짜’에 대한 갈망이다.
+      </p>
+      <p>
+        "이건 무료입니다." 이 짧은 한마디는 인간의 이성을 마비시키는 가장 강력한 주문이다. 마트의 시식 코너, 웹사이트의
+        무료 회원가입, 지인의 대가 없는 호의 앞에서 우리는 경계심을 푼다. 그러나 인류의 역사는, 그리고 우주의 법칙은
+        단호하게 말한다. 이 세상에 진정한 의미의 '무료'는 존재하지 않는다고. 누군가가 대가를 치르지 않은 것처럼
+        보인다면, 그 청구서는 단지 시간차를 두고 배달되고 있거나, 제3자에게 전가되었거나, 혹은 눈에 보이지 않는 더 큰
+        가치로 지불되고 있을 뿐이다.
+      </p>
+
+      <h4>19세기 미국 서부의 짠 햄과 맥주</h4>
+      <p>
+        이 유명한 문장, "세상에 공짜 점심은 없다(There ain't no such thing as a free lunch)"는 어디서 유래했을까?
+        시곗바늘을 19세기 말, 미국 서부 개척 시대로 돌려보자.
+      </p>
+      <p>
+        당시 뉴올리언스에서 샌프란시스코에 이르는 술집(Saloon)들은 노동자들로 북적였다. 거친 일을 마친 그들을 유혹하기
+        위해 술집 주인들은 기발한 마케팅을 고안해 냈다. 가게 앞에 커다란 간판을 내건 것이다. "맥주 한 잔을 시키면 점심
+        식사가 공짜!"
+      </p>
+      <p>
+        가난한 노동자들에게 이는 기적과도 같은 제안이었다. 단돈 5센트짜리 맥주 한 잔만 시키면 로스트비프, 햄, 치즈, 빵,
+        크래커가 가득 담긴 접시를 마음껏 먹을 수 있었다. 사람들은 구름처럼 몰려들었고, 주인은 자선사업가라는 칭송을
+        들었다. 하지만 이 '공짜 점심'에는 치밀하게 계산된 함정이 숨어 있었다. 제공된 음식들은 하나같이 소금기가
+        가득했다(Salty). 햄은 소금에 절어 있었고, 크래커는 짭짤했으며, 치즈는 강한 향과 짠맛을 냈다. 공짜 안주를 먹으면
+        먹을수록 손님들은 극심한 갈증을 느꼈다. 그 갈증을 해소할 방법은 오직 하나, 맥주를 더 시키는 것뿐이었다.
+      </p>
+
+      <h4>밀턴 프리드먼과 기회비용의 발견</h4>
+      <p>
+        노벨 경제학상 수상자 밀턴 프리드먼(Milton Friedman)은 1975년 그의 저서 제목으로 이 문장을 채택하며, 술집의
+        일화를 경제학의 황금률로 격상시켰다. 그는 정부의 복지 정책이나 무상 서비스가 결코 '공짜'가 아님을 경고했다.
+        경제학적으로 이 문장은 '희소성(Scarcity)'과 '기회비용(Opportunity Cost)'이라는 개념으로 설명된다. 자원은
+        한정되어 있다. 시간도, 돈도, 노동력도 무한하지 않다. 따라서 우리가 어떤 선택을 한다는 것은 필연적으로 다른 어떤
+        가능성을 포기한다는 것을 의미한다.
+      </p>
+
+      <h4>트로이의 목마와 파우스트의 거래</h4>
+      <p>
+        인류는 경제학이 탄생하기 훨씬 전부터 본능적으로 이 진리를 알고 있었다. 고대 신화와 문학은 '대가 없는 선물'이
+        가져오는 파국을 끊임없이 경고해 왔다. 가장 대표적인 사례가 그리스 로마 신화의 '트로이 목마'다. 트로이 사람들은
+        이를 신이 내린 선물이라 생각하고 성 안으로 들였다. 하지만 트로이의 사제 라오콘은 이렇게 외쳤다. "나는
+        그리스인들이 두렵다. 비록 그들이 선물을 가져올지라도." 그의 경고는 무시되었고, 트로이는 멸망했다.
+      </p>
+
+      <h4>엔트로피와 등가교환</h4>
+      <p>
+        시선을 인간 사회에서 우주로 돌려보자. 자연계는 인간보다 훨씬 더 철저하게 '공짜 없음'의 원칙을 고수한다. 물리학의
+        근간인 열역학 제1법칙(에너지 보존의 법칙)은 "에너지는 생성되거나 소멸되지 않고 형태만 바뀔 뿐"이라고 선언한다.
+        즉, 무(無)에서 유(有)는 절대 나올 수 없다. 애니메이션 &lt;강철의 연금술사&gt;에서 차용되어 유명해진
+        '등가교환(Equivalent Exchange)의 법칙'은 사실 연금술이 아닌 우주의 섭리다. "무언가를 얻으려면 그와 동등한 대가를
+        치러야 한다."
+      </p>
+
+      <h4>"당신이 상품이다"</h4>
+      <p>
+        21세기, 디지털 자본주의 시대에 '공짜'는 더욱 교묘하고 세련된 형태로 진화했다. 우리는 구글 검색, 페이스북,
+        인스타그램, 유튜브를 무료로 이용한다. 실리콘밸리의 보안 전문가들은 섬뜩한 명언을 남겼다. "상품이 무료라면,
+        당신이 바로 상품이다(If you're not paying for the product, you are the product)." 우리는 돈을 내지 않는 대신, 더
+        소중한 것을 지불하고 있다. 바로 우리의 '관심(Attention)'과 '데이터(Data)'다.
+      </p>
+
+      <h4>왜 우리는 공짜에 속는가?</h4>
+      <p>
+        행동경제학자 댄 애리얼리(Dan Ariely)는 그의 저서 &lt;상식 밖의 경제학&gt;에서 '0(Zero)의 마력'을 이야기한다.
+        인간은 '할인'이나 '저렴함'을 좋아하지만, '공짜'라는 단어 앞에서는 이성적인 판단 회로가 멈춰버린다. 사기꾼들은
+        바로 이 심리를 파고든다.
+      </p>
+
+      <h4>정당한 대가를 치를 용기</h4>
+      <p>
+        "세상에 공짜는 없다"는 말은 우리를 비관적으로 만들기 위한 말이 아니다. 오히려 세상을 투명하게 바라보고
+        주체적으로 살아가게 하는 힘이다. 이 법칙을 뼈저리게 이해한 사람은 요행을 바라지 않고, 타인의 호의에 감사할 줄
+        알며, 선택에 책임을 진다. 세상은 거대한 시장이다. 계산대는 언제나 열려 있고, 정당한 대가를 치르는 자에게 세상은
+        그 무엇이든 내어줄 준비가 되어 있다. 기억하라. 공짜는 없다. 그리고 그것이야말로 세상이 공평하다는 증거다.
+      </p>
+    </div>
+
+    <!-- Chapter 2 (Partial Content) -->
+    <div id="chapter-2">
+      <div class="chapter-header">
+        <span style="font-size: 24px;">제2장</span>
+        <h3 class="chapter-title">하이 리스크, 하이 리턴 (High Risk, High Return)</h3>
+        <div class="chapter-subtitle">심연을 건너는 대가, 위험과 보상의 잔혹한 비례 법칙</div>
+      </div>
+
+      <h4>안전한 대박은 존재하는가?</h4>
+      <p>
+        인류는 언제나 모순된 꿈을 꾼다. "원금은 절대 잃지 않으면서, 20% 이상의 수익을 내는 상품은 없을까?", "상처받을
+        위험은 전혀 없으면서도, 영화 같은 열정적인 사랑을 할 수는 없을까?"
+      </p>
+      <p>
+        금융 전문가, 인생의 멘토, 혹은 노련한 협상가에게 이 질문을 던지면 돌아오는 답은 냉정하다. 그런 것은 신화 속에나
+        존재한다는 것이다. 만약 누군가가 당신에게 "리스크는 제로(0)에 가까운데 수익은 확실하다"고 속삭인다면, 그는
+        금융의 연금술사가 아니라 당신의 지갑을 노리는 사기꾼일 확률이 99.9%다.
+      </p>
+      <p>
+        "하이 리스크, 하이 리턴(High Risk, High Return)." 위험이 높을수록 기대 수익도 높다. 반대로 위험이 낮으면(Low
+        Risk), 수익도 낮을 수밖에 없다(Low Return). 이것은 자본시장의 법칙이기 이전에, 우주의 에너지 보존 법칙과도 같은
+        자연계의 절대 진리다.
+      </p>
+
+      <h4>향신료 항로와 주식회사의 탄생</h4>
+      <p>
+        "위험을 감수하고 수익을 얻는다"는 개념이 인류 역사를 가장 드라마틱하게 바꾼 시점은 16~17세기 '대항해시대'였다.
+        당시 유럽인들에게 인도의 향신료는 '검은 황금'이었다. 하지만 그 대가는 가혹했다. 유럽에서 희망봉을 돌아
+        인도네시아의 향료 제도까지 가는 길은 말 그대로 '저승길'이었다.
+      </p>
+      <p>
+        이 극단적인 위험을 관리하기 위해 인류 최고의 발명품 중 하나인 '주식회사'가 탄생했다. 1602년 설립된 네덜란드
+        동인도 회사(VOC)가 그 주인공이다. 과거에는 부유한 선주 혼자 배를 띄웠다가 배가 침몰하면 파산했다. 하지만 VOC는
+        리스크를 잘게 쪼갰다. 수천 명의 시민들로부터 소액의 투자금을 모아 수십 척의 선단을 꾸린 것이다.
+      </p>
+      <p>
+        투자자들은 직접 험한 바다로 나가지 않았다. 대신 그들은 자신의 돈을 '침몰할지도 모른다는 공포(Risk)'에 노출시킨
+        대가로, 배가 돌아왔을 때 '배당금(Return)'을 챙겼다. 오늘날 주식 시장의 원리는 여기서 한 치도 벗어나지 않았다.
+      </p>
+      <div class="placeholder-content">... (제2장 후속 내용 계속) ...</div>
+    </div>
+
+    <!-- Chapter 3 (Full Content) -->
+    <div id="chapter-3">
+      <div class="chapter-header">
+        <span style="font-size: 24px;">제3장</span>
+        <h3 class="chapter-title">계란을 한 바구니에 담지 마라</h3>
+        <div class="chapter-subtitle">생존을 위한 위대한 쪼개기, 리스크 분산과 포트폴리오의 미학</div>
+      </div>
+
+      <h4>할머니의 장바구니와 파멸의 소리</h4>
+      <p>
+        상상해 보자. 19세기 유럽의 어느 시골 마을, 한 농부가 아침 일찍 닭장에서 갓 낳은 따뜻한 계란 30개를 꺼냈다. 이
+        계란은 장에 내다 팔아 가족들의 일주일 치 식량과 바꿀 소중한 재산이다. 농부는 튼튼해 보이는 커다란 바구니 하나에
+        지푸라기를 깔고 계란을 차곡차곡 쌓았다. 그리고 콧노래를 부르며 장터로 향했다.
+      </p>
+      <p>돌부리에 걸리기 전까지는 모든 것이 완벽했다.</p>
+      <p>
+        순식간이었다. 농부가 중심을 잃고 넘어지는 순간, 바구니는 허공을 가르며 땅으로 곤두박질쳤다. "철퍼덕." 둔탁하고
+        끈적한 소리와 함께 30개의 미래는 노란 액체가 되어 흙바닥으로 스며들었다. 바구니가 두 개였다면, 혹은 가족들에게
+        나누어 들게 했다면 절반은 건졌을 것이다. 하지만 농부의 선택은 '효율'을 위한 '집중'이었고, 그 대가는
+        '전멸'이었다.
+      </p>
+      <p>
+        "계란을 한 바구니에 담지 마라(Don't put all your eggs in one basket)." 이 오래된 격언은 인류가 생존을 위해
+        본능적으로 체득한 '분산(Diversification)'의 지혜를 담고 있다. 제3장에서는 인류가 어떻게 이 '몰빵'의 유혹을
+        이겨내고 시스템을 구축했는지 파헤쳐 본다.
+      </p>
+
+      <h4>돈키호테와 베니스의 상인</h4>
+      <p>
+        오늘날 분산 투자의 진리처럼 여겨지는 이 문장은 세르반테스의 걸작 &lt;돈키호테&gt;를 통해 세상에 널리 퍼졌다.
+        산초 판자는 무모한 모험에 목숨을 거는 주인 돈키호테를 향해 이렇게 호소한다. "나리, 물러설 줄 아는 것은 도망치는
+        게 아닙니다. 가진 모든 것을 한 곳에 거는 건 결코 지혜로운 태도가 아닙니다."
+      </p>
+      <p>
+        셰익스피어의 &lt;베니스의 상인&gt; 또한 이 철칙을 어긴 대가가 얼마나 혹독한지를 보여준다. 주인공 안토니오는
+        친구를 위해 고리대금업자 샤일록에게 살 1파운드를 담보로 돈을 빌린다. 그의 무역선들이 돌아올 것이라 맹신했기
+        때문이다. "자네의 전 재산이 저 배 한 척에 실려 있는가?" 안토니오의 부인에도 불구하고 배들은 난파되었고, 그는
+        위기에 처한다. 16세기 상인들은 이미 알고 있었다. 바다는 믿을 수 없으며, 단 한 척의 배에 모든 것을 거는 것은
+        파멸의 지름길임을.
+      </p>
+
+      <h4>해리 마코위츠와 "유일한 공짜 점심"</h4>
+      <p>
+        수백 년간 상인들의 감에 의존하던 이 지혜를 수학 이론으로 증명한 사람은 현대 포트폴리오 이론의 창시자 해리
+        마코위츠다. 1952년 그는 "어떻게 하면 수익률은 유지하면서 위험만 낮출 수 있을까?"를 고민했다. 그가 찾아낸 열쇠는
+        '상관관계'였다.
+      </p>
+      <p>
+        비가 오면 우산이 잘 팔리고, 해가 뜨면 선글라스가 잘 팔린다. 두 회사에 반반씩 투자하면 날씨에 상관없이 안정적인
+        수익을 올릴 수 있다. 마코위츠는 "분산 투자는 투자 세계에서 찾을 수 있는 유일한 공짜 점심(The only free lunch in
+        finance)이다."라는 명언을 남겼다.
+      </p>
+
+      <h4>아일랜드 대기근과 단일 품종의 저주</h4>
+      <p>
+        리스크 분산의 원칙을 무시했을 때 어떤 재앙이 닥치는지 보여주는 사례는 1845년 아일랜드 대기근이다. 당시
+        아일랜드는 '럼퍼'라는 단일 품종의 감자에 전적으로 의존했다. 감자 역병이 돌자 저항력이 없던 럼퍼 감자는 전멸했고,
+        100만 명이 굶어 죽었다. 자연은 다양성을 사랑하고 획일성을 벌한다.
+      </p>
+
+      <h4>로스차일드의 다섯 화살</h4>
+      <p>
+        반대로 철저한 분산을 통해 왕조를 지켜낸 로스차일드 가문이 있다. 마이어 암셸 로스차일드는 다섯 아들을 유럽의 5개
+        주요 도시(프랑크푸르트, 빈, 런던, 나폴리, 파리)로 흩어지게 했다. 전쟁이 터져도 어느 한 나라가 망해도 가문 전체는
+        살아남는 시스템을 구축한 것이다.
+      </p>
+
+      <h4>자연은 왜 섹스를 발명했는가?</h4>
+      <p>
+        자연계에서 유성 생식(Sex)이야말로 최고의 분산 투자 전략이다. 무성 생식은 효율적이지만 전염병에 취약하다. 암수가
+        만나 유전자를 섞는 유성 생식은 다양한 형질의 자손을 만들어 환경 변화에도 종이 살아남게 한다.
+      </p>
+
+      <h4>레이 달리오의 사계절 포트폴리오</h4>
+      <p>
+        브리지워터의 레이 달리오는 어떤 경제 상황(계절)이 닥쳐도 살아남을 수 있는 '올 웨더 포트폴리오'를 고안했다. 주식,
+        채권, 금, 원자재에 자산을 배분하여 2008년 금융위기 때도 수익을 냈다. 그는 예측하려 하지 말고 준비하라고 말한다.
+      </p>
+
+      <h4>워런 버핏의 "집중 투자"</h4>
+      <p>
+        반면 워런 버핏은 "분산 투자는 자신이 무엇을 하는지 모르는 사람들을 위한 보호막이다"라며 집중 투자를 강조한다.
+        부의 '축적' 단계에서는 집중이 필요하지만, '보존' 단계에서는 분산이 필수다. 대부분의 개인에게는 분산 전략이
+        생존에 유리하다.
+      </p>
+
+      <h4>삼성과 노키아, 그리고 피벗</h4>
+      <p>
+        기업 경영에서도 포트폴리오 전략은 생사를 가른다. 노키아는 휴대폰이라는 한 바구니에 의존하다 몰락했지만, 삼성은
+        반도체, 스마트폰, 가전 등 사업 포트폴리오를 다각화하여 위기를 넘긴다.
+      </p>
+
+      <h4>행복의 바구니를 나눠라</h4>
+      <p>
+        행복한 삶을 사는 사람들은 '인생 포트폴리오'가 잘 분산되어 있다. 직장, 가족, 취미, 혼자만의 시간 등에 자아를
+        분산시켜 놓으면, 한 곳에서 문제가 생겨도 무너지지 않는다. "계란을 한 바구니에 담지 마라." 이 말은 예측 불가능한
+        세상을 인정하는 겸손함이자 생존 의지다. 오늘 당신의 바구니를 점검해 보라. 당신의 행복은 안전하게 분산되어
+        있는가?
+      </p>
+    </div>
+
+    <!-- Placeholder for remaining chapters -->
+    <div id="chapters-remaining">
+      <div class="part-header"><span class="part-number">제1부 (계속)</span></div>
+      <div id="chapter-4" class="chapter-header">
+        <h3 class="chapter-title">4. 수요가 있으면 공급이 있다.</h3>
+        <p class="placeholder-content">Chapter content goes here...</p>
+      </div>
+      <div id="chapter-5" class="chapter-header">
+        <h3 class="chapter-title">5. 싼 게 비지떡이다.</h3>
+        <p class="placeholder-content">Chapter content goes here...</p>
+      </div>
+      <div id="chapter-6" class="chapter-header">
+        <h3 class="chapter-title">6. 돈은 거짓말을 하지 않는다.</h3>
+        <p class="placeholder-content">Chapter content goes here...</p>
+      </div>
+      <div id="chapter-7" class="chapter-header">
+        <h3 class="chapter-title">7. 악화가 양화를 구축한다.</h3>
+        <p class="placeholder-content">Chapter content goes here...</p>
+      </div>
+      <div id="chapter-8" class="chapter-header">
+        <h3 class="chapter-title">8. 늦게 배운 도둑질이 날 새는 줄 모른다.</h3>
+        <p class="placeholder-content">Chapter content goes here...</p>
+      </div>
+      <div id="chapter-9" class="chapter-header">
+        <h3 class="chapter-title">9. 남의 돈 벌기가 제일 어렵다.</h3>
+        <p class="placeholder-content">Chapter content goes here...</p>
+      </div>
+      <div id="chapter-10" class="chapter-header">
+        <h3 class="chapter-title">10. 재주는 곰이 부리고 돈은 왕서방이 받는다.</h3>
+        <p class="placeholder-content">Chapter content goes here...</p>
+      </div>
+      <div id="chapter-11" class="chapter-header">
+        <h3 class="chapter-title">11. 밑 빠진 독에 물 붓기.</h3>
+        <p class="placeholder-content">Chapter content goes here...</p>
+      </div>
+
+      <div class="part-header">
+        <span class="part-number">제2부 ~ 제9부</span>
+        <h2 class="part-title">나머지 장들</h2>
+      </div>
+      <div id="chapter-12" class="chapter-header">
+        <h3 class="chapter-title">12. 아니 땐 굴뚝에 연기 나랴.</h3>
+        <p class="placeholder-content">Chapter content goes here...</p>
+      </div>
+      <div style="text-align: center; color: #999; margin: 40px 0">(제13장 ~ 제99장 생략: 구조 동일)</div>
+    </div>
+
+    <!-- Chapter 100 -->
+    <div id="chapter-100">
+      <div class="chapter-header">
+        <span class="chapter-number">제100장</span>
+        <h3 class="chapter-title">오롯한 당신만의 삶의 경험과 지혜의 말</h3>
+      </div>
+      <div class="blank-page-container">
+        <div class="blank-page-text">(이곳은 당신의 이야기를 위한 공간입니다.)</div>
+      </div>
+    </div>
+
+    <!-- Closing Remarks -->
+    <div id="closing">
+      <h2>맺음 말</h2>
+      <h3>올바른 일을 올바르게, 지혜의 숲을 이루다</h3>
+      <p>
+        이 책 &lt;99개의 가장 이해하기 쉬운 지혜&gt;는 우리가 살면서 마주하는 수많은 문제에 대한 가장 직관적이고
+        보편적인 해답을 담고자 했습니다. 하지만 이것은 시작에 불과합니다.
+      </p>
+      <p>
+        "올바른 일을 올바르게 하는 것." 이것은 단순한 도덕률이 아닙니다. 자연과 우주가 공존하며 지속 가능한 생태계를
+        유지하게 만드는 근원적인 엔진입니다. 이 거대한 엔진을 멈추지 않게 하는 것이야말로, 깨어있는 인간의 역할이자
+        책임일 것입니다.
+      </p>
+      <p>이제 당신의 지혜가 흐를 차례입니다. 우리 함께, 더 나은 세상을 위한 지혜의 숲을 만들어 갑시다.</p>
+    </div>
+
+    
+    
+    
+  
+
+<div class="VIpgJd-ZVi9od-aZ2wEe-wOHMyf"><div class="VIpgJd-ZVi9od-aZ2wEe-OiiCO"><svg xmlns="http://www.w3.org/2000/svg" class="VIpgJd-ZVi9od-aZ2wEe" width="96px" height="96px" viewBox="0 0 66 66"><circle class="VIpgJd-ZVi9od-aZ2wEe-Jt5cK" fill="none" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle></svg></div></div><div id="goog-gt-tt" class="VIpgJd-yAWNEb-L7lbkb skiptranslate" style="border-radius: 12px; margin: 0 0 0 -23px; padding: 0; font-family: 'Google Sans', Arial, sans-serif;" data-id=""><div id="goog-gt-vt" class="VIpgJd-yAWNEb-hvhgNd"><div class="VIpgJd-yAWNEb-hvhgNd-Ud7fr"><img src="https://fonts.gstatic.com/s/i/productlogos/translate/v14/24px.svg" width="24" height="24" alt="" data-height-listener-added="true"><div class=" VIpgJd-yAWNEb-hvhgNd-IuizWc-i3jM8c " dir="ltr">원본 텍스트</div></div><div class="VIpgJd-yAWNEb-hvhgNd-k77Iif"><div id="goog-gt-original-text" class="VIpgJd-yAWNEb-nVMfcd-fmcmS VIpgJd-yAWNEb-hvhgNd-axAV1"></div></div><div class="VIpgJd-yAWNEb-hvhgNd-N7Eqid ltr"><div class="VIpgJd-yAWNEb-hvhgNd-N7Eqid-B7I4Od ltr" dir="ltr"><div class="VIpgJd-yAWNEb-hvhgNd-UTujCb">번역 평가</div><div class="VIpgJd-yAWNEb-hvhgNd-eO9mKe">보내주신 의견은 Google 번역을 개선하는 데 사용됩니다.</div></div><div class="VIpgJd-yAWNEb-hvhgNd-xgov5 ltr"><button id="goog-gt-thumbUpButton" type="button" class="VIpgJd-yAWNEb-hvhgNd-bgm6sf" title="번역 품질 좋음" aria-label="번역 품질 좋음" aria-pressed="false"><span id="goog-gt-thumbUpIcon"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M21 7h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 0S7.08 6.85 7 7H2v13h16c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73V9c0-1.1-.9-2-2-2zM7 18H4V9h3v9zm14-7l-3 7H9V8l4.34-4.34L12 9h9v2z"></path></svg></span><span id="goog-gt-thumbUpIconFilled"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M21 7h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 0S7.08 6.85 7 7v13h11c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73V9c0-1.1-.9-2-2-2zM5 7H1v13h4V7z"></path></svg></span></button><button id="goog-gt-thumbDownButton" type="button" class="VIpgJd-yAWNEb-hvhgNd-bgm6sf" title="번역 품질 좋지 않음" aria-label="번역 품질 좋지 않음" aria-pressed="false"><span id="goog-gt-thumbDownIcon"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M3 17h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 24s7.09-6.85 7.17-7h5V4H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2zM17 6h3v9h-3V6zM3 13l3-7h9v10l-4.34 4.34L12 15H3v-2z"></path></svg></span><span id="goog-gt-thumbDownIconFilled"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M3 17h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 24s7.09-6.85 7.17-7V4H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2zm16 0h4V4h-4v13z"></path></svg></span></button></div></div><div id="goog-gt-votingHiddenPane" class="VIpgJd-yAWNEb-hvhgNd-aXYTce"><form id="goog-gt-votingForm" action="//translate.googleapis.com/translate_voting?client=te" method="post" target="votingFrame" class="VIpgJd-yAWNEb-hvhgNd-aXYTce"><input type="text" name="sl" id="goog-gt-votingInputSrcLang"><input type="text" name="tl" id="goog-gt-votingInputTrgLang"><input type="text" name="query" id="goog-gt-votingInputSrcText"><input type="text" name="gtrans" id="goog-gt-votingInputTrgText"><input type="text" name="vote" id="goog-gt-votingInputVote"></form><iframe name="votingFrame" frameborder="0"></iframe></div></div></div><iframe frameborder="0" class="VIpgJd-ZVi9od-xl07Ob-OEVmcd skiptranslate" title="언어 번역 위젯" style="visibility: visible; box-sizing: content-box; width: 92px; height: 228px; display: none;"></iframe><div class="VIpgJd-ZVi9od-aZ2wEe-wOHMyf"><div class="VIpgJd-ZVi9od-aZ2wEe-OiiCO"><svg xmlns="http://www.w3.org/2000/svg" class="VIpgJd-ZVi9od-aZ2wEe" width="96px" height="96px" viewBox="0 0 66 66"><circle class="VIpgJd-ZVi9od-aZ2wEe-Jt5cK" fill="none" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle></svg></div></div><div id="goog-gt-tt" class="VIpgJd-yAWNEb-L7lbkb skiptranslate" style="border-radius: 12px; margin: 0 0 0 -23px; padding: 0; font-family: 'Google Sans', Arial, sans-serif;" data-id=""><div id="goog-gt-vt" class="VIpgJd-yAWNEb-hvhgNd"><div class="VIpgJd-yAWNEb-hvhgNd-Ud7fr"><img src="https://fonts.gstatic.com/s/i/productlogos/translate/v14/24px.svg" width="24" height="24" alt="" data-height-listener-added="true"><div class=" VIpgJd-yAWNEb-hvhgNd-IuizWc-i3jM8c " dir="ltr">원본 텍스트</div></div><div class="VIpgJd-yAWNEb-hvhgNd-k77Iif"><div id="goog-gt-original-text" class="VIpgJd-yAWNEb-nVMfcd-fmcmS VIpgJd-yAWNEb-hvhgNd-axAV1"></div></div><div class="VIpgJd-yAWNEb-hvhgNd-N7Eqid ltr"><div class="VIpgJd-yAWNEb-hvhgNd-N7Eqid-B7I4Od ltr" dir="ltr"><div class="VIpgJd-yAWNEb-hvhgNd-UTujCb">번역 평가</div><div class="VIpgJd-yAWNEb-hvhgNd-eO9mKe">보내주신 의견은 Google 번역을 개선하는 데 사용됩니다.</div></div><div class="VIpgJd-yAWNEb-hvhgNd-xgov5 ltr"><button id="goog-gt-thumbUpButton" type="button" class="VIpgJd-yAWNEb-hvhgNd-bgm6sf" title="번역 품질 좋음" aria-label="번역 품질 좋음" aria-pressed="false"><span id="goog-gt-thumbUpIcon"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M21 7h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 0S7.08 6.85 7 7H2v13h16c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73V9c0-1.1-.9-2-2-2zM7 18H4V9h3v9zm14-7l-3 7H9V8l4.34-4.34L12 9h9v2z"></path></svg></span><span id="goog-gt-thumbUpIconFilled"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M21 7h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 0S7.08 6.85 7 7v13h11c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73V9c0-1.1-.9-2-2-2zM5 7H1v13h4V7z"></path></svg></span></button><button id="goog-gt-thumbDownButton" type="button" class="VIpgJd-yAWNEb-hvhgNd-bgm6sf" title="번역 품질 좋지 않음" aria-label="번역 품질 좋지 않음" aria-pressed="false"><span id="goog-gt-thumbDownIcon"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M3 17h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 24s7.09-6.85 7.17-7h5V4H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2zM17 6h3v9h-3V6zM3 13l3-7h9v10l-4.34 4.34L12 15H3v-2z"></path></svg></span><span id="goog-gt-thumbDownIconFilled"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M3 17h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 24s7.09-6.85 7.17-7V4H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2zm16 0h4V4h-4v13z"></path></svg></span></button></div></div><div id="goog-gt-votingHiddenPane" class="VIpgJd-yAWNEb-hvhgNd-aXYTce"><form id="goog-gt-votingForm" action="//translate.googleapis.com/translate_voting?client=te" method="post" target="votingFrame" class="VIpgJd-yAWNEb-hvhgNd-aXYTce"><input type="text" name="sl" id="goog-gt-votingInputSrcLang"><input type="text" name="tl" id="goog-gt-votingInputTrgLang"><input type="text" name="query" id="goog-gt-votingInputSrcText"><input type="text" name="gtrans" id="goog-gt-votingInputTrgText"><input type="text" name="vote" id="goog-gt-votingInputVote"></form><iframe name="votingFrame" frameborder="0"></iframe></div></div></div><iframe frameborder="0" class="VIpgJd-ZVi9od-xl07Ob-OEVmcd skiptranslate" title="언어 번역 위젯" style="visibility: visible; box-sizing: content-box; width: 92px; height: 228px; display: none;"></iframe><div class="VIpgJd-ZVi9od-aZ2wEe-wOHMyf"><div class="VIpgJd-ZVi9od-aZ2wEe-OiiCO"><svg xmlns="http://www.w3.org/2000/svg" class="VIpgJd-ZVi9od-aZ2wEe" width="96px" height="96px" viewBox="0 0 66 66"><circle class="VIpgJd-ZVi9od-aZ2wEe-Jt5cK" fill="none" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle></svg></div></div><div id="goog-gt-tt" class="VIpgJd-yAWNEb-L7lbkb skiptranslate" style="border-radius: 12px; margin: 0 0 0 -23px; padding: 0; font-family: 'Google Sans', Arial, sans-serif;" data-id=""><div id="goog-gt-vt" class="VIpgJd-yAWNEb-hvhgNd"><div class="VIpgJd-yAWNEb-hvhgNd-Ud7fr"><img src="https://fonts.gstatic.com/s/i/productlogos/translate/v14/24px.svg" width="24" height="24" alt="" data-height-listener-added="true"><div class=" VIpgJd-yAWNEb-hvhgNd-IuizWc-i3jM8c " dir="ltr">원본 텍스트</div></div><div class="VIpgJd-yAWNEb-hvhgNd-k77Iif"><div id="goog-gt-original-text" class="VIpgJd-yAWNEb-nVMfcd-fmcmS VIpgJd-yAWNEb-hvhgNd-axAV1"></div></div><div class="VIpgJd-yAWNEb-hvhgNd-N7Eqid ltr"><div class="VIpgJd-yAWNEb-hvhgNd-N7Eqid-B7I4Od ltr" dir="ltr"><div class="VIpgJd-yAWNEb-hvhgNd-UTujCb">번역 평가</div><div class="VIpgJd-yAWNEb-hvhgNd-eO9mKe">보내주신 의견은 Google 번역을 개선하는 데 사용됩니다.</div></div><div class="VIpgJd-yAWNEb-hvhgNd-xgov5 ltr"><button id="goog-gt-thumbUpButton" type="button" class="VIpgJd-yAWNEb-hvhgNd-bgm6sf" title="번역 품질 좋음" aria-label="번역 품질 좋음" aria-pressed="false"><span id="goog-gt-thumbUpIcon"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M21 7h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 0S7.08 6.85 7 7H2v13h16c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73V9c0-1.1-.9-2-2-2zM7 18H4V9h3v9zm14-7l-3 7H9V8l4.34-4.34L12 9h9v2z"></path></svg></span><span id="goog-gt-thumbUpIconFilled"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M21 7h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 0S7.08 6.85 7 7v13h11c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73V9c0-1.1-.9-2-2-2zM5 7H1v13h4V7z"></path></svg></span></button><button id="goog-gt-thumbDownButton" type="button" class="VIpgJd-yAWNEb-hvhgNd-bgm6sf" title="번역 품질 좋지 않음" aria-label="번역 품질 좋지 않음" aria-pressed="false"><span id="goog-gt-thumbDownIcon"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M3 17h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 24s7.09-6.85 7.17-7h5V4H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2zM17 6h3v9h-3V6zM3 13l3-7h9v10l-4.34 4.34L12 15H3v-2z"></path></svg></span><span id="goog-gt-thumbDownIconFilled"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M3 17h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 24s7.09-6.85 7.17-7V4H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2zm16 0h4V4h-4v13z"></path></svg></span></button></div></div><div id="goog-gt-votingHiddenPane" class="VIpgJd-yAWNEb-hvhgNd-aXYTce"><form id="goog-gt-votingForm" action="//translate.googleapis.com/translate_voting?client=te" method="post" target="votingFrame" class="VIpgJd-yAWNEb-hvhgNd-aXYTce"><input type="text" name="sl" id="goog-gt-votingInputSrcLang"><input type="text" name="tl" id="goog-gt-votingInputTrgLang"><input type="text" name="query" id="goog-gt-votingInputSrcText"><input type="text" name="gtrans" id="goog-gt-votingInputTrgText"><input type="text" name="vote" id="goog-gt-votingInputVote"></form><iframe name="votingFrame" frameborder="0"></iframe></div></div></div><iframe frameborder="0" class="VIpgJd-ZVi9od-xl07Ob-OEVmcd skiptranslate" title="언어 번역 위젯" style="visibility: visible; box-sizing: content-box; width: 92px; height: 228px; display: none;"></iframe><div class="VIpgJd-ZVi9od-aZ2wEe-wOHMyf"><div class="VIpgJd-ZVi9od-aZ2wEe-OiiCO"><svg xmlns="http://www.w3.org/2000/svg" class="VIpgJd-ZVi9od-aZ2wEe" width="96px" height="96px" viewBox="0 0 66 66"><circle class="VIpgJd-ZVi9od-aZ2wEe-Jt5cK" fill="none" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle></svg></div></div><div id="goog-gt-tt" class="VIpgJd-yAWNEb-L7lbkb skiptranslate" style="border-radius: 12px; margin: 0 0 0 -23px; padding: 0; font-family: 'Google Sans', Arial, sans-serif;" data-id=""><div id="goog-gt-vt" class="VIpgJd-yAWNEb-hvhgNd"><div class="VIpgJd-yAWNEb-hvhgNd-Ud7fr"><img src="https://fonts.gstatic.com/s/i/productlogos/translate/v14/24px.svg" width="24" height="24" alt="" data-height-listener-added="true"><div class=" VIpgJd-yAWNEb-hvhgNd-IuizWc-i3jM8c " dir="ltr">원본 텍스트</div></div><div class="VIpgJd-yAWNEb-hvhgNd-k77Iif"><div id="goog-gt-original-text" class="VIpgJd-yAWNEb-nVMfcd-fmcmS VIpgJd-yAWNEb-hvhgNd-axAV1"></div></div><div class="VIpgJd-yAWNEb-hvhgNd-N7Eqid ltr"><div class="VIpgJd-yAWNEb-hvhgNd-N7Eqid-B7I4Od ltr" dir="ltr"><div class="VIpgJd-yAWNEb-hvhgNd-UTujCb">번역 평가</div><div class="VIpgJd-yAWNEb-hvhgNd-eO9mKe">보내주신 의견은 Google 번역을 개선하는 데 사용됩니다.</div></div><div class="VIpgJd-yAWNEb-hvhgNd-xgov5 ltr"><button id="goog-gt-thumbUpButton" type="button" class="VIpgJd-yAWNEb-hvhgNd-bgm6sf" title="번역 품질 좋음" aria-label="번역 품질 좋음" aria-pressed="false"><span id="goog-gt-thumbUpIcon"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M21 7h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 0S7.08 6.85 7 7H2v13h16c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73V9c0-1.1-.9-2-2-2zM7 18H4V9h3v9zm14-7l-3 7H9V8l4.34-4.34L12 9h9v2z"></path></svg></span><span id="goog-gt-thumbUpIconFilled"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M21 7h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 0S7.08 6.85 7 7v13h11c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73V9c0-1.1-.9-2-2-2zM5 7H1v13h4V7z"></path></svg></span></button><button id="goog-gt-thumbDownButton" type="button" class="VIpgJd-yAWNEb-hvhgNd-bgm6sf" title="번역 품질 좋지 않음" aria-label="번역 품질 좋지 않음" aria-pressed="false"><span id="goog-gt-thumbDownIcon"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M3 17h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 24s7.09-6.85 7.17-7h5V4H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2zM17 6h3v9h-3V6zM3 13l3-7h9v10l-4.34 4.34L12 15H3v-2z"></path></svg></span><span id="goog-gt-thumbDownIconFilled"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M3 17h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 24s7.09-6.85 7.17-7V4H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2zm16 0h4V4h-4v13z"></path></svg></span></button></div></div><div id="goog-gt-votingHiddenPane" class="VIpgJd-yAWNEb-hvhgNd-aXYTce"><form id="goog-gt-votingForm" action="//translate.googleapis.com/translate_voting?client=te" method="post" target="votingFrame" class="VIpgJd-yAWNEb-hvhgNd-aXYTce"><input type="text" name="sl" id="goog-gt-votingInputSrcLang"><input type="text" name="tl" id="goog-gt-votingInputTrgLang"><input type="text" name="query" id="goog-gt-votingInputSrcText"><input type="text" name="gtrans" id="goog-gt-votingInputTrgText"><input type="text" name="vote" id="goog-gt-votingInputVote"></form><iframe name="votingFrame" frameborder="0"></iframe></div></div></div><iframe frameborder="0" class="VIpgJd-ZVi9od-xl07Ob-OEVmcd skiptranslate" title="언어 번역 위젯" style="visibility: visible; box-sizing: content-box; width: 92px; height: 228px; display: none;"></iframe><div class="VIpgJd-ZVi9od-aZ2wEe-wOHMyf"><div class="VIpgJd-ZVi9od-aZ2wEe-OiiCO"><svg xmlns="http://www.w3.org/2000/svg" class="VIpgJd-ZVi9od-aZ2wEe" width="96px" height="96px" viewBox="0 0 66 66"><circle class="VIpgJd-ZVi9od-aZ2wEe-Jt5cK" fill="none" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle></svg></div></div><iframe frameborder="0" class="VIpgJd-ZVi9od-xl07Ob-OEVmcd skiptranslate" title="언어 번역 위젯" style="visibility: visible; box-sizing: content-box; width: 92px; height: 228px; display: none;"></iframe>
+  
+
+
+  
+
+
+
+  <script>
+    // 사용자 정보 표시 및 로그아웃
+    (function() {
+      // 사용자 정보 표시
+      
+    // 언어 메뉴 토글
+    function toggleLanguageMenu(event) {
+      console.log('🔘 toggleLanguageMenu 호출됨');
+      if (event) {
+        event.stopPropagation();
+      }
+      
+      const menu = document.getElementById('languageMenu');
+      const btn = document.getElementById('languageBtn');
+      
+      if (!menu || !btn) {
+        console.error('❌ 언어 메뉴 요소를 찾을 수 없음');
+        return;
+      }
+      
+      const isShowing = menu.style.display === 'block';
+      console.log('📊 현재 상태:', isShowing ? '열림' : '닫힘', '→', !isShowing ? '열림' : '닫힘');
+      
+      // 인라인 스타일로 직접 제어
+      if (isShowing) {
+        menu.style.display = 'none';
+        console.log('✅ 드롭다운 닫힘');
+        document.removeEventListener('click', closeLanguageMenu);
+      } else {
+        menu.style.display = 'block';
+        console.log('✅ 드롭다운 열림');
+        setTimeout(() => {
+          document.addEventListener('click', closeLanguageMenu);
+        }, 0);
+      }
+      
+      btn.classList.toggle('active');
+    }
+    
+    function closeLanguageMenu(e) {
+      const menu = document.getElementById('languageMenu');
+      const btn = document.getElementById('languageBtn');
+      
+      if (!menu.contains(e.target) && !btn.contains(e.target)) {
+        menu.style.display = 'none';
+        btn.classList.remove('active');
+        document.removeEventListener('click', closeLanguageMenu);
+      }
+    }
+    
+    // 언어 선택 및 번역
+    function selectLanguage(lang) {
+      console.log('🌐 언어 선택:', lang);
+      
+      // 활성 언어 표시
+      const items = document.querySelectorAll('.language-menu a');
+      items.forEach(item => {
+        if (item.getAttribute('data-lang') === lang) {
+          item.classList.add('active');
+        } else {
+          item.classList.remove('active');
+        }
+      });
+      
+      // 메뉴 닫기
+      const menu = document.getElementById('languageMenu');
+      const btn = document.getElementById('languageBtn');
+      menu.style.display = 'none';
+      btn.classList.remove('active');
+      
+      // Google Translate 호출
+      if (window.switchLanguage) {
+        window.switchLanguage(lang);
+      }
+    }
+    
+
+    // 디버깅: 버튼 클릭 테스트
+    document.addEventListener('DOMContentLoaded', function() {
+      const btn = document.getElementById('languageBtn');
+      if (btn) {
+        console.log('✅ Language 버튼 발견');
+        btn.addEventListener('click', function(e) {
+          console.log('🔘 버튼 클릭됨!');
+          console.log('toggleLanguageMenu 함수:', typeof toggleLanguageMenu);
+        });
+      } else {
+        console.error('❌ Language 버튼 없음');
+      }
+    });
+    
+    function displayUserInfo() {
+        const currentUser = '강병준'; // 데모 버전
+        if (currentUser) {
+          try {
+            const user = JSON.parse(currentUser);
+            const userNameElement = document.getElementById('userName');
+            if (userNameElement) {
+              userNameElement.textContent = user.name || '사용자';
+            }
+          } catch (e) {
+            console.error('사용자 정보 파싱 오류:', e);
+          }
+        }
+      }
+      
+      // 로그아웃 함수 (전역)
+      window.logout = function() {
+        if (confirm('로그아웃하시겠습니까?')) {
+          localStorage.removeItem('currentUser');
+          sessionStorage.removeItem('currentUser');
+          window.location.href = 'index.html';
+        }
+      };
+      
+      // 목차 토글 함수 (전역)
+      window.toggleTOC = function() {
+        const panel = document.getElementById('floating-toc-panel');
+        const overlay = document.getElementById('toc-overlay');
+        
+        if (panel && overlay) {
+          const isActive = panel.classList.contains('active');
+          
+          if (isActive) {
+            // 닫기
+            panel.classList.remove('active');
+            overlay.classList.remove('active');
+          } else {
+            // 열기
+            panel.classList.add('active');
+            overlay.classList.add('active');
+          }
+        }
+      };
+      
+      // 목차 닫기 함수 (전역)
+      window.closeTOC = function() {
+        const panel = document.getElementById('floating-toc-panel');
+        const overlay = document.getElementById('toc-overlay');
+        
+        if (panel && overlay) {
+          panel.classList.remove('active');
+          overlay.classList.remove('active');
+        }
+      };
+      
+      // 목차 아이템 클릭 시 스크롤 및 닫기
+      window.scrollToSection = function(sectionId) {
+        const section = document.getElementById(sectionId);
+        if (section) {
+          // 목차 닫기
+          closeTOC();
+          
+          // 스크롤 (부드럽게)
+          setTimeout(function() {
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 300);
+        }
+      };
+      
+      // 페이지 로드 시 사용자 정보 표시
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+          displayUserInfo();
+          console.log('✅ 사용자 정보 표시 완료');
+        });
+      } else {
+        displayUserInfo();
+        console.log('✅ 사용자 정보 표시 완료');
+      }
+      
+      // 오버레이 클릭 시 목차 닫기
+      document.addEventListener('DOMContentLoaded', function() {
+        const overlay = document.getElementById('toc-overlay');
+        if (overlay) {
+          overlay.addEventListener('click', closeTOC);
+        }
+      });
+    })();
+  </script>
+
+  <script>
+    // Google Translate 언어 전환
+    (function() {
+      var translationReady = false;
+      var readyCheckCount = 0;
+      var maxChecks = 100; // 10초
+      
+      // Google Translate 준비 확인
+      function checkTranslateReady() {
+        var checkInterval = setInterval(function() {
+          readyCheckCount++;
+          var selectElement = document.querySelector('.goog-te-combo');
+          
+          if (selectElement) {
+            translationReady = true;
+            clearInterval(checkInterval);
+            console.log('✅ Google Translate 준비 완료 (' + readyCheckCount + '/' + maxChecks + ')');
+            
+            // 초기 언어 설정
+            updateActiveLanguage('ko');
+          } else if (readyCheckCount >= maxChecks) {
+            clearInterval(checkInterval);
+            console.error('❌ Google Translate 로드 실패 (10초 초과)');
+            console.log('💡 페이지를 새로고침해보세요.');
+          }
+        }, 100);
+      }
+      
+      // 언어 전환 함수 (전역)
+      window.switchLanguage = function(lang) {
+        console.log('🔄 언어 전환 시도:', lang);
+        
+        // 한국어 복귀
+        if (lang === 'ko') {
+          var currentUrl = window.location.href;
+          if (currentUrl.includes('#googtrans') || currentUrl.includes('?')) {
+            // URL에서 번역 파라미터 제거하고 새로고침
+            window.location.href = window.location.pathname;
+            return;
+          }
+          
+          // Google Translate 초기화
+          var selectElement = document.querySelector('.goog-te-combo');
+          if (selectElement && selectElement.value !== '') {
+            selectElement.value = '';
+            selectElement.dispatchEvent(new Event('change'));
+          }
+          
+          updateActiveLanguage('ko');
+          return;
+        }
+        
+        // Google Translate 준비 확인
+        if (!translationReady) {
+          console.warn('⚠️ Google Translate 준비 중... 0.5초 후 재시도');
+          setTimeout(function() { window.switchLanguage(lang); }, 500);
+          return;
+        }
+        
+        // 언어 전환
+        var selectElement = document.querySelector('.goog-te-combo');
+        if (selectElement) {
+          console.log('✅ Google Translate 언어 설정:', lang);
+          
+          // 셀렉트 값 변경
+          selectElement.value = lang;
+          
+          // change 이벤트 발생 (번역 시작)
+          var changeEvent = new Event('change', { bubbles: true });
+          selectElement.dispatchEvent(changeEvent);
+          
+          // 활성 언어 업데이트
+          updateActiveLanguage(lang);
+          
+          console.log('✅ 번역 시작:', lang);
+        } else {
+          console.error('❌ Google Translate 셀렉트 박스를 찾을 수 없습니다.');
+        }
+      };
+      
+      // 활성 언어 메뉴 업데이트
+      function updateActiveLanguage(lang) {
+        document.querySelectorAll('.language-links a').forEach(function(link) {
+          if (link.getAttribute('data-lang') === lang) {
+            link.classList.add('active');
+          } else {
+            link.classList.remove('active');
+          }
+        });
+      }
+      
+      // 페이지 로드 시 초기화
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+          console.log('🌐 Google Translate Element 초기화 시작...');
+          checkTranslateReady();
+        });
+      } else {
+        console.log('🌐 Google Translate Element 초기화 시작...');
+        checkTranslateReady();
+      }
+    })();
+  </script>
+
+</body></html>
