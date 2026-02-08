@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>직접 테스트</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    
+    .top-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #f5f5f5;
+      border-bottom: 1px solid #e0e0e0;
+      padding: 12px 40px;
+      height: 56px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+    }
+    
+    /* 사용자 정보 영역 */
+    .user-section {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .user-name {
+      color: #333;
+      font-weight: 500;
+      font-size: 14px;
+    }
+    
+    .logout-btn {
+      background: #5d4037;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      height: 34px;
+    }
+    
+    /* 우측 아이콘 영역 */
+    .icons-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .lang-container {
+      position: relative;
+    }
+    
+    .lang-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: #f5f5f5;
+      color: #333;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      height: 34px;
+    }
+    
+    .lang-btn:hover {
+      background: #e8e8e8;
+    }
+    
+    .lang-menu {
+      display: none;
+      position: absolute;
+      top: 42px;
+      right: 0;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      min-width: 180px;
+      z-index: 10000;
+      padding: 8px 0;
+    }
+    
+    .lang-menu.show {
+      display: block;
+    }
+    
+    .lang-menu a {
+      display: block;
+      padding: 10px 16px;
+      color: #333;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    
+    .lang-menu a:hover {
+      background: #f5f5f5;
+    }
+    
+    .content {
+      margin-top: 100px;
+      padding: 40px;
+    }
+    
+    .status {
+      padding: 20px;
+      background: #e8f5e9;
+      border: 1px solid #4caf50;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    
+    .log {
+      margin-top: 10px;
+      padding: 10px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-nav">
+    <!-- 좌측: 사용자 정보 -->
+    <div class="user-section">
+      <span class="user-name">강병준</span>
+      <button class="logout-btn">로그아웃</button>
+    </div>
+    
+    <!-- 우측: 아이콘들 -->
+    <div class="icons-section">
+      <div class="lang-container">
+        <button class="lang-btn" id="langBtn">
+          <span>🌐</span>
+          <span>Language</span>
+          <span>▼</span>
+        </button>
+        <div class="lang-menu" id="langMenu">
+          <a href="#" data-lang="ko">🇰🇷 한국어</a>
+          <a href="#" data-lang="en">🇺🇸 English</a>
+          <a href="#" data-lang="zh-CN">🇨🇳 中文</a>
+          <a href="#" data-lang="ja">🇯🇵 日本語</a>
+          <a href="#" data-lang="es">🇪🇸 Español</a>
+          <a href="#" data-lang="fr">🇫🇷 Français</a>
+          <a href="#" data-lang="ru">🇷🇺 Русский</a>
+          <a href="#" data-lang="ar">🇸🇦 عربي</a>
+        </div>
+      </div>
+      <button class="lang-btn">
+        <span>📖</span>
+        <span>Contents</span>
+      </button>
+    </div>
+  </div>
+  
+  <div class="content">
+    <div class="status">
+      <h2>✅ 테스트 상태</h2>
+      <p><strong>사용자 이름 정렬:</strong> "강병준"과 "로그아웃" 버튼이 같은 높이에 있나요?</p>
+      <p><strong>Language 버튼:</strong> 클릭하면 드롭다운이 나타나나요?</p>
+      <div class="log" id="logArea">
+        <div>✅ 페이지 로드 완료</div>
+      </div>
+    </div>
+    
+    <h1>직접 테스트 페이지</h1>
+    <p>위의 상단 바를 확인하세요. Language 버튼을 클릭하면 8개 언어가 표시되어야 합니다.</p>
+  </div>
+  
+  <script>
+    const langBtn = document.getElementById('langBtn');
+    const langMenu = document.getElementById('langMenu');
+    const logArea = document.getElementById('logArea');
+    
+    function addLog(msg) {
+      const time = new Date().toLocaleTimeString();
+      const div = document.createElement('div');
+      div.textContent = `[${time}] ${msg}`;
+      logArea.appendChild(div);
+      logArea.scrollTop = logArea.scrollHeight;
+      console.log(msg);
+    }
+    
+    langBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      
+      const isOpen = langMenu.classList.contains('show');
+      addLog(`🔘 버튼 클릭: ${isOpen ? '열림 → 닫힘' : '닫힘 → 열림'}`);
+      
+      langMenu.classList.toggle('show');
+    });
+    
+    document.addEventListener('click', function(e) {
+      if (!langMenu.contains(e.target) && !langBtn.contains(e.target)) {
+        if (langMenu.classList.contains('show')) {
+          addLog('📴 외부 클릭으로 닫힘');
+          langMenu.classList.remove('show');
+        }
+      }
+    });
+    
+    const langLinks = document.querySelectorAll('.lang-menu a');
+    langLinks.forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const lang = this.getAttribute('data-lang');
+        addLog(`🌐 언어 선택: ${lang}`);
+        langMenu.classList.remove('show');
+      });
+    });
+    
+    addLog('✅ 이벤트 리스너 등록 완료');
+  </script>
+</body>
+</html>
