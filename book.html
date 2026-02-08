@@ -1,5 +1,22 @@
 <!DOCTYPE html>
 <html lang="ko" data-theme="light" style="height: 100%;"><head>
+  <!-- 🔴 강력한 캐시 무효화 -->
+  <script>
+    (function() {
+      // URL에 버전 파라미터가 없으면 추가하고 리로드
+      const url = new URL(window.location.href);
+      const hasVersion = url.searchParams.get('v');
+      const currentVersion = '1770541848';
+      
+      if (!hasVersion || hasVersion !== currentVersion) {
+        console.log('🔄 최신 버전으로 리다이렉트 중...');
+        url.searchParams.set('v', currentVersion);
+        url.searchParams.set('_', Date.now());
+        window.location.replace(url.href);
+      }
+    })();
+  </script>
+
     <meta charset="UTF-8">
   <!-- 브라우저 번역 허용 -->
   <meta name="google" content="translate">
