@@ -280,7 +280,178 @@
                 padding: 30px 20px;
             }
         }
-    </style>
+    
+    /* ========================================
+       반응형 웹 디자인 - 로그인 페이지
+       ======================================== */
+    
+    /* 태블릿 (768px ~ 1024px) */
+    @media screen and (max-width: 1024px) {
+      .container {
+        max-width: 600px;
+        padding: 40px 30px;
+      }
+      
+      h1 {
+        font-size: 2em;
+      }
+      
+      .tabs {
+        font-size: 16px;
+      }
+    }
+    
+    /* 모바일 (768px 이하) */
+    @media screen and (max-width: 768px) {
+      body {
+        padding: 20px 16px;
+      }
+      
+      .container {
+        max-width: 100%;
+        padding: 30px 20px;
+        margin: 20px 0;
+      }
+      
+      h1 {
+        font-size: 1.6em;
+        margin-bottom: 20px;
+      }
+      
+      .subtitle {
+        font-size: 0.9em;
+      }
+      
+      .tabs {
+        font-size: 15px;
+        gap: 20px;
+      }
+      
+      .tab {
+        padding: 10px 16px;
+      }
+      
+      form {
+        margin-top: 20px;
+      }
+      
+      input[type="text"],
+      input[type="email"],
+      input[type="password"] {
+        padding: 10px 12px;
+        font-size: 14px;
+      }
+      
+      button[type="submit"] {
+        padding: 12px;
+        font-size: 15px;
+      }
+      
+      .error-message,
+      .success-message {
+        font-size: 13px;
+        padding: 8px 12px;
+      }
+      
+      .remember-me {
+        font-size: 13px;
+      }
+      
+      .divider {
+        margin: 20px 0;
+        font-size: 13px;
+      }
+      
+      .footer {
+        font-size: 12px;
+        margin-top: 30px;
+      }
+    }
+    
+    /* 아주 작은 모바일 (480px 이하) */
+    @media screen and (max-width: 480px) {
+      body {
+        padding: 10px 12px;
+      }
+      
+      .container {
+        padding: 20px 16px;
+        margin: 10px 0;
+      }
+      
+      h1 {
+        font-size: 1.4em;
+        margin-bottom: 16px;
+      }
+      
+      .subtitle {
+        font-size: 0.85em;
+      }
+      
+      .tabs {
+        font-size: 14px;
+        gap: 15px;
+      }
+      
+      .tab {
+        padding: 8px 12px;
+      }
+      
+      input[type="text"],
+      input[type="email"],
+      input[type="password"] {
+        padding: 9px 10px;
+        font-size: 13px;
+      }
+      
+      button[type="submit"] {
+        padding: 11px;
+        font-size: 14px;
+      }
+      
+      .remember-me {
+        font-size: 12px;
+      }
+      
+      .footer {
+        font-size: 11px;
+        margin-top: 20px;
+      }
+    }
+    
+    /* 가로 모드 모바일 */
+    @media screen and (max-width: 768px) and (orientation: landscape) {
+      .container {
+        max-width: 80%;
+        margin: 20px auto;
+      }
+      
+      h1 {
+        margin-bottom: 16px;
+      }
+      
+      form {
+        margin-top: 16px;
+      }
+    }
+    
+    /* 큰 화면 (1440px 이상) */
+    @media screen and (min-width: 1440px) {
+      .container {
+        max-width: 500px;
+        padding: 60px 50px;
+      }
+      
+      h1 {
+        font-size: 2.4em;
+      }
+      
+      .subtitle {
+        font-size: 1.1em;
+      }
+    }
+
+  </style>
 </head>
 <body>
     <div class="container">
