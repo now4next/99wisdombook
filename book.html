@@ -134,6 +134,9 @@
       #user-info .user-name {
         color: #333;
         font-weight: 500;
+        line-height: 32px; /* 로그아웃 버튼 높이와 동일 */
+        display: flex;
+        align-items: center;
       }
 
       #user-info .logout-btn {
@@ -160,6 +163,10 @@
         align-items: center;
         gap: 10px;
         margin-left: auto;
+      }
+      
+      .language-dropdown {
+        position: relative;
       }
       
       .text-btn {
@@ -252,7 +259,7 @@
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         min-width: 180px;
-        z-index: 10001;
+        z-index: 100000;
         padding: 8px 0;
       }
       
@@ -1093,7 +1100,7 @@
       <!-- 언어 선택 드롭다운 -->
       <div class="header-icons">
         <div class="language-dropdown">
-          <button class="text-btn language-btn" id="languageBtn" onclick="toggleLanguageMenu()" title="언어 선택" aria-label="언어 선택">
+          <button class="text-btn language-btn" id="languageBtn" onclick="toggleLanguageMenu(event)" title="언어 선택" aria-label="언어 선택">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="2" y1="12" x2="22" y2="12"></line>
@@ -1614,18 +1621,35 @@
       // 사용자 정보 표시
       
     // 언어 메뉴 토글
-    function toggleLanguageMenu() {
+    function toggleLanguageMenu(event) {
+      console.log('🔘 toggleLanguageMenu 호출됨');
+      if (event) {
+        event.stopPropagation();
+      }
+      
       const menu = document.getElementById('languageMenu');
       const btn = document.getElementById('languageBtn');
+      
+      if (!menu || !btn) {
+        console.error('❌ 언어 메뉴 요소를 찾을 수 없음');
+        return;
+      }
+      
+      const isShowing = menu.classList.contains('show');
+      console.log('📊 현재 상태:', isShowing ? '열림' : '닫힘', '→', !isShowing ? '열림' : '닫힘');
       
       menu.classList.toggle('show');
       btn.classList.toggle('active');
       
       // 다른 곳 클릭시 닫기
       if (menu.classList.contains('show')) {
+        console.log('✅ 드롭다운 열림');
         setTimeout(() => {
           document.addEventListener('click', closeLanguageMenu);
         }, 0);
+      } else {
+        console.log('✅ 드롭다운 닫힘');
+        document.removeEventListener('click', closeLanguageMenu);
       }
     }
     
