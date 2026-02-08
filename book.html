@@ -10,9 +10,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
     <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&amp;family=Noto+Sans+KR:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
     
-    <!-- i18n Translation System -->
-    <script src="js/i18n.js"></script>
-    
     <script>
       // 인증 체크
       (function() {
@@ -1013,16 +1010,7 @@
           }
           
           // Google Translate Element 생성
-          var translateElement = new google.translate.TranslateElement(
-            {
-              pageLanguage: 'ko',
-              includedLanguages: 'ar,zh-CN,en,fr,ru,es,ja,ko',
-              layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
-              autoDisplay: false,
-              multilanguagePage: true
-            },
-            'google_translate_element'
-          );
+          var translateElement = 
           
           console.log('✅ TranslateElement 객체 생성 완료');
           
