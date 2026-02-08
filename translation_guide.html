@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>번역 기능 안내 - 99 Wisdom Book</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <style>
+        body {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        .method-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .method-card h2 {
+            margin-top: 0;
+            color: white;
+        }
+        .method-card code {
+            background: rgba(255,255,255,0.2);
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: #ffd700;
+        }
+        .steps {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .steps li {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+        .demo-button {
+            display: inline-block;
+            background: #ffd700;
+            color: #333;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+        }
+        .demo-button:hover {
+            background: #ffed4e;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .browser-icon {
+            font-size: 2em;
+            margin: 0 10px;
+        }
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .comparison-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+        @media (max-width: 768px) {
+            .comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>🌐 자동 번역 기능 안내</h1>
+    <p style="font-size: 1.1em; color: #666;">
+        방대한 책 내용(99개 챕터)을 효율적으로 번역하는 3가지 방법을 소개합니다.
+    </p>
+
+    <!-- 방법 1: Google Translate URL -->
+    <div class="method-card">
+        <h2>✨ 방법 1: 언어 메뉴 클릭 (추천!)</h2>
+        <p><strong>가장 간단하고 효과적인 방법</strong></p>
+        
+        <div class="steps">
+            <ol>
+                <li>📖 책 페이지 상단의 <strong>언어 메뉴</strong>를 확인하세요</li>
+                <li>🌐 원하는 언어를 <strong>클릭</strong>하세요 (예: English, 日本語, 中文)</li>
+                <li>✅ Google Translate가 자동으로 전체 페이지를 번역합니다</li>
+                <li>🔄 한국어로 돌아가려면 <strong>한국어</strong> 버튼 클릭</li>
+            </ol>
+        </div>
+
+        <p><strong>장점:</strong></p>
+        <ul>
+            <li>✅ 클릭 한 번으로 전체 페이지 번역</li>
+            <li>✅ 99개 챕터 모두 자동 번역</li>
+            <li>✅ 이미지 캡션도 번역됨</li>
+            <li>✅ 원본 디자인 유지</li>
+        </ul>
+
+        <a href="simulate_login.html" class="demo-button">📖 지금 테스트하기</a>
+    </div>
+
+    <!-- 방법 2: 브라우저 내장 번역 -->
+    <div class="method-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+        <h2>🌐 방법 2: 브라우저 자동 번역</h2>
+        <p><strong>Chrome, Edge, Safari의 내장 번역 기능 사용</strong></p>
+        
+        <div class="steps">
+            <h3>Google Chrome / Microsoft Edge:</h3>
+            <ol>
+                <li>📄 책 페이지를 엽니다</li>
+                <li>🖱️ 주소창 오른쪽의 <strong>번역 아이콘</strong> 클릭</li>
+                <li>🌐 또는 우클릭 → <strong>"한국어 번역"</strong> 선택</li>
+                <li>⚙️ 또는 <code>Ctrl+Shift+P</code> (Mac: <code>Cmd+Shift+P</code>)</li>
+            </ol>
+
+            <h3>Safari (Mac/iPhone):</h3>
+            <ol>
+                <li>📱 주소창의 <strong>aA</strong> 아이콘 클릭</li>
+                <li>🌐 <strong>"Translate to [언어]"</strong> 선택</li>
+            </ol>
+        </div>
+
+        <p><strong>지원 브라우저:</strong></p>
+        <div style="font-size: 2em; text-align: center; margin: 15px 0;">
+            <span class="browser-icon">🌐 Chrome</span>
+            <span class="browser-icon">🔷 Edge</span>
+            <span class="browser-icon">🧭 Safari</span>
+        </div>
+    </div>
+
+    <!-- 방법 3: Google Translate 직접 사용 -->
+    <div class="method-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+        <h2>🔗 방법 3: Google Translate 직접 사용</h2>
+        <p><strong>Google Translate 웹사이트에서 URL 번역</strong></p>
+        
+        <div class="steps">
+            <ol>
+                <li>🌐 <a href="https://translate.google.com" target="_blank" style="color: #ffd700; text-decoration: underline;">translate.google.com</a> 접속</li>
+                <li>📋 <strong>"웹사이트"</strong> 탭 클릭</li>
+                <li>🔗 책 페이지 URL 입력:
+                    <br><code style="font-size: 0.9em;">https://now4next.github.io/99wisdombook/book.html</code>
+                </li>
+                <li>🌐 원하는 언어 선택 (예: 영어, 일본어, 중국어)</li>
+                <li>✅ 번역된 페이지 보기</li>
+            </ol>
+        </div>
+
+        <a href="https://translate.google.com/?sl=ko&tl=en&op=websites" target="_blank" class="demo-button">
+            🔗 Google Translate 열기
+        </a>
+    </div>
+
+    <!-- 비교표 -->
+    <h2>📊 방법 비교</h2>
+    <div class="comparison">
+        <div class="comparison-item">
+            <h3>✨ 방법 1: 언어 메뉴</h3>
+            <ul>
+                <li>⚡ 속도: <strong>가장 빠름</strong></li>
+                <li>🎯 편의성: <strong>최고</strong></li>
+                <li>💰 비용: 무료</li>
+                <li>📱 모바일: 완벽 지원</li>
+            </ul>
+            <p style="color: #28a745; font-weight: 600;">👍 추천!</p>
+        </div>
+
+        <div class="comparison-item">
+            <h3>🌐 방법 2: 브라우저 번역</h3>
+            <ul>
+                <li>⚡ 속도: 빠름</li>
+                <li>🎯 편의성: 높음</li>
+                <li>💰 비용: 무료</li>
+                <li>📱 모바일: 브라우저 따라 다름</li>
+            </ul>
+            <p style="color: #17a2b8; font-weight: 600;">👌 좋음</p>
+        </div>
+    </div>
+
+    <!-- 실제 예시 -->
+    <h2>🎬 실제 동작 예시</h2>
+    <div style="background: #f8f9fa; padding: 30px; border-radius: 12px; border: 2px solid #667eea;">
+        <h3>언어 메뉴 사용 시:</h3>
+        <ol style="line-height: 1.8;">
+            <li>📖 책 페이지 열기</li>
+            <li>⬆️ 상단의 <strong style="color: #667eea;">English</strong> 클릭</li>
+            <li>🔄 페이지가 Google Translate로 이동</li>
+            <li>✅ 전체 내용이 영어로 번역됨</li>
+            <li>🎨 원본 디자인 유지</li>
+        </ol>
+
+        <p style="margin-top: 20px;"><strong>번역되는 내용:</strong></p>
+        <ul>
+            <li>✅ 책 제목</li>
+            <li>✅ 목차 (99개 챕터)</li>
+            <li>✅ 여는 말 / 맺음 말</li>
+            <li>✅ 모든 본문 내용</li>
+            <li>✅ 이미지 캡션</li>
+            <li>✅ 메뉴 및 버튼</li>
+        </ul>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="simulate_login.html" class="demo-button" style="font-size: 1.2em; padding: 15px 30px;">
+                🚀 지금 바로 테스트하기
+            </a>
+        </div>
+    </div>
+
+    <!-- FAQ -->
+    <h2>❓ 자주 묻는 질문 (FAQ)</h2>
+    
+    <details style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 15px 0;">
+        <summary style="cursor: pointer; font-weight: 600; font-size: 1.1em;">
+            Q1. 번역 품질은 어떤가요?
+        </summary>
+        <p style="margin-top: 15px;">
+            Google Translate는 최신 AI 기술(Neural Machine Translation)을 사용하여 매우 높은 품질의 번역을 제공합니다. 
+            99개 챕터의 방대한 내용도 문맥을 이해하여 자연스럽게 번역합니다.
+        </p>
+    </details>
+
+    <details style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 15px 0;">
+        <summary style="cursor: pointer; font-weight: 600; font-size: 1.1em;">
+            Q2. 번역 속도는 빠른가요?
+        </summary>
+        <p style="margin-top: 15px;">
+            네! Google Translate는 전체 페이지를 1-2초 내에 번역합니다. 
+            99개 챕터를 모두 한 번에 번역하므로 매우 효율적입니다.
+        </p>
+    </details>
+
+    <details style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 15px 0;">
+        <summary style="cursor: pointer; font-weight: 600; font-size: 1.1em;">
+            Q3. 디자인이 깨지지 않나요?
+        </summary>
+        <p style="margin-top: 15px;">
+            Google Translate는 원본 HTML 구조를 유지하면서 텍스트만 번역하므로, 
+            아름다운 원본 디자인이 그대로 유지됩니다.
+        </p>
+    </details>
+
+    <details style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 15px 0;">
+        <summary style="cursor: pointer; font-weight: 600; font-size: 1.1em;">
+            Q4. 비용이 드나요?
+        </summary>
+        <p style="margin-top: 15px;">
+            완전 무료입니다! Google Translate는 무료 서비스이며, 
+            제한 없이 사용할 수 있습니다.
+        </p>
+    </details>
+
+    <details style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 15px 0;">
+        <summary style="cursor: pointer; font-weight: 600; font-size: 1.1em;">
+            Q5. 모바일에서도 작동하나요?
+        </summary>
+        <p style="margin-top: 15px;">
+            네! 모든 방법이 모바일에서도 완벽하게 작동합니다. 
+            특히 방법 1(언어 메뉴 클릭)은 모바일에서 가장 편리합니다.
+        </p>
+    </details>
+
+    <!-- 결론 -->
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; border-radius: 12px; text-align: center; margin: 40px 0;">
+        <h2 style="color: white; margin-top: 0;">🎉 결론</h2>
+        <p style="font-size: 1.2em; margin: 20px 0;">
+            <strong>언어 메뉴 클릭 방법</strong>이 가장 간단하고 효과적입니다!
+        </p>
+        <p style="font-size: 1.1em; margin: 20px 0;">
+            99개 챕터의 방대한 내용을 1초 만에 번역할 수 있습니다.
+        </p>
+        <a href="simulate_login.html" class="demo-button" style="font-size: 1.3em; padding: 18px 36px;">
+            🚀 지금 테스트하기
+        </a>
+    </div>
+
+    <!-- 지원 -->
+    <div style="text-align: center; color: #999; margin: 40px 0;">
+        <p>📚 99 Wisdom Book - 살아본 뒤에야 비로소 읽히는 문장들</p>
+        <p>🌐 GitHub Pages: <a href="https://now4next.github.io/99wisdombook/">now4next.github.io/99wisdombook</a></p>
+    </div>
+</body>
+</html>

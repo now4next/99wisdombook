@@ -2,6 +2,8 @@
 <html lang="ko" data-theme="light" style="height: 100%;"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google" content="notranslate">
+    <meta http-equiv="content-language" content="ko">
     <title>살아본 뒤에야 비로소 읽히는 문장들</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1067,37 +1069,84 @@
         console.log('   URL에 ?translate=true를 추가해보세요.');
       }
 
-            // 언어 전환 (i18n 사용)
-      async      // 언어 전환 (i18n 사용)
-      async function switchLanguage(lang) {
-        console.log('🔄 언어 전환 시도:', lang);
+            // 언어 전환 - Google Translate URL 사용
+      // 언어 전환 - Google Translate URL 사용
+      function switchLanguage(lang) {
+        console.log('🔄 언어 전환:', lang);
         
-        try {
-          const success = await window.i18n.switchLanguage(lang);
-          
-          if (success) {
-            updateActiveLanguage(lang);
-            console.log('✅ 언어 전환 완료:', lang);
-          } else {
-            console.error('❌ 언어 전환 실패:', lang);
+        // 현재 페이지 URL
+        const currentUrl = window.location.href;
+        
+        // 언어 코드 매핑 (i18n -> Google Translate)
+        const langMap = {
+          'ko': 'ko',
+          'en': 'en',
+          'ja': 'ja',
+          'zh-CN': 'zh-CN',
+          'es': 'es',
+          'fr': 'fr',
+          'ru': 'ru',
+          'ar': 'ar'
+        };
+        
+        const targetLang = langMap[lang] || lang;
+        
+        // 한국어로 돌아가기
+        if (lang === 'ko') {
+          // 원본 페이지로
+          if (currentUrl.includes('translate.goog') || currentUrl.includes('translate.google.com')) {
+            window.location.href = currentUrl.split('?')[0].replace(/\/\/.*?-/, '//');
           }
-        } catch (error) {
-          console.error('❌ 언어 전환 오류:', error);
+          updateActiveLanguage('ko');
+          return;
         }
+        
+        // Google Translate URL 생성
+        const translateUrl = `https://translate.google.com/translate?sl=ko&tl=${targetLang}&u=${encodeURIComponent(currentUrl)}`;
+        
+        // 번역 페이지로 이동
+        window.location.href = translateUrl;
+        
+        console.log('✅ Google Translate로 리다이렉트:', targetLang);
       }
 
+      // 활성 언어 메뉴 업데이트
       function updateActiveLanguage(lang) {
         document.querySelectorAll('.language-links a').forEach(link => {
           link.classList.toggle('active', link.getAttribute('data-lang') === lang);
         });
-      } else {
-            console.error('❌ 언어 전환 실패:', lang);
-          }
-        } catch (error) {
-          console.error('❌ 언어 전환 오류:', error);
+      }
+      
+      // 브라우저 번역 감지 및 안내
+      function detectBrowserTranslation() {
+        // Chrome 번역 바 감지
+        if (document.documentElement.classList.contains('translated-ltr') || 
+            document.documentElement.classList.contains('translated-rtl')) {
+          console.log('✅ 브라우저 자동 번역이 활성화되었습니다.');
+          return true;
         }
+        return false;
       }
 
+      
+      function updateActiveLanguage(lang) {
+        document.querySelectorAll('.language-links a').forEach(link => {
+          link.classList.toggle('active', link.getAttribute('data-lang') === lang);
+        });
+      }
+      
+      // 브라우저 번역 감지 및 안내
+      function detectBrowserTranslation() {
+        // Chrome 번역 바 감지
+        if (document.documentElement.classList.contains('translated-ltr') || 
+            document.documentElement.classList.contains('translated-rtl')) {
+          console.log('✅ 브라우저 자동 번역이 활성화되었습니다.');
+          return true;
+        }
+        return false;
+      }
+
+      // 
       // 활성 언어 메뉴 업데이트
       function updateActiveLanguage(lang) {
         const links = document.querySelectorAll('.language-links a');
