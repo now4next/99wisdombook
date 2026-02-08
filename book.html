@@ -623,16 +623,16 @@
         
         #language-selector span.divider { display: none; }
         
-        /* 모바일 목차 버튼 */
-        #mobile-toc-button {
-          display: flex !important;
-          width: 40px;
-          height: 40px;
-          background: var(--color-accent);
-          border: none;
-          border-radius: 6px;
-          flex-shrink: 0;
-        }
+        /* 모바일 목차 버튼 (기본 숨김) */
+      #mobile-toc-button {
+        display: none;
+        position: fixed;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 9998;
+        transition: all 0.3s;
+      }
         
         #mobile-toc-button svg {
           width: 24px;
@@ -759,6 +759,58 @@
         .chapter { page-break-inside: avoid; }
         h1, h2, h3 { page-break-after: avoid; }
       }
+      /* Google Translate 모든 UI 요소 완전 숨김 */
+      body > .skiptranslate,
+      body > div[id^="goog-"],
+      .goog-te-banner-frame,
+      .goog-te-balloon-frame,
+      iframe.goog-te-banner-frame,
+      iframe.goog-te-menu-frame,
+      .goog-te-ftab,
+      .goog-te-ftab-float,
+      #goog-gt-tt,
+      .goog-tooltip,
+      .goog-tooltip:hover,
+      .goog-text-highlight {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        position: absolute !important;
+        top: -9999px !important;
+        left: -9999px !important;
+        width: 0 !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+      }
+      
+      /* Body의 모든 번역 관련 인라인 스타일 무시 */
+      body[style*="top"],
+      body[style*="position"] {
+        top: 0 !important;
+        position: relative !important;
+      }
+      
+      html.translated-ltr,
+      html.translated-rtl {
+        margin-top: 0 !important;
+      }
+      
+      body.translated-ltr,
+      body.translated-rtl {
+        top: 0 !important;
+        margin-top: 0 !important;
+      }
+      
+      /* 번역 중 파란색 배경 제거 */
+      body::before,
+      html::before {
+        display: none !important;
+      }
+
       /* 브라우저 번역 바 숨김 및 body top 여백 제거 */
       body.translated-ltr {
         top: 0 !important;
