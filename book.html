@@ -3,7 +3,7 @@
   <!-- 🔴 초강력 캐시 무효화 -->
   <script>
     (function() {
-      const currentVersion = '1770542000';
+      const currentVersion = '1770544088';
       
       // 1. Service Worker 무효화
       if ('serviceWorker' in navigator) {
@@ -52,7 +52,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="version" content="1770542617">
+  <meta name="version" content="1770544088">
   <title>살아본 뒤에야 비로소 읽히는 문장들</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1134,14 +1134,14 @@
 
     
     <div id="language-selector">
-      <div id="user-info">
-        <span class="user-name" id="userName"></span>
+      <div id="user-info" style="display: flex; align-items: center; gap: 15px;">
+        <span class="user-name" id="userName" style="color: #333; font-weight: 500; line-height: 32px; display: flex; align-items: center;"></span>
         <button class="logout-btn" onclick="logout()">로그아웃</button>
       </div>
       
       <!-- 언어 선택 드롭다운 -->
       <div class="header-icons">
-        <div class="language-dropdown">
+        <div class="language-dropdown" style="position: relative;">
           <button class="text-btn language-btn" id="languageBtn" onclick="toggleLanguageMenu(event)" title="언어 선택" aria-label="언어 선택">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
               <circle cx="12" cy="12" r="10"></circle>
@@ -1153,7 +1153,7 @@
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
           </button>
-          <div class="language-menu" id="languageMenu">
+          <div class="language-menu" id="languageMenu" style="display: none; position: absolute; top: 40px; right: 0; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 180px; z-index: 100000; padding: 8px 0;">
             <a href="javascript:void(0)" onclick="selectLanguage('ko')" data-lang="ko">🇰🇷 한국어</a>
             <a href="javascript:void(0)" onclick="selectLanguage('en')" data-lang="en">🇺🇸 English</a>
             <a href="javascript:void(0)" onclick="selectLanguage('zh-CN')" data-lang="zh-CN">🇨🇳 中文</a>
@@ -1677,22 +1677,23 @@
         return;
       }
       
-      const isShowing = menu.classList.contains('show');
+      const isShowing = menu.style.display === 'block';
       console.log('📊 현재 상태:', isShowing ? '열림' : '닫힘', '→', !isShowing ? '열림' : '닫힘');
       
-      menu.classList.toggle('show');
-      btn.classList.toggle('active');
-      
-      // 다른 곳 클릭시 닫기
-      if (menu.classList.contains('show')) {
+      // 인라인 스타일로 직접 제어
+      if (isShowing) {
+        menu.style.display = 'none';
+        console.log('✅ 드롭다운 닫힘');
+        document.removeEventListener('click', closeLanguageMenu);
+      } else {
+        menu.style.display = 'block';
         console.log('✅ 드롭다운 열림');
         setTimeout(() => {
           document.addEventListener('click', closeLanguageMenu);
         }, 0);
-      } else {
-        console.log('✅ 드롭다운 닫힘');
-        document.removeEventListener('click', closeLanguageMenu);
       }
+      
+      btn.classList.toggle('active');
     }
     
     function closeLanguageMenu(e) {
@@ -1700,7 +1701,7 @@
       const btn = document.getElementById('languageBtn');
       
       if (!menu.contains(e.target) && !btn.contains(e.target)) {
-        menu.classList.remove('show');
+        menu.style.display = 'none';
         btn.classList.remove('active');
         document.removeEventListener('click', closeLanguageMenu);
       }
@@ -1723,7 +1724,7 @@
       // 메뉴 닫기
       const menu = document.getElementById('languageMenu');
       const btn = document.getElementById('languageBtn');
-      menu.classList.remove('show');
+      menu.style.display = 'none';
       btn.classList.remove('active');
       
       // Google Translate 호출
