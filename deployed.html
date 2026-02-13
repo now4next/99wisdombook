@@ -3,7 +3,7 @@
   <!-- 🔴 초강력 캐시 무효화 -->
   <script>
     (function() {
-      const currentVersion = '1770980928';
+      const currentVersion = '1770544793';
       
       // 1. Service Worker 무효화
       if ('serviceWorker' in navigator) {
@@ -43,12 +43,16 @@
   </script>
 
     <meta charset="UTF-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- 브라우저 번역 허용 -->
+  <meta name="google" content="translate">
+  <meta http-equiv="content-language" content="ko">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google" content="translate">
+    <meta http-equiv="content-language" content="ko">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="version" content="1770972162">
+  <meta name="version" content="1770544793">
   <title>살아본 뒤에야 비로소 읽히는 문장들</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -75,345 +79,583 @@
         --page-width: 880px;
       }
 
-      /* ===============================
-   Perfect Header Layout (from test-ui.html)
-   =============================== */
-   
-   #language-selector 
-     {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      background-color: #f5f5f5;
-      border-bottom: 1px solid #e0e0e0;
-      padding: 12px 40px;
-      z-index: 10000;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      height: 50px;
-      box-sizing: border-box;
-    }
-    
-    #user-info {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-    
-    .user-name {
-      color: #333;
-      font-weight: 500;
-      line-height: 32px;
-      display: flex;
-      align-items: center;
-      font-size: 13px;
-    }
-    
-    .logout-btn {
-      background: #5d4037;
-      color: white;
-      border: none;
-      padding: 6px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      height: 32px;
-      line-height: 1;
-      font-weight: 500;
-    }
-    
-    .logout-btn:hover {
-      background: #4a332c;
-    }
-    
-    .header-icons {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .language-dropdown {
-      position: relative;
-    }
-    
-    .text-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      background: #f5f5f5;
-      color: #333;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      height: 32px;
-      line-height: 1;
-      box-sizing: border-box;
-      transition: all 0.2s ease;
-    }
-    
-    .text-btn:hover {
-      background: #e8e8e8;
-      border-color: #999;
-      color: #000;
-    }
-    
-    .text-btn:active {
-      background: #ddd;
-      transform: scale(0.98);
-    }
-    
-    .btn-icon {
-      width: 16px;
-      height: 16px;
-      stroke: #666;
-      flex-shrink: 0;
-    }
-    
-    .text-btn:hover .btn-icon {
-      stroke: #000;
-    }
-    
-    .btn-arrow {
-      width: 12px;
-      height: 12px;
-      stroke: #666;
-      flex-shrink: 0;
-      transition: transform 0.2s ease;
-    }
-    
-    .text-btn:hover .btn-arrow {
-      stroke: #000;
-    }
-    
-    .btn-text {
-      color: #333;
-      font-size: 13px;
-      font-weight: 500;
-      line-height: 1;
-    }
-    
-    .text-btn:hover .btn-text {
-      color: #000;
-    }
-    
-    .language-menu {
-      display: none;
-      position: absolute;
-      top: 40px;
-      right: 0;
-      background: white;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      min-width: 180px;
-      z-index: 100000;
-      padding: 8px 0;
-    }
-    
-    .language-menu.show {
-      display: block;
-    }
-    
-    .language-menu a {
-      display: block;
-      padding: 10px 16px;
-      color: #333;
-      text-decoration: none;
-      font-size: 14px;
-      transition: background 0.2s;
-    }
-    
-    .language-menu a:hover {
-      background: #f5f5f5;
-    }
+      body {
+        max-width: var(--page-width);
+        margin: 0 auto;
+        padding: 40px 80px;
+        padding-top: 65px; /* Space for fixed language menu */
+        color: var(--color-text);
+        font-family: var(--font-main);
+        line-height: 1.8;
+        font-size: 16px;
+        background-color: #ffffff;
+        word-break: keep-all;
+        text-align: justify;
+        position: relative;
+        box-sizing: border-box;
+      }
 
-    /* ===============================
-       Improved Typography & Spacing
-       =============================== */
-    
-    body {
-      max-width: var(--page-width);
-      margin: 0 auto;
-      padding: 80px 60px 40px;
-      background-color: #ffffff;
-      font-family: var(--font-main);
-      font-size: 17px;
-      line-height: 1.9;
-      color: var(--color-text);
-      text-align: justify;
-      position: relative;
-    }
-    
-    h1, h2, h3, h4, h5, h6 {
-      font-family: var(--font-sans);
-      color: var(--color-heading);
-      font-weight: 700;
-      line-height: 1.4;
-      margin-top: 2em;
-      margin-bottom: 0.8em;
-      letter-spacing: -0.02em;
-    }
-    
-    h1 {
-      font-size: 2.5em;
-      margin-top: 1.5em;
-      padding-bottom: 0.3em;
-      border-bottom: 3px solid var(--color-accent);
-    }
-    
-    h2 {
-      font-size: 2em;
-      color: var(--color-accent);
-    }
-    
-    h3 {
-      font-size: 1.5em;
-      color: #4a4a4a;
-    }
-    
-    h4 {
-      font-size: 1.2em;
-      color: #5a5a5a;
-    }
-    
-    p {
-      margin: 1.2em 0;
-      text-indent: 1em;
-      word-break: keep-all;
-      word-wrap: break-word;
-    }
-    
-    .chapter {
-      padding: 40px 0;
-      margin-bottom: 60px;
-      border-bottom: 1px solid #e0e0e0;
-    }
-    
-    .chapter:last-of-type {
-      border-bottom: none;
-    }
-    
-    /* Improved TOC Panel */
-    #floating-toc-panel {
-      position: fixed;
-      top: 70px;
-      right: -400px;
-      width: 380px;
-      max-height: calc(100vh - 100px);
-      background: #ffffff;
-      border: 1px solid #e0e0e0;
-      border-radius: 12px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-      padding: 24px;
-      overflow-y: auto;
-      transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      z-index: 9999;
-    }
-    
-    #floating-toc-panel.active {
-      right: 20px;
-    }
-    
-    #floating-toc-panel h3 {
-      margin: 0 0 20px 0;
-      font-size: 1.3em;
-      color: var(--color-accent);
-      border-bottom: 2px solid var(--color-accent);
-      padding-bottom: 10px;
-    }
-    
-    .toc-item {
-      display: block;
-      padding: 12px 16px;
-      margin: 4px 0;
-      color: #333;
-      text-decoration: none;
-      border-radius: 6px;
-      transition: all 0.2s ease;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-    
-    .toc-item:hover {
-      background: #f5f5f5;
-      color: var(--color-accent);
-      transform: translateX(4px);
-    }
-    
-    .toc-section-title {
-      font-weight: 600;
-      color: var(--color-accent);
-      margin-top: 16px;
-      margin-bottom: 8px;
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    
-    .toc-close {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: none;
-      border: none;
-      font-size: 28px;
-      color: #999;
-      cursor: pointer;
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      transition: all 0.2s ease;
-    }
-    
-    .toc-close:hover {
-      background: #f5f5f5;
-      color: #333;
-    }
-    
-    #toc-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.3);
-      z-index: 9998;
-      backdrop-filter: blur(2px);
-    }
-    
-    #toc-overlay.active {
-      display: block;
-    }
+      /* Typography */
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        font-family: var(--font-sans);
+        color: var(--color-heading);
+        margin-top: 2em;
+        margin-bottom: 1em;
+        font-weight: 700;
+      }
 
+      h1 {
+        font-size: 2.4em;
+        text-align: center;
+        margin-bottom: 0.5em;
+        line-height: 1.2;
+      }
+      h2 {
+        font-size: 1.8em;
+        border-bottom: 2px solid var(--color-accent);
+        padding-bottom: 0.5em;
+        margin-top: 3em;
+      }
+      h3 {
+        font-size: 1.4em;
+        margin-top: 2.5em;
+        color: var(--color-accent);
+      }
+      h4 {
+        font-size: 1.2em;
+        margin-top: 1.5em;
+        margin-bottom: 0.8em;
+        color: #333;
+      }
 
+      p {
+        margin-bottom: 1.2em;
+      }
+
+      a {
+        text-decoration: none;
+        color: var(--color-text);
+        transition: color 0.2s;
+      }
+      a:hover {
+        color: var(--color-link);
+        text-decoration: underline;
+      }
+
+      /* UN Style Language Selector */
+      #language-selector {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background-color: #f5f5f5;
+        border-bottom: 1px solid #e0e0e0;
+        padding: 12px 40px;
+        z-index: 10000;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-family: var(--font-sans);
+        font-size: 13px;
+        height: 50px;
+        box-sizing: border-box;
+      }
+
+      /* User Info Section */
+      #user-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      #user-info .user-name {
+        color: #333;
+        font-weight: 500;
+        line-height: 32px; /* 로그아웃 버튼 높이와 동일 */
+        display: flex;
+        align-items: center;
+      }
+
+      #user-info .logout-btn {
+        background: var(--color-accent);
+        color: white;
+        border: none;
+        padding: 6px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-family: var(--font-sans);
+        transition: background 0.3s;
+      }
+
+      #user-info .logout-btn:hover {
+        background: #4a332c;
+      }
+
+      
+
+      /* Header Icons */
+      .header-icons {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-left: auto;
+      }
+      
+      .language-dropdown {
+        position: relative;
+      }
+      
+      .text-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        background: #f5f5f5;
+        color: #333;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        height: 32px;
+      }
+      
+      .text-btn:hover {
+        background: #e8e8e8;
+        border-color: #999;
+        color: #000;
+      }
+      
+      .text-btn:active {
+        background: #ddd;
+        transform: scale(0.98);
+      }
+      
+      .text-btn .btn-icon {
+        width: 16px;
+        height: 16px;
+        stroke: #666;
+        flex-shrink: 0;
+      }
+      
+      .text-btn:hover .btn-icon {
+        stroke: #000;
+      }
+      
+      .text-btn .btn-text {
+        color: #333;
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1;
+      }
+      
+      .text-btn:hover .btn-text {
+        color: #000;
+      }
+      
+      .text-btn .btn-arrow {
+        width: 12px;
+        height: 12px;
+        stroke: #666;
+        flex-shrink: 0;
+        transition: transform 0.2s ease;
+        margin-left: 2px;
+      }
+      
+      .text-btn:hover .btn-arrow {
+        stroke: #000;
+      }
+      
+      /* 드롭다운 열릴 때 화살표 회전 */
+      .language-btn.active .btn-arrow {
+        transform: rotate(180deg);
+      }
+      
+      .icon-btn svg {
+        fill: var(--color-accent);
+        width: 24px;
+        height: 24px;
+      }
+      
+      /* Language Dropdown */
+      .language-dropdown {
+        position: relative;
+      }
+      
+      .language-menu {
+        display: none;
+        position: absolute;
+        top: 50px;
+        right: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        min-width: 180px;
+        z-index: 100000;
+        padding: 8px 0;
+      }
+      
+      .language-menu.show {
+        display: block;
+      }
+      
+      .language-menu a {
+        display: block;
+        padding: 10px 16px;
+        color: #333;
+        text-decoration: none;
+        font-size: 14px;
+        transition: background 0.2s;
+      }
+      
+      .language-menu a:hover {
+        background: #f5f5f5;
+      }
+      
+      .language-menu a.active {
+        background: #e8f4f8;
+        color: #0066cc;
+        font-weight: 600;
+      }
+/* Language Links Section */
+      #language-links {
+        display: flex;
+        align-items: center;
+      }
+
+      #language-selector a {
+        color: #333;
+        text-decoration: none;
+        padding: 0 8px;
+        cursor: pointer;
+      }
+
+      #language-selector a:hover {
+        text-decoration: underline;
+      }
+
+      #language-selector span.divider {
+        color: #ccc;
+        font-size: 10px;
+      }
+
+      #language-selector a.active {
+        color: #0066cc;
+        font-weight: 700;
+      }
+
+      /* Hide Google Translate Widget */
+      .goog-te-banner-frame {
+        display: none !important;
+      }
+      .goog-te-gadget {
+        display: none !important;
+      }
+      body {
+        top: 0px !important;
+        position: relative !important;
+      }
+      
+      /* Prevent Google Translate from moving body */
+      body.translated-ltr {
+        top: 0px !important;
+      }
+      
+      /* Hide Google Translate tooltip and popup */
+      #goog-gt-tt, .goog-te-balloon-frame {
+        display: none !important;
+      }
+      
+      .goog-text-highlight {
+        background-color: transparent !important;
+        box-shadow: none !important;
+      }
+
+      /* Floating TOC Button */
+      
+
+      
+
+      
+
+      /* TOC Panel */
+      #floating-toc-panel {
+        position: fixed;
+        top: 60px;
+        right: -400px;
+        width: 380px;
+        max-height: 85vh;
+        background: white;
+        border-radius: 12px 0 0 12px;
+        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+        z-index: 9997;
+        overflow-y: auto;
+        transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        padding: 20px;
+      }
+
+      #floating-toc-panel.active {
+        right: 0;
+      }
+
+      #floating-toc-panel h3 {
+        margin: 0 0 24px 0;
+        font-size: 1.1em;
+        font-weight: 600;
+        color: #000;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid #e0e0e0;
+        padding-bottom: 12px;
+      }
+
+      .toc-section {
+        margin-bottom: 16px;
+      }
+
+      .toc-section-title {
+        font-weight: 600;
+        font-size: 0.9em;
+        color: #666;
+        margin-bottom: 8px;
+        padding-left: 0;
+        letter-spacing: 0.03em;
+      }
+
+      .toc-item {
+        display: block;
+        padding: 6px 0;
+        margin: 2px 0;
+        color: #444;
+        text-decoration: none;
+        transition: all 0.2s;
+        font-size: 0.9em;
+        line-height: 1.5;
+      }
+
+      .toc-item:hover {
+        color: #000;
+        font-weight: 500;
+      }
+
+      .toc-close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 32px;
+        height: 32px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        font-size: 24px;
+        font-weight: 300;
+        color: #999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        line-height: 1;
+      }
+
+      .toc-close:hover {
+        color: #000;
+        transform: scale(1.1);
+      }
+
+      /* Overlay */
+      #toc-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.3);
+        z-index: 9996;
+        display: none;
+        transition: opacity 0.3s;
+      }
+
+      #toc-overlay.active {
+        display: block;
+      }
+
+      /* Page Layouts */
+      .cover-page {
+        height: 800px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        page-break-after: always;
+        border-bottom: 1px solid #eee;
+        margin-bottom: 40px;
+      }
+
+      .cover-title {
+        font-size: 3.5em;
+        font-weight: 700;
+        margin-bottom: 0.2em;
+        font-family: var(--font-sans);
+      }
+      .cover-subtitle {
+        font-size: 1.5em;
+        font-style: italic;
+        margin-bottom: 3em;
+        color: #555;
+      }
+      .cover-author {
+        font-size: 1.4em;
+        font-weight: 500;
+      }
+
+      .copyright-page,
+      .dedication-page,
+      .toc-page {
+        page-break-after: always;
+        margin-bottom: 60px;
+      }
+
+      .copyright-page {
+        padding-top: 100px;
+        font-size: 0.9em;
+        color: #444;
+      }
+      .copyright-info {
+        border-top: 1px solid #ddd;
+        padding-top: 2em;
+        margin-top: 2em;
+      }
+      .copyright-row {
+        display: flex;
+        margin-bottom: 0.5em;
+      }
+      .copyright-label {
+        width: 120px;
+        font-weight: bold;
+      }
+
+      .dedication-box {
+        border: 1px solid #ddd;
+        padding: 40px;
+        background-color: #fcfcfc;
+        margin: 100px 0;
+        font-style: italic;
+      }
+
+      /* TOC Styling */
+      .toc-title {
+        text-align: center;
+        font-size: 2em;
+        margin-bottom: 2em;
+        font-family: var(--font-sans);
+      }
+      .toc-part {
+        margin-top: 1.5em;
+        font-weight: bold;
+        font-size: 1.1em;
+        color: var(--color-accent);
+        border-bottom: 1px solid #eee;
+        padding-bottom: 0.3em;
+        margin-bottom: 0.5em;
+      }
+      .toc-chapter {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5em;
+        font-size: 0.95em;
+        padding-left: 10px;
+      }
+      .toc-chapter a:hover {
+        color: var(--color-link);
+      }
+
+      /* Content Elements */
+      .part-header {
+        text-align: center;
+        padding: 80px 0;
+        background-color: #f9f9f9;
+        margin: 4em 0;
+        border-top: 1px solid #eee;
+        border-bottom: 1px solid #eee;
+      }
+      .part-number {
+        font-size: 1.2em;
+        color: #777;
+        display: block;
+        margin-bottom: 0.5em;
+      }
+      .part-title {
+        font-size: 2em;
+        margin: 0;
+        color: var(--color-text);
+      }
+
+      .chapter-header {
+        margin-top: 4em;
+        margin-bottom: 2em;
+        text-align: left;
+      }
+      .chapter-number {
+        font-size: 1em;
+        color: var(--color-accent);
+        display: block;
+        margin-bottom: 0.5em;
+        font-weight: bold;
+      }
+      .chapter-title {
+        font-size: 1.8em;
+        margin: 0 0 0.5em 0;
+        line-height: 1.3;
+        color: #000;
+      }
+      .chapter-subtitle {
+        font-size: 1.1em;
+        color: #555;
+        font-weight: 500;
+        font-family: var(--font-main);
+      }
+
+      .blank-page-container {
+        border: 2px dashed #e0e0e0;
+        height: 500px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 2em;
+        background-color: #fafafa;
+        border-radius: 8px;
+      }
+      .blank-page-text {
+        color: #aaa;
+        font-style: italic;
+      }
+
+      /* Helper for placeholders */
+      .placeholder-content {
+        color: #888;
+        font-style: italic;
+        padding: 20px 0;
+        border-bottom: 1px solid #eee;
+      }
+    
+      
+
+    
       /* ========================================
          반응형 웹 디자인 (Responsive Web Design)
          ======================================== */
       
       /* 태블릿 (769px ~ 1024px) */
-      
-      /* ===============================
-         Mobile Responsive (maintain button sizes)
-         =============================== */
-      @media screen and (max-width: 768px) {
-        /* Header uses global styles */
-      }
-        
-        #user-info .user-name {
-          font-size: 12px !important;
-        }
-      }
-
-
       @media screen and (min-width: 769px) and (max-width: 1024px) {
         body {
           padding: 30px 40px;
@@ -425,7 +667,10 @@
         h2 { font-size: 1.6em; }
         h3 { font-size: 1.3em; }
         
-        /* Removed conflicting padding */
+        #language-selector {
+          padding: 8px 20px;
+          font-size: 12px;
+        }
 
       /* PC (1025px ~ 1439px) */
       @media screen and (min-width: 1025px) and (max-width: 1439px) {
@@ -441,14 +686,19 @@
         h3 { font-size: 1.35em; }
         h4 { font-size: 1.15em; }
         
-        /* Removed conflicting padding */
+        #language-selector {
+          padding: 10px 30px;
+          font-size: 13px;
+        }
         
         #language-selector a {
           padding: 6px 12px;
           font-size: 13px;
         }
         
-
+        #user-info {
+          font-size: 13px;
+        }
         
         
         
@@ -472,7 +722,9 @@
         .chapter-header {
           margin-bottom: 16px;
         }
-            }
+      }
+      
+      }
       
       /* 모바일 (최대 768px) */
       @media screen and (max-width: 768px) {
@@ -495,36 +747,18 @@
         }
         
         .text-btn .btn-text {
-          font-size: 12px !important !important;
+          font-size: 12px !important;
         }
         
         .text-btn .btn-arrow {
-          width: 10px !important !important;
-          height: 10px !important !important;
+          width: 10px !important;
+          height: 10px !important;
         }
         
-        
-      .language-menu {
-        display: none !important;
-        position: absolute !important;
-        top: 42px !important;
-        right: 0 !important;
-        background: white !important;
-        border: 1px solid #ddd !important;
-        border-radius: 8px !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-        min-width: 200px !important;
-        z-index: 100000 !important;
-        padding: 8px 0 !important;
-      }
-      
-      .language-menu.show {
-        display: block !important;
-      }
-      
-      .language-menu.show {
-        display: block !important;
-      }
+        .language-menu {
+          top: 36px;
+          min-width: 160px;
+        }
         
         .language-menu a {
           padding: 7px 12px;
@@ -547,87 +781,143 @@
         h2 { font-size: 1.3em; }
         h3 { font-size: 1.15em; }
         
-        #language-selector, .top-nav {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      background-color: #f5f5f5;
-      border-bottom: 1px solid #e0e0e0;
-      padding: 12px 40px;
-      z-index: 10000;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      height: 50px;
-      box-sizing: border-box;
-    }
-    
-    #user-info {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-    
-    .user-name {
-      color: #333;
-      font-weight: 500;
-      line-height: 32px;
-      display: flex;
-      align-items: center;
-      font-size: 13px;
-    }
-    
-    .logout-btn {
-      background: #5d4037;
-      color: white;
-      border: none;
-      padding: 6px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      height: 32px;
-      line-height: 1;
-      font-weight: 500;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .logout-btn:hover {
-      background: #4a332c;
-    }
-    
-    .header-icons {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .language-dropdown {
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
-    
-    .text-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 6px 14px;
-      background: #f5f5f5;
-      color: #333;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      height: 32px;
-      line-height: 1;
-      box-sizing: border-box;
-      transition: all 0.2s ease;
-    }
+        #language-selector { padding: 6px 8px; }
+        
+        #language-selector a {
+          padding: 3px 5px;
+          font-size: 10px;
+        }
+        
+        #floating-toc-panel {
+          width: 90%;
+          max-width: 280px;
+        }
+      }
+      
+      /* 가로 모드 모바일 */
+      @media screen and (max-width: 768px) and (orientation: landscape) {
+        body { padding-top: 60px; }
+        
+        #language-links {
+          flex-wrap: nowrap;
+          overflow-x: auto;
+        }
+      }
+      
+      /* 대형 화면 (1440px 이상) */
+      @media screen and (min-width: 1440px) {
+        body {
+          max-width: 1000px;
+          padding: 50px 100px;
+          padding-top: 70px;
+          font-size: 17px;
+        }
+        
+        h1 { font-size: 2.6em; }
+        h2 { font-size: 2em; }
+        h3 { font-size: 1.5em; }
+      }
+      
+      /* 인쇄 스타일 */
+      @media print {
+        #language-selector,
+        #floating-toc-button,
+        #mobile-toc-button,
+        #floating-toc-panel,
+        #toc-overlay,
+        #user-info {
+          display: none !important;
+        }
+        
+        body {
+          padding: 20px;
+          max-width: none;
+        }
+        
+        .chapter { page-break-inside: avoid; }
+        h1, h2, h3 { page-break-after: avoid; }
+      }
+      /* Google Translate 모든 UI 요소 완전 숨김 */
+      body > .skiptranslate,
+      body > div[id^="goog-"],
+      .goog-te-banner-frame,
+      .goog-te-balloon-frame,
+      iframe.goog-te-banner-frame,
+      iframe.goog-te-menu-frame,
+      .goog-te-ftab,
+      .goog-te-ftab-float,
+      #goog-gt-tt,
+      .goog-tooltip,
+      .goog-tooltip:hover,
+      .goog-text-highlight {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        position: absolute !important;
+        top: -9999px !important;
+        left: -9999px !important;
+        width: 0 !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+      }
+      
+      /* Body의 모든 번역 관련 인라인 스타일 무시 */
+      body[style*="top"],
+      body[style*="position"] {
+        top: 0 !important;
+        position: relative !important;
+      }
+      
+      html.translated-ltr,
+      html.translated-rtl {
+        margin-top: 0 !important;
+      }
+      
+      body.translated-ltr,
+      body.translated-rtl {
+        top: 0 !important;
+        margin-top: 0 !important;
+      }
+      
+      /* 번역 중 파란색 배경 제거 */
+      body::before,
+      html::before {
+        display: none !important;
+      }
+
+      /* 브라우저 번역 바 숨김 및 body top 여백 제거 */
+      body.translated-ltr {
+        top: 0 !important;
+        margin-top: 0 !important;
+      }
+      
+      body.translated-rtl {
+        top: 0 !important;
+        margin-top: 0 !important;
+      }
+      
+      /* 번역 관련 추가 여백 제거 */
+      html[translate="yes"] body {
+        top: 0 !important;
+      }
+      /* 모바일 반응형 */
+      @media screen and (max-width: 768px) {
+        /* 모바일 버튼 최적화 */
+        .header-icons {
+          display: flex !important;
+          gap: 8px;
+        }
+        
+        .text-btn {
+          height: 30px !important;
+          padding: 5px 12px !important;
+          font-size: 12px !important;
+          gap: 5px !important;
+        }
         
         .text-btn .btn-icon {
           width: 14px !important;
@@ -635,31 +925,18 @@
         }
         
         .text-btn .btn-text {
-          font-size: 12px !important !important;
+          font-size: 12px !important;
         }
         
         .text-btn .btn-arrow {
-          width: 10px !important !important;
-          height: 10px !important !important;
+          width: 10px !important;
+          height: 10px !important;
         }
         
         .language-menu {
-        display: none !important;
-        position: absolute !important;
-        top: 42px !important;
-        right: 0 !important;
-        background: white !important;
-        border: 1px solid #ddd !important;
-        border-radius: 8px !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-        min-width: 200px !important;
-        z-index: 100000 !important;
-        padding: 8px 0 !important;
-      }
-      
-      .language-menu.show {
-        display: block !important;
-      }
+          top: 36px;
+          min-width: 160px;
+        }
         
         .language-menu a {
           padding: 7px 12px;
@@ -706,12 +983,12 @@
         }
         
         .text-btn .btn-text {
-          font-size: 14px !important !important;
+          font-size: 14px !important;
         }
         
         .text-btn .btn-arrow {
-          width: 14px !important !important;
-          height: 14px !important !important;
+          width: 14px !important;
+          height: 14px !important;
         }
         
         .language-btn {
@@ -723,22 +1000,10 @@
         }
         
         .language-menu {
-        display: none !important;
-        position: absolute !important;
-        top: 42px !important;
-        right: 0 !important;
-        background: white !important;
-        border: 1px solid #ddd !important;
-        border-radius: 8px !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-        min-width: 200px !important;
-        z-index: 100000 !important;
-        padding: 8px 0 !important;
-      }
-      
-      .language-menu.show {
-        display: block !important;
-      }
+          top: 48px;
+          min-width: 180px;
+          right: 0;
+        }
         
         .language-menu a {
           padding: 10px 16px;
@@ -769,22 +1034,10 @@
         }
         
         .language-menu {
-        display: none !important;
-        position: absolute !important;
-        top: 42px !important;
-        right: 0 !important;
-        background: white !important;
-        border: 1px solid #ddd !important;
-        border-radius: 8px !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-        min-width: 200px !important;
-        z-index: 100000 !important;
-        padding: 8px 0 !important;
-      }
-      
-      .language-menu.show {
-        display: block !important;
-      }
+          top: 50px;
+          min-width: 180px;
+          right: 0;
+        }
         
         .language-menu a {
           padding: 10px 16px;
@@ -792,87 +1045,41 @@
         }
         
 
-        #language-selector, .top-nav {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      background-color: #f5f5f5;
-      border-bottom: 1px solid #e0e0e0;
-      padding: 12px 40px;
-      z-index: 10000;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      height: 50px;
-      box-sizing: border-box;
-    }
-    
-    #user-info {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-    
-    .user-name {
-      color: #333;
-      font-weight: 500;
-      line-height: 32px;
-      display: flex;
-      align-items: center;
-      font-size: 13px;
-    }
-    
-    .logout-btn {
-      background: #5d4037;
-      color: white;
-      border: none;
-      padding: 6px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      height: 32px;
-      line-height: 1;
-      font-weight: 500;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .logout-btn:hover {
-      background: #4a332c;
-    }
-    
-    .header-icons {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .language-dropdown {
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
-    
-    .text-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 6px 14px;
-      background: #f5f5f5;
-      color: #333;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      height: 32px;
-      line-height: 1;
-      box-sizing: border-box;
-      transition: all 0.2s ease;
-    }
+        #language-selector {
+          padding: 10px 16px;
+          height: 55px;
+        }
+        
+        #user-info {
+          display: none;  /* 모바일에서 사용자 정보 숨김 */
+        }
+        
+        .header-icons {
+          gap: 8px;
+        }
+        
+        .icon-btn {
+          width: 36px;
+          height: 36px;
+        }
+        
+        .icon-btn svg {
+          width: 20px;
+          height: 20px;
+        }
+        
+        .language-menu {
+          right: -8px;
+        }
+      }
+      
+      @media screen and (max-width: 480px) {
+        /* 초소형 모바일에서 텍스트 버튼 최적화 */
+        .text-btn {
+          padding: 7px 14px !important;
+          font-size: 13px !important;
+          gap: 5px !important;
+        }
         
         .text-btn .btn-icon {
           width: 16px !important;
@@ -880,31 +1087,17 @@
         }
         
         .text-btn .btn-text {
-          font-size: 13px !important !important;
+          font-size: 13px !important;
         }
         
         .text-btn .btn-arrow {
-          width: 12px !important !important;
-          height: 12px !important !important;
+          width: 12px !important;
+          height: 12px !important;
         }
         
         .language-menu {
-        display: none !important;
-        position: absolute !important;
-        top: 42px !important;
-        right: 0 !important;
-        background: white !important;
-        border: 1px solid #ddd !important;
-        border-radius: 8px !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-        min-width: 200px !important;
-        z-index: 100000 !important;
-        padding: 8px 0 !important;
-      }
-      
-      .language-menu.show {
-        display: block !important;
-      }
+          min-width: 160px;
+        }
         
 
         /* 초소형 모바일에서도 아이콘 유지 */
@@ -919,41 +1112,13 @@
         }
         
         .language-menu {
-        display: none !important;
-        position: absolute !important;
-        top: 42px !important;
-        right: 0 !important;
-        background: white !important;
-        border: 1px solid #ddd !important;
-        border-radius: 8px !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-        min-width: 200px !important;
-        z-index: 100000 !important;
-        padding: 8px 0 !important;
-      }
-      
-      .language-menu.show {
-        display: block !important;
-      }
+          min-width: 160px;
+        }
         
 
         .language-menu {
-        display: none !important;
-        position: absolute !important;
-        top: 42px !important;
-        right: 0 !important;
-        background: white !important;
-        border: 1px solid #ddd !important;
-        border-radius: 8px !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-        min-width: 200px !important;
-        z-index: 100000 !important;
-        padding: 8px 0 !important;
-      }
-      
-      .language-menu.show {
-        display: block !important;
-      }
+          min-width: 160px;
+        }
         
         .language-menu a {
           padding: 8px 12px;
@@ -961,223 +1126,7 @@
         }
       }
 
-
-      
-        
-        #user-info {
-          gap: 8px !important;
-        }
-        
-        .header-icons {
-          gap: 8px !important;
-        }
-        
-        .user-name,
-        #user-info .logout-btn,
-        .text-btn {
-          font-size: 12px !important;
-        }
-      }
-
-  
-      /* ============================================
-         🚨 CRITICAL: 헤더 정렬 최우선 규칙
-         ============================================ */
-      
-      #language-selector, .top-nav {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      background-color: #f5f5f5;
-      border-bottom: 1px solid #e0e0e0;
-      padding: 12px 40px;
-      z-index: 10000;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      height: 50px;
-      box-sizing: border-box;
-    }
-    
-    #user-info {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-    
-    .user-name {
-      color: #333;
-      font-weight: 500;
-      line-height: 32px;
-      display: flex;
-      align-items: center;
-      font-size: 13px;
-    }
-    
-    .logout-btn {
-      background: #5d4037;
-      color: white;
-      border: none;
-      padding: 6px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      height: 32px;
-      line-height: 1;
-      font-weight: 500;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .logout-btn:hover {
-      background: #4a332c;
-    }
-    
-    .header-icons {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .language-dropdown {
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
-    
-    .text-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 6px 14px;
-      background: #f5f5f5;
-      color: #333;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      height: 32px;
-      line-height: 1;
-      box-sizing: border-box;
-      transition: all 0.2s ease;
-    }
-
-
-
-      /* ============================================
-         🎯 FINAL: test-ui.html과 동일한 헤더 CSS
-         ============================================ */
-      
-      #language-selector, .top-nav {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      background-color: #f5f5f5;
-      border-bottom: 1px solid #e0e0e0;
-      padding: 12px 40px;
-      z-index: 10000;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      height: 50px;
-      box-sizing: border-box;
-    }
-    
-    #user-info {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-    
-    .user-name {
-      color: #333;
-      font-weight: 500;
-      line-height: 32px;
-      display: flex;
-      align-items: center;
-      font-size: 13px;
-    }
-    
-    .logout-btn {
-      background: #5d4037;
-      color: white;
-      border: none;
-      padding: 6px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      height: 32px;
-      line-height: 1;
-      font-weight: 500;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .logout-btn:hover {
-      background: #4a332c;
-    }
-    
-    .header-icons {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .language-dropdown {
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
-    
-    .text-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 6px 14px;
-      background: #f5f5f5;
-      color: #333;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      height: 32px;
-      line-height: 1;
-      box-sizing: border-box;
-      transition: all 0.2s ease;
-    }
-      
-      .text-btn:hover {
-        background: #e8e8e8 !important;
-        border-color: #999 !important;
-      }
-      
-      .text-btn .btn-icon {
-        width: 16px !important;
-        height: 16px !important;
-        stroke: #666 !important;
-      }
-      
-      .text-btn .btn-text {
-        color: #333 !important;
-        font-size: 13px !important;
-        font-weight: 500 !important;
-      }
-      
-      .text-btn .btn-arrow {
-        width: 12px !important;
-        height: 12px !important;
-        stroke: #666 !important;
-      }
-
-      </style>
+  </style>
 
 </head>
   <body>
@@ -1187,15 +1136,15 @@
     
 
     
-    <div id="language-selector" class="top-nav">
-      <div id="user-info">
-        <span class="user-name" id="userName"></span>
+    <div id="language-selector">
+      <div id="user-info" style="display: flex; align-items: center; gap: 15px;">
+        <span class="user-name" id="userName" style="color: #333; font-weight: 500; line-height: 32px; display: flex; align-items: center;"></span>
         <button class="logout-btn" onclick="logout()">로그아웃</button>
       </div>
       
       <!-- 언어 선택 드롭다운 -->
       <div class="header-icons">
-        <div class="language-dropdown">
+        <div class="language-dropdown" style="position: relative;">
           <button class="text-btn language-btn" id="languageBtn" onclick="toggleLanguageMenu(event)" title="언어 선택" aria-label="언어 선택">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
               <circle cx="12" cy="12" r="10"></circle>
@@ -1207,15 +1156,15 @@
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
           </button>
-          <div class="language-menu" id="languageMenu">
-            <a href="book.html" data-lang="ko">🇰🇷 한국어</a>
-            <a href="book_en.html" data-lang="en">🇺🇸 English</a>
-            <a href="book_zh.html" data-lang="zh-CN">🇨🇳 中文</a>
-            <a href="book_ja.html" data-lang="ja">🇯🇵 日本語</a>
-            <a href="book_es.html" data-lang="es">🇪🇸 Español</a>
-            <a href="book_fr.html" data-lang="fr">🇫🇷 Français</a>
-            <a href="book_ru.html" data-lang="ru">🇷🇺 Русский</a>
-            <a href="book_ar.html" data-lang="ar">🇸🇦 عربي</a>
+          <div class="language-menu" id="languageMenu" style="display: none; position: absolute; top: 40px; right: 0; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 180px; z-index: 100000; padding: 8px 0;">
+            <a href="javascript:void(0)" onclick="selectLanguage('ko')" data-lang="ko">🇰🇷 한국어</a>
+            <a href="javascript:void(0)" onclick="selectLanguage('en')" data-lang="en">🇺🇸 English</a>
+            <a href="javascript:void(0)" onclick="selectLanguage('zh-CN')" data-lang="zh-CN">🇨🇳 中文</a>
+            <a href="javascript:void(0)" onclick="selectLanguage('ja')" data-lang="ja">🇯🇵 日本語</a>
+            <a href="javascript:void(0)" onclick="selectLanguage('es')" data-lang="es">🇪🇸 Español</a>
+            <a href="javascript:void(0)" onclick="selectLanguage('fr')" data-lang="fr">🇫🇷 Français</a>
+            <a href="javascript:void(0)" onclick="selectLanguage('ru')" data-lang="ru">🇷🇺 Русский</a>
+            <a href="javascript:void(0)" onclick="selectLanguage('ar')" data-lang="ar">🇸🇦 عربي</a>
           </div>
         </div>
         
@@ -1230,9 +1179,31 @@
         </button>
       </div>
     </div>
-
+<!-- Language Notice -->
+    <div id="translation-notice" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); color: white; padding: 30px 50px; border-radius: 12px; z-index: 10000; text-align: center; font-family: var(--font-sans);">
+      <h3 style="margin: 0 0 15px 0; color: white;">⚠️ 번역 기능 안내</h3>
+      <p style="margin: 0; line-height: 1.6;">
+        실시간 번역 기능은 웹 서버 환경에서만 작동합니다.<br>
+        로컬 파일에서는 보안 정책(CORS)으로 인해 제한됩니다.
+      </p>
+      <h4 style="margin: 20px 0 10px 0; color: #ffd700;">해결 방법:</h4>
+      <div style="text-align: left; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+        <p style="margin: 5px 0;"><strong>1. 웹 서버 실행 (추천)</strong></p>
+        <code style="background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 4px; display: block; margin: 5px 0;">
+          python -m http.server 8000
+        </code>
+        <p style="margin: 5px 0; font-size: 0.9em;">그 다음: http://localhost:8000 접속</p>
+      </div>
       <button onclick="closeNotice()" style="background: #667eea; color: white; border: none; padding: 10px 30px; border-radius: 6px; cursor: pointer; font-size: 16px; margin-top: 10px;">확인</button>
     </div>
+
+    <!-- i18n system replaces Google Translate -->
+
+    <!-- Floating TOC Button -->
+    
+
+    <!-- TOC Overlay -->
+    <div id="toc-overlay" onclick="toggleTOC()"></div>
 
     <!-- Floating TOC Panel -->
     <div id="floating-toc-panel">
@@ -1695,62 +1666,52 @@
       // 사용자 정보 표시
       
     // 언어 메뉴 토글
-    window.toggleLanguageMenu = function(event) {
+    function toggleLanguageMenu(event) {
       console.log('🔘 toggleLanguageMenu 호출됨');
-      
       if (event) {
-        event.preventDefault();
         event.stopPropagation();
       }
       
       const menu = document.getElementById('languageMenu');
       const btn = document.getElementById('languageBtn');
       
-      if (!menu) {
-        console.error('❌ languageMenu를 찾을 수 없음');
+      if (!menu || !btn) {
+        console.error('❌ 언어 메뉴 요소를 찾을 수 없음');
         return;
       }
       
-      if (!btn) {
-        console.error('❌ languageBtn을 찾을 수 없음');
-        return;
-      }
+      const isShowing = menu.style.display === 'block';
+      console.log('📊 현재 상태:', isShowing ? '열림' : '닫힘', '→', !isShowing ? '열림' : '닫힘');
       
-      // 클래스 기반으로 토글
-      const isShowing = menu.classList.contains('show');
-      console.log('📊 현재 상태:', isShowing ? '열림' : '닫힘');
-      
+      // 인라인 스타일로 직접 제어
       if (isShowing) {
-        menu.classList.remove('show');
-        btn.classList.remove('active');
+        menu.style.display = 'none';
         console.log('✅ 드롭다운 닫힘');
         document.removeEventListener('click', closeLanguageMenu);
       } else {
-        menu.classList.add('show');
-        btn.classList.add('active');
+        menu.style.display = 'block';
         console.log('✅ 드롭다운 열림');
         setTimeout(() => {
           document.addEventListener('click', closeLanguageMenu);
-        }, 100);
+        }, 0);
       }
+      
+      btn.classList.toggle('active');
     }
     
     function closeLanguageMenu(e) {
       const menu = document.getElementById('languageMenu');
       const btn = document.getElementById('languageBtn');
       
-      if (!menu || !btn) return;
-      
       if (!menu.contains(e.target) && !btn.contains(e.target)) {
-        menu.classList.remove('show');
+        menu.style.display = 'none';
         btn.classList.remove('active');
-        console.log('📴 외부 클릭으로 드롭다운 닫힘');
         document.removeEventListener('click', closeLanguageMenu);
       }
     }
     
     // 언어 선택 및 번역
-    window.selectLanguage = function(lang) {
+    function selectLanguage(lang) {
       console.log('🌐 언어 선택:', lang);
       
       // 활성 언어 표시
@@ -1766,9 +1727,8 @@
       // 메뉴 닫기
       const menu = document.getElementById('languageMenu');
       const btn = document.getElementById('languageBtn');
-      menu.classList.remove('show');
+      menu.style.display = 'none';
       btn.classList.remove('active');
-      document.removeEventListener('click', closeLanguageMenu);
       
       // Google Translate 호출
       if (window.switchLanguage) {
