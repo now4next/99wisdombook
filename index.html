@@ -330,10 +330,6 @@
             <input type="text" id="register-username" required minlength="3" autocomplete="username">
           </div>
           <div class="form-group">
-            <label for="register-name">이름</label>
-            <input type="text" id="register-name" required>
-          </div>
-          <div class="form-group">
             <label for="register-email">이메일</label>
             <input type="email" id="register-email" required autocomplete="email">
           </div>
@@ -345,44 +341,7 @@
             <label for="register-password-confirm">비밀번호 확인</label>
             <input type="password" id="register-password-confirm" required autocomplete="new-password">
           </div>
-          
-          <div class="language-permissions">
-            <h4>열람 가능한 언어 선택</h4>
-            <div class="permission-grid">
-              <div class="permission-item">
-                <input type="checkbox" id="lang-ko" value="ko" checked disabled>
-                <label for="lang-ko">🇰🇷 한국어</label>
-              </div>
-              <div class="permission-item">
-                <input type="checkbox" id="lang-en" value="en">
-                <label for="lang-en">🇺🇸 English</label>
-              </div>
-              <div class="permission-item">
-                <input type="checkbox" id="lang-zh" value="zh">
-                <label for="lang-zh">🇨🇳 中文</label>
-              </div>
-              <div class="permission-item">
-                <input type="checkbox" id="lang-ja" value="ja">
-                <label for="lang-ja">🇯🇵 日本語</label>
-              </div>
-              <div class="permission-item">
-                <input type="checkbox" id="lang-es" value="es">
-                <label for="lang-es">🇪🇸 Español</label>
-              </div>
-              <div class="permission-item">
-                <input type="checkbox" id="lang-fr" value="fr">
-                <label for="lang-fr">🇫🇷 Français</label>
-              </div>
-              <div class="permission-item">
-                <input type="checkbox" id="lang-ru" value="ru">
-                <label for="lang-ru">🇷🇺 Русский</label>
-              </div>
-              <div class="permission-item">
-                <input type="checkbox" id="lang-ar" value="ar">
-                <label for="lang-ar">🇸🇦 عربي</label>
-              </div>
-            </div>
-          </div>
+
 
           <button type="submit" class="submit-button">회원가입</button>
         </form>
@@ -462,7 +421,6 @@
       e.preventDefault();
       
       const username = document.getElementById('register-username').value.trim();
-      const name = document.getElementById('register-name').value.trim();
       const email = document.getElementById('register-email').value.trim();
       const password = document.getElementById('register-password').value;
       const passwordConfirm = document.getElementById('register-password-confirm').value;
@@ -472,12 +430,6 @@
         showError('register-error', '비밀번호가 일치하지 않습니다.');
         return;
       }
-      
-      // Get selected language permissions
-      const permissions = ['ko']; // Korean is always included
-      document.querySelectorAll('.permission-item input[type="checkbox"]:checked:not(:disabled)').forEach(cb => {
-        if (cb.value !== 'ko') permissions.push(cb.value);
-      });
       
       const users = JSON.parse(localStorage.getItem('users') || '[]');
       
@@ -493,14 +445,15 @@
         return;
       }
       
-      // Create new user
+      // Create new user with default permissions (only Korean)
+      // Admin will assign additional language permissions
       users.push({
         username,
-        name,
+        name: username, // Use username as name
         email,
         password,
         role: 'user',
-        permissions,
+        permissions: ['ko'], // Default: Korean only
         createdAt: new Date().toISOString()
       });
       
