@@ -807,6 +807,29 @@
          ======================================== */
       
       /* 태블릿 (769px ~ 1024px) */
+      
+      /* ===============================
+         Mobile Responsive (maintain button sizes)
+         =============================== */
+      @media screen and (max-width: 768px) {
+        #language-selector {
+          padding: 10px 16px !important;
+        }
+        
+        .text-btn,
+        #user-info .logout-btn {
+          padding: var(--header-btn-py) var(--header-btn-px) !important;
+          height: var(--header-btn-h) !important;
+          min-height: var(--header-btn-h) !important;
+          font-size: 12px !important; /* Slightly smaller font on mobile */
+        }
+        
+        #user-info .user-name {
+          font-size: 12px !important;
+        }
+      }
+
+
       @media screen and (min-width: 769px) and (max-width: 1024px) {
         body {
           padding: 30px 40px;
