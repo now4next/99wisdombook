@@ -40,7 +40,7 @@
     })();
     
     // Step 2: Cache busting (only if auth passed)
-    const currentVersion = '1770987427';
+    const currentVersion = '1770988330';
     const urlVersion = new URLSearchParams(window.location.search).get('v');
     if (urlVersion !== currentVersion) {
       console.log('[ADMIN HEAD] Updating version to', currentVersion);
