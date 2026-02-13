@@ -3,7 +3,7 @@
   <!-- 🔴 초강력 캐시 무효화 -->
   <script>
     (function() {
-      const currentVersion = '1770545810';
+      const currentVersion = '1770958256';
       
       // 1. Service Worker 무효화
       if ('serviceWorker' in navigator) {
@@ -52,7 +52,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="version" content="1770545810">
+  <meta name="version" content="1770958256">
   <title>살아본 뒤에야 비로소 읽히는 문장들</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -168,34 +168,38 @@
 
       /* User Info Section */
       #user-info {
-        display: flex;
-        align-items: center;
-        gap: 15px;
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        flex-wrap: nowrap !important;
       }
 
       #user-info .user-name {
-        color: #333 !important;
-        font-weight: 500 !important;
-        line-height: 34px !important;
         display: inline-flex !important;
         align-items: center !important;
-        height: 34px !important;
+        white-space: nowrap !important;
+        line-height: 1 !important;
+        color: #333 !important;
+        font-weight: 500 !important;
         margin: 0 !important;
         padding: 0 !important;
       }
 
       #user-info .logout-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
         background: var(--color-accent) !important;
         color: white !important;
         border: none !important;
-        padding: 6px 16px !important;
+        padding: 8px 16px !important;
         border-radius: 4px !important;
         cursor: pointer !important;
         font-size: 13px !important;
         font-family: var(--font-sans) !important;
         transition: background 0.3s !important;
-        height: 34px !important;
         line-height: 1 !important;
+        white-space: nowrap !important;
       }
 
       #user-info .logout-btn:hover {
@@ -706,8 +710,11 @@
         }
         
         #user-info {
-          font-size: 13px;
-        }
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        flex-wrap: nowrap !important;
+      }
         
         
         
@@ -848,8 +855,11 @@
         #floating-toc-panel,
         #toc-overlay,
         #user-info {
-          display: none !important;
-        }
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        flex-wrap: nowrap !important;
+      }
         
         body {
           padding: 20px;
@@ -1110,8 +1120,11 @@
         }
         
         #user-info {
-          display: none;  /* 모바일에서 사용자 정보 숨김 */
-        }
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        flex-wrap: nowrap !important;
+      }
         
         .header-icons {
           gap: 8px;
@@ -1252,14 +1265,14 @@
 
     
     <div id="language-selector">
-      <div id="user-info" style="display: flex; align-items: center; gap: 15px;">
-        <span class="user-name" id="userName" style="color: #333; font-weight: 500; line-height: 32px; display: flex; align-items: center;"></span>
+      <div id="user-info">
+        <span class="user-name" id="userName"></span>
         <button class="logout-btn" onclick="logout()">로그아웃</button>
       </div>
       
       <!-- 언어 선택 드롭다운 -->
       <div class="header-icons">
-        <div class="language-dropdown" style="position: relative;">
+        <div class="language-dropdown">
           <button class="text-btn language-btn" id="languageBtn" onclick="toggleLanguageMenu(event)" title="언어 선택" aria-label="언어 선택">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
               <circle cx="12" cy="12" r="10"></circle>
@@ -1271,7 +1284,7 @@
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
           </button>
-          <div class="language-menu" id="languageMenu" style="display: none; position: absolute; top: 40px; right: 0; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 180px; z-index: 100000; padding: 8px 0;">
+          <div class="language-menu" id="languageMenu">
             <a href="javascript:void(0)" onclick="selectLanguage('ko')" data-lang="ko">🇰🇷 한국어</a>
             <a href="javascript:void(0)" onclick="selectLanguage('en')" data-lang="en">🇺🇸 English</a>
             <a href="javascript:void(0)" onclick="selectLanguage('zh-CN')" data-lang="zh-CN">🇨🇳 中文</a>
@@ -1781,7 +1794,7 @@
       // 사용자 정보 표시
       
     // 언어 메뉴 토글
-    function toggleLanguageMenu(event) {
+    window.toggleLanguageMenu = function(event) {
       console.log('🔘 toggleLanguageMenu 호출됨');
       
       if (event) {
@@ -1836,7 +1849,7 @@
     }
     
     // 언어 선택 및 번역
-    function selectLanguage(lang) {
+    window.selectLanguage = function(lang) {
       console.log('🌐 언어 선택:', lang);
       
       // 활성 언어 표시
@@ -1852,8 +1865,9 @@
       // 메뉴 닫기
       const menu = document.getElementById('languageMenu');
       const btn = document.getElementById('languageBtn');
-      menu.style.display = 'none';
+      menu.classList.remove('show');
       btn.classList.remove('active');
+      document.removeEventListener('click', closeLanguageMenu);
       
       // Google Translate 호출
       if (window.switchLanguage) {
