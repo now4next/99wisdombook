@@ -7,7 +7,7 @@
   
   <!-- Cache busting script -->
   <script>
-    const currentVersion = '1770984000';
+    const currentVersion = '1770984130';
     const urlVersion = new URLSearchParams(window.location.search).get('v');
     if (urlVersion !== currentVersion) {
       window.location.href = window.location.pathname + '?v=' + currentVersion;
@@ -586,49 +586,65 @@
       ar: 'عربي'
     };
 
-    // Check admin authentication - FIXED
+    // Check admin authentication - COMPLETELY FIXED
     function checkAuth() {
       const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
       
-      console.log('Admin page - Current user:', currentUser);
+      console.log('[ADMIN] Checking authentication...');
+      console.log('[ADMIN] Current user:', currentUser);
       
       if (!currentUser) {
-        console.log('No user logged in, redirecting to index');
-        window.location.href = 'index.html';
+        console.log('[ADMIN] No user logged in, redirecting to index');
+        window.location.replace('index.html');
         return null;
       }
       
       const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const user = users.find(u => u.username === currentUser);
+      console.log('[ADMIN] Total users in database:', users.length);
       
-      console.log('Admin page - Found user:', user);
+      const user = users.find(u => u.username === currentUser);
+      console.log('[ADMIN] Found user:', user);
       
       if (!user) {
-        console.log('User not found in database');
+        console.log('[ADMIN] ERROR: User not found in database');
         alert('사용자 정보를 찾을 수 없습니다.');
         localStorage.removeItem('currentUser');
         sessionStorage.removeItem('currentUser');
-        window.location.href = 'index.html';
+        window.location.replace('index.html');
         return null;
       }
+      
+      console.log('[ADMIN] User role:', user.role);
       
       if (user.role !== 'admin') {
-        console.log('User is not admin, role:', user.role);
+        console.log('[ADMIN] ERROR: User is not admin');
         alert('관리자 권한이 필요합니다.');
-        window.location.href = 'book.html';
+        window.location.replace('book.html');
         return null;
       }
       
-      console.log('Admin authenticated successfully');
+      console.log('[ADMIN] ✓ Admin authenticated successfully');
+      console.log('[ADMIN] Admin user:', user.username, user.email);
       return user;
     }
 
     // Load users and display
     function loadUsers() {
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      console.log('[ADMIN] Loading users...');
+      
+      const usersStr = localStorage.getItem('users');
+      console.log('[ADMIN] Users localStorage raw:', usersStr);
+      
+      const users = JSON.parse(usersStr || '[]');
+      console.log('[ADMIN] Parsed users:', users);
+      console.log('[ADMIN] Total users to display:', users.length);
+      
       const tbody = document.getElementById('user-table-body');
       
-      console.log('Loading users:', users);
+      if (!tbody) {
+        console.error('[ADMIN] ERROR: table body element not found!');
+        return;
+      }
       
       // Update stats
       document.getElementById('total-users').textContent = users.length;
@@ -644,7 +660,11 @@
       }
       
       // Add users to table
+      console.log('[ADMIN] Creating table rows for', users.length, 'users');
+      
       users.forEach((user, index) => {
+        console.log('[ADMIN] Processing user', index + 1, ':', user.username, user.email);
+        
         const tr = document.createElement('tr');
         
         // Username
@@ -701,6 +721,8 @@
         
         tbody.appendChild(tr);
       });
+      
+      console.log('[ADMIN] ✓ Table loaded with', users.length, 'users');
     }
 
     // Open edit modal
@@ -797,11 +819,26 @@
     });
 
     // Initialize on page load
-    console.log('Admin page loaded');
+    console.log('[ADMIN] ========================================');
+    console.log('[ADMIN] Admin page loading...');
+    console.log('[ADMIN] ========================================');
+    
+    // Stop any potential redirect
+    window.history.pushState(null, '', window.location.href);
+    
+    // Authenticate
     const admin = checkAuth();
+    
     if (admin) {
-      console.log('Admin authenticated, loading users');
-      loadUsers();
+      console.log('[ADMIN] ✓ Authentication successful');
+      console.log('[ADMIN] Loading user data...');
+      
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        loadUsers();
+      }, 100);
+    } else {
+      console.log('[ADMIN] ✗ Authentication failed');
     }
 
     // Close modal on outside click
