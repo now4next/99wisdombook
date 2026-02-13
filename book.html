@@ -108,7 +108,7 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     (function() {
-      const currentVersion = '1770987181';
+      const currentVersion = '1770987411';
       
       // 1. Service Worker 무효화
       if ('serviceWorker' in navigator) {
@@ -1363,7 +1363,75 @@
 
       </style>
 
-</head>
+
+    <script>
+    // Global UI functions
+    window.logout = function() {
+      if (confirm('로그아웃 하시겠습니까?')) {
+        localStorage.removeItem('currentUser');
+        sessionStorage.removeItem('currentUser');
+        window.location.href = 'index.html';
+      }
+    };
+
+    window.toggleLanguageMenu = function(event) {
+      event.stopPropagation();
+      const menu = document.getElementById('languageMenu');
+      if (menu) {
+        menu.classList.toggle('show');
+      }
+    };
+
+    window.toggleTOC = function() {
+      const panel = document.getElementById('floating-toc-panel');
+      const overlay = document.getElementById('toc-overlay');
+      if (panel && overlay) {
+        panel.classList.toggle('show');
+        overlay.classList.toggle('show');
+      }
+    };
+
+    window.closeTOC = function() {
+      const panel = document.getElementById('floating-toc-panel');
+      const overlay = document.getElementById('toc-overlay');
+      if (panel && overlay) {
+        panel.classList.remove('show');
+        overlay.classList.remove('show');
+      }
+    };
+
+    window.navigateToSection = function(sectionId) {
+      window.closeTOC();
+      const element = document.getElementById(sectionId);
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 300);
+      }
+    };
+
+    // Close language menu when clicking outside
+    document.addEventListener('click', function(event) {
+      const languageBtn = document.getElementById('languageBtn');
+      const languageMenu = document.getElementById('languageMenu');
+      
+      if (languageMenu && languageBtn) {
+        if (!languageBtn.contains(event.target) && !languageMenu.contains(event.target)) {
+          languageMenu.classList.remove('show');
+        }
+      }
+    });
+
+    // Close TOC when clicking overlay
+    document.addEventListener('DOMContentLoaded', function() {
+      const overlay = document.getElementById('toc-overlay');
+      if (overlay) {
+        overlay.addEventListener('click', window.closeTOC);
+      }
+    });
+    </script>
+
+  </head>
   <body>
     <!-- Language Selector Menu (Fixed Top) -->
     
