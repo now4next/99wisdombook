@@ -1487,38 +1487,140 @@
     <!-- Floating TOC Panel -->
     <div id="floating-toc-panel">
       <button class="toc-close" onclick="toggleTOC()">×</button>
-      <h3>CONTENTS</h3>
-      <div class="toc-content"><div class="toc-section">
-        <a href="#opening" class="toc-item" onclick="navigateToSection('opening')">여는 말</a>
-      </div>
+      <h3 style="margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px;">목차</h3>
+      <ul style="list-style: none; padding: 0;">
+        <li><a href="#opening" onclick="navigateToSection('opening')">여는 말</a></li>
 
-      <div class="toc-section">
-        <div class="toc-section-title">제1부. 경제와 거래의 법칙</div>
-        <a href="#chapter-1" class="toc-item" onclick="navigateToSection('chapter-1')">1. 세상에 공짜는 없다</a>
-        <a href="#chapter-2" class="toc-item" onclick="navigateToSection('chapter-2')">2. 하이 리스크, 하이 리턴</a>
-        <a href="#chapter-3" class="toc-item" onclick="navigateToSection('chapter-3')">3. 계란을 한 바구니에 담지 마라</a>
-        <a href="#chapter-4" class="toc-item" onclick="navigateToSection('chapter-4')">4. 수요가 있으면 공급이 있다</a>
-        <a href="#chapter-5" class="toc-item" onclick="navigateToSection('chapter-5')">5. 싼 게 비지떡이다</a>
-        <a href="#chapter-6" class="toc-item" onclick="navigateToSection('chapter-6')">6. 돈은 거짓말을 하지 않는다</a>
-        <a href="#chapter-7" class="toc-item" onclick="navigateToSection('chapter-7')">7. 악화가 양화를 구축한다</a>
-        <a href="#chapter-8" class="toc-item" onclick="navigateToSection('chapter-8')">8. 늦게 배운 도둑질이 날 새는 줄 모른다</a>
-        <a href="#chapter-9" class="toc-item" onclick="navigateToSection('chapter-9')">9. 남의 돈 벌기가 제일 어렵다</a>
-        <a href="#chapter-10" class="toc-item" onclick="navigateToSection('chapter-10')">10. 재주는 곰이 부리고 돈은 왕서방이 받는다</a>
-        <a href="#chapter-11" class="toc-item" onclick="navigateToSection('chapter-11')">11. 밑 빠진 독에 물 붓기</a>
-      </div>
+        <!-- Part 1 -->
+        <li style="margin-top: 15px; font-weight: bold; color: #666; font-size: 0.9em;">경제와 거래의 법칙: 세상에 공짜는 없다</li>
+        <li><a href="#chapter-1" onclick="navigateToSection('chapter-1')">1. 세상에 공짜는 없다</a></li>
+        <li><a href="#chapter-2" onclick="navigateToSection('chapter-2')">2. 하이 리스크, 하이 리턴</a></li>
+        <li><a href="#chapter-3" onclick="navigateToSection('chapter-3')">3. 계란을 한 바구니에 담지 마라</a></li>
+        <li><a href="#chapter-4" onclick="navigateToSection('chapter-4')">4. 수요가 있으면 공급이 있다</a></li>
+        <li><a href="#chapter-5" onclick="navigateToSection('chapter-5')">5. 싼 게 비지떡이다</a></li>
+        <li><a href="#chapter-6" onclick="navigateToSection('chapter-6')">6. 돈은 거짓말을 하지 않는다</a></li>
+        <li><a href="#chapter-7" onclick="navigateToSection('chapter-7')">7. 악화가 양화를 구축한다</a></li>
+        <li><a href="#chapter-8" onclick="navigateToSection('chapter-8')">8. 늦게 배운 도둑질이 날 새는 줄 모른다</a></li>
+        <li><a href="#chapter-9" onclick="navigateToSection('chapter-9')">9. 남의 돈 벌기가 제일 어렵다</a></li>
+        <li><a href="#chapter-10" onclick="navigateToSection('chapter-10')">10. 재주는 곰이 부리고 돈은 왕서방이 받는다</a></li>
+        <li><a href="#chapter-11" onclick="navigateToSection('chapter-11')">11. 밑 빠진 독에 물 붓기</a></li>
 
-      <div class="toc-section">
-        <div class="toc-section-title">제2부 ~ 제9부</div>
-        <a href="#chapter-12" class="toc-item" onclick="navigateToSection('chapter-12')">12. 아니 땐 굴뚝에 연기 나랴</a>
-        <div style="text-align: center; color: #999; padding: 10px; font-size: 0.85em;">(제13~99장 생략)</div>
-      </div>
+        <!-- Part 2 -->
+        <li style="margin-top: 15px; font-weight: bold; color: #666; font-size: 0.9em;">인과와 자연의 법칙: 아니 땐 굴뚝에 연기 나랴</li>
+        <li><a href="#chapter-12" onclick="navigateToSection('chapter-12')">12. 아니 땐 굴뚝에 연기 나랴</a></li>
+        <li><a href="#chapter-13" onclick="navigateToSection('chapter-13')">13. 뿌린 대로 거둔다</a></li>
+        <li><a href="#chapter-14" onclick="navigateToSection('chapter-14')">14. 고인 물은 썩는다</a></li>
+        <li><a href="#chapter-15" onclick="navigateToSection('chapter-15')">15. 오르막이 있으면 내리막이 있다</a></li>
+        <li><a href="#chapter-16" onclick="navigateToSection('chapter-16')">16. 빈 수레가 요란하다</a></li>
+        <li><a href="#chapter-17" onclick="navigateToSection('chapter-17')">17. 윗물이 맑아야 아랫물이 맑다</a></li>
+        <li><a href="#chapter-18" onclick="navigateToSection('chapter-18')">18. 낙숫물이 바위를 뚫는다</a></li>
+        <li><a href="#chapter-19" onclick="navigateToSection('chapter-19')">19. 모든 것은 흙으로 돌아간다</a></li>
+        <li><a href="#chapter-20" onclick="navigateToSection('chapter-20')">20. 해는 반드시 동쪽에서 뜬다</a></li>
+        <li><a href="#chapter-21" onclick="navigateToSection('chapter-21')">21. 바람이 없으면 파도도 없다</a></li>
+        <li><a href="#chapter-22" onclick="navigateToSection('chapter-22')">22. 피는 물보다 진하다</a></li>
 
-      <div class="toc-section">
-        <a href="#chapter-100" class="toc-item" onclick="navigateToSection('chapter-100')">100. 당신만의 지혜</a>
-        <a href="#closing" class="toc-item" onclick="navigateToSection('closing')">맺음 말</a>
-      </div>
+        <!-- Part 3 -->
+        <li style="margin-top: 15px; font-weight: bold; color: #666; font-size: 0.9em;">시간과 변화의 법칙: 이 또한 지나가리라</li>
+        <li><a href="#chapter-23" onclick="navigateToSection('chapter-23')">23. 이 또한 지나가리라</a></li>
+        <li><a href="#chapter-24" onclick="navigateToSection('chapter-24')">24. 로마는 하루아침에 이루어지지 않았다</a></li>
+        <li><a href="#chapter-25" onclick="navigateToSection('chapter-25')">25. 역사는 반복된다</a></li>
+        <li><a href="#chapter-26" onclick="navigateToSection('chapter-26')">26. 세월 앞에 장사 없다</a></li>
+        <li><a href="#chapter-27" onclick="navigateToSection('chapter-27')">27. 늦었다고 생각할 때가 가장 빠른 때다</a></li>
+        <li><a href="#chapter-28" onclick="navigateToSection('chapter-28')">28. 내일은 내일의 태양이 뜬다</a></li>
+        <li><a href="#chapter-29" onclick="navigateToSection('chapter-29')">29. 십 년이면 강산도 변한다</a></li>
+        <li><a href="#chapter-30" onclick="navigateToSection('chapter-30')">30. 기회는 준비된 자에게 온다</a></li>
+        <li><a href="#chapter-31" onclick="navigateToSection('chapter-31')">31. 쇠뿔도 단김에 빼라</a></li>
+        <li><a href="#chapter-32" onclick="navigateToSection('chapter-32')">32. 과거를 잊은 민족에게 미래는 없다</a></li>
+        <li><a href="#chapter-33" onclick="navigateToSection('chapter-33')">33. 영원한 것은 없다</a></li>
+
+        <!-- Part 4 -->
+        <li style="margin-top: 15px; font-weight: bold; color: #666; font-size: 0.9em;">인간 본성과 심리의 법칙: 열 길 물속은 알아도</li>
+        <li><a href="#chapter-34" onclick="navigateToSection('chapter-34')">34. 열 길 물속은 알아도 한 길 사람 속은 모른다</a></li>
+        <li><a href="#chapter-35" onclick="navigateToSection('chapter-35')">35. 팔은 안으로 굽는다</a></li>
+        <li><a href="#chapter-36" onclick="navigateToSection('chapter-36')">36. 남의 떡이 더 커 보인다</a></li>
+        <li><a href="#chapter-37" onclick="navigateToSection('chapter-37')">37. 등잔 밑이 어둡다</a></li>
+        <li><a href="#chapter-38" onclick="navigateToSection('chapter-38')">38. 제 눈에 안경이다</a></li>
+        <li><a href="#chapter-39" onclick="navigateToSection('chapter-39')">39. 믿는 도끼에 발등 찍힌다</a></li>
+        <li><a href="#chapter-40" onclick="navigateToSection('chapter-40')">40. 개구리 올챙이 적 생각 못 한다</a></li>
+        <li><a href="#chapter-41" onclick="navigateToSection('chapter-41')">41. 세 살 버릇 여든까지 간다</a></li>
+        <li><a href="#chapter-42" onclick="navigateToSection('chapter-42')">42. 호랑이도 제 말 하면 온다</a></li>
+        <li><a href="#chapter-43" onclick="navigateToSection('chapter-43')">43. 똥 묻은 개가 겨 묻은 개 나무란다</a></li>
+        <li><a href="#chapter-44" onclick="navigateToSection('chapter-44')">44. 간에 붙었다 쓸개에 붙었다 한다</a></li>
+
+        <!-- Part 5 -->
+        <li style="margin-top: 15px; font-weight: bold; color: #666; font-size: 0.9em;">관계와 처세의 법칙: 가는 말이 고와야</li>
+        <li><a href="#chapter-45" onclick="navigateToSection('chapter-45')">45. 가는 말이 고와야 오는 말이 곱다</a></li>
+        <li><a href="#chapter-46" onclick="navigateToSection('chapter-46')">46. 이 세상에 비밀은 없다</a></li>
+        <li><a href="#chapter-47" onclick="navigateToSection('chapter-47')">47. 낮말은 새가 듣고 밤말은 쥐가 듣는다</a></li>
+        <li><a href="#chapter-48" onclick="navigateToSection('chapter-48')">48. 발 없는 말이 천 리를 간다</a></li>
+        <li><a href="#chapter-49" onclick="navigateToSection('chapter-49')">49. 사공이 많으면 배가 산으로 간다</a></li>
+        <li><a href="#chapter-50" onclick="navigateToSection('chapter-50')">50. 끼리끼리 논다</a></li>
+        <li><a href="#chapter-51" onclick="navigateToSection('chapter-51')">51. 중이 제 머리 못 깎는다</a></li>
+        <li><a href="#chapter-52" onclick="navigateToSection('chapter-52')">52. 모르는 게 약이다</a></li>
+        <li><a href="#chapter-53" onclick="navigateToSection('chapter-53')">53. 침묵은 금이다</a></li>
+        <li><a href="#chapter-54" onclick="navigateToSection('chapter-54')">54. 웃는 얼굴에 침 뱉으랴</a></li>
+        <li><a href="#chapter-55" onclick="navigateToSection('chapter-55')">55. 친구 따라 강남 간다</a></li>
+
+        <!-- Part 6 -->
+        <li style="margin-top: 15px; font-weight: bold; color: #666; font-size: 0.9em;">실행과 노력의 법칙: 천 리 길도 한 걸음부터</li>
+        <li><a href="#chapter-56" onclick="navigateToSection('chapter-56')">56. 천 리 길도 한 걸음부터</a></li>
+        <li><a href="#chapter-57" onclick="navigateToSection('chapter-57')">57. 티끌 모아 태산</a></li>
+        <li><a href="#chapter-58" onclick="navigateToSection('chapter-58')">58. 구슬이 서 말이라도 꿰어야 보배다</a></li>
+        <li><a href="#chapter-59" onclick="navigateToSection('chapter-59')">59. 실패는 성공의 어머니</a></li>
+        <li><a href="#chapter-60" onclick="navigateToSection('chapter-60')">60. 두드려라, 그러면 열릴 것이다</a></li>
+        <li><a href="#chapter-61" onclick="navigateToSection('chapter-61')">61. 지렁이도 밟으면 꿈틀한다</a></li>
+        <li><a href="#chapter-62" onclick="navigateToSection('chapter-62')">62. 급할수록 돌아가라</a></li>
+        <li><a href="#chapter-63" onclick="navigateToSection('chapter-63')">63. 우물을 파도 한 우물을 파라</a></li>
+        <li><a href="#chapter-64" onclick="navigateToSection('chapter-64')">64. 돌다리도 두들겨 보고 건너라</a></li>
+        <li><a href="#chapter-65" onclick="navigateToSection('chapter-65')">65. 백지장도 맞들면 낫다</a></li>
+        <li><a href="#chapter-66" onclick="navigateToSection('chapter-66')">66. 고생 끝에 낙이 온다</a></li>
+
+        <!-- Part 7 -->
+        <li style="margin-top: 15px; font-weight: bold; color: #666; font-size: 0.9em;">위기와 생존의 법칙: 호랑이 굴에 들어가야</li>
+        <li><a href="#chapter-67" onclick="navigateToSection('chapter-67')">67. 호랑이 굴에 들어가야 호랑이를 잡는다</a></li>
+        <li><a href="#chapter-68" onclick="navigateToSection('chapter-68')">68. 뛰는 놈 위에 나는 놈 있다</a></li>
+        <li><a href="#chapter-69" onclick="navigateToSection('chapter-69')">69. 소 잃고 외양간 고친다</a></li>
+        <li><a href="#chapter-70" onclick="navigateToSection('chapter-70')">70. 쥐구멍에도 볕 들 날 있다</a></li>
+        <li><a href="#chapter-71" onclick="navigateToSection('chapter-71')">71. 하늘이 무너져도 솟아날 구멍이 있다</a></li>
+        <li><a href="#chapter-72" onclick="navigateToSection('chapter-72')">72. 약육강식</a></li>
+        <li><a href="#chapter-73" onclick="navigateToSection('chapter-73')">73. 뭉치면 살고 흩어지면 죽는다</a></li>
+        <li><a href="#chapter-74" onclick="navigateToSection('chapter-74')">74. 적의 적은 나의 친구다</a></li>
+        <li><a href="#chapter-75" onclick="navigateToSection('chapter-75')">75. 강한 자가 살아남는 것이 아니라, 살아남는 자가 강한 것이다</a></li>
+        <li><a href="#chapter-76" onclick="navigateToSection('chapter-76')">76. 병 주고 약 준다</a></li>
+        <li><a href="#chapter-77" onclick="navigateToSection('chapter-77')">77. 도둑이 제 발 저린다</a></li>
+
+        <!-- Part 8 -->
+        <li style="margin-top: 15px; font-weight: bold; color: #666; font-size: 0.9em;">지혜와 통찰의 법칙: 아는 것이 힘이다</li>
+        <li><a href="#chapter-78" onclick="navigateToSection('chapter-78')">78. 아는 것이 힘이다</a></li>
+        <li><a href="#chapter-79" onclick="navigateToSection('chapter-79')">79. 무식이 용감이다</a></li>
+        <li><a href="#chapter-80" onclick="navigateToSection('chapter-80')">80. 벼는 익을수록 고개를 숙인다</a></li>
+        <li><a href="#chapter-81" onclick="navigateToSection('chapter-81')">81. 등잔 밑이 어둡다</a></li>
+        <li><a href="#chapter-82" onclick="navigateToSection('chapter-82')">82. 시작이 반이다</a></li>
+        <li><a href="#chapter-83" onclick="navigateToSection('chapter-83')">83. 개천에서 용 난다</a></li>
+        <li><a href="#chapter-84" onclick="navigateToSection('chapter-84')">84. 하나를 보면 열을 안다</a></li>
+        <li><a href="#chapter-85" onclick="navigateToSection('chapter-85')">85. 독 안에 든 쥐</a></li>
+        <li><a href="#chapter-86" onclick="navigateToSection('chapter-86')">86. 낫 놓고 기역 자도 모른다</a></li>
+        <li><a href="#chapter-87" onclick="navigateToSection('chapter-87')">87. 구관이 명관이다</a></li>
+        <li><a href="#chapter-88" onclick="navigateToSection('chapter-88')">88. 겉 다르고 속 다르다</a></li>
+
+        <!-- Part 9 -->
+        <li style="margin-top: 15px; font-weight: bold; color: #666; font-size: 0.9em;">운명과 수용의 법칙: 될 놈은 된다</li>
+        <li><a href="#chapter-89" onclick="navigateToSection('chapter-89')">89. 될 놈은 된다</a></li>
+        <li><a href="#chapter-90" onclick="navigateToSection('chapter-90')">90. 사람 일은 모른다</a></li>
+        <li><a href="#chapter-91" onclick="navigateToSection('chapter-91')">91. 죽은 자는 말이 없다</a></li>
+        <li><a href="#chapter-92" onclick="navigateToSection('chapter-92')">92. 가지 많은 나무에 바람 잘 날 없다</a></li>
+        <li><a href="#chapter-93" onclick="navigateToSection('chapter-93')">93. 미운 놈 떡 하나 더 준다</a></li>
+        <li><a href="#chapter-94" onclick="navigateToSection('chapter-94')">94. 목마른 사람이 우물 판다</a></li>
+        <li><a href="#chapter-95" onclick="navigateToSection('chapter-95')">95. 산 입에 거미줄 치랴</a></li>
+        <li><a href="#chapter-96" onclick="navigateToSection('chapter-96')">96. 매도 먼저 맞는 게 낫다</a></li>
+        <li><a href="#chapter-97" onclick="navigateToSection('chapter-97')">97. 무소식이 희소식이다</a></li>
+        <li><a href="#chapter-98" onclick="navigateToSection('chapter-98')">98. 공수래공수거</a></li>
+        <li><a href="#chapter-99" onclick="navigateToSection('chapter-99')">99. 진리는 단순하다</a></li>
+
+        <li style="margin-top: 15px;"><a href="#chapter-100" onclick="navigateToSection('chapter-100')">100. 오롯한 당신만의 삶의 경험과 지혜의 말</a></li>
+        <li><a href="#closing" onclick="navigateToSection('closing')">맺음말</a></li>
+      </ul>
     </div>
-      </div>
     <!-- TOC Overlay -->
     <div id="toc-overlay" onclick="toggleTOC()"></div>
 
