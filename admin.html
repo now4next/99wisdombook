@@ -4,6 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>관리자 페이지 - 회원 관리</title>
+  
+  <!-- Cache busting script -->
+  <script>
+    const currentVersion = '1770984000';
+    const urlVersion = new URLSearchParams(window.location.search).get('v');
+    if (urlVersion !== currentVersion) {
+      window.location.href = window.location.pathname + '?v=' + currentVersion;
+    }
+  </script>
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -246,7 +256,7 @@
       background: white;
       border-radius: 16px;
       padding: 32px;
-      max-width: 500px;
+      max-width: 600px;
       width: 90%;
       max-height: 80vh;
       overflow-y: auto;
@@ -295,6 +305,58 @@
       font-weight: 600;
       margin-bottom: 16px;
       color: var(--color-text);
+    }
+
+    /* Role Selection */
+    .role-section {
+      background: var(--color-bg);
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .role-section h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--color-text);
+    }
+
+    .role-options {
+      display: flex;
+      gap: 16px;
+    }
+
+    .role-option {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      background: white;
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .role-option:hover {
+      border-color: var(--color-primary);
+      background: #fafafa;
+    }
+
+    .role-option input[type="radio"] {
+      width: 18px;
+      height: 18px;
+      margin-right: 10px;
+      cursor: pointer;
+      accent-color: var(--color-primary);
+    }
+
+    .role-option label {
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      user-select: none;
     }
 
     .permission-grid {
@@ -385,6 +447,10 @@
       .permission-grid {
         grid-template-columns: 1fr;
       }
+
+      .role-options {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
@@ -445,6 +511,23 @@
         <div class="user-info" id="modal-user-info">
           <!-- User info will be loaded here -->
         </div>
+        
+        <!-- Role Selection -->
+        <div class="role-section">
+          <h3>권한 설정</h3>
+          <div class="role-options">
+            <div class="role-option">
+              <input type="radio" id="role-user" name="user-role" value="user">
+              <label for="role-user">일반 회원</label>
+            </div>
+            <div class="role-option">
+              <input type="radio" id="role-admin" name="user-role" value="admin">
+              <label for="role-admin">관리자</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Language Permissions -->
         <div class="permission-section">
           <h3>언어 권한 설정</h3>
           <div class="permission-grid">
@@ -503,10 +586,14 @@
       ar: 'عربي'
     };
 
-    // Check admin authentication
+    // Check admin authentication - FIXED
     function checkAuth() {
       const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+      
+      console.log('Admin page - Current user:', currentUser);
+      
       if (!currentUser) {
+        console.log('No user logged in, redirecting to index');
         window.location.href = 'index.html';
         return null;
       }
@@ -514,12 +601,25 @@
       const users = JSON.parse(localStorage.getItem('users') || '[]');
       const user = users.find(u => u.username === currentUser);
       
-      if (!user || user.role !== 'admin') {
+      console.log('Admin page - Found user:', user);
+      
+      if (!user) {
+        console.log('User not found in database');
+        alert('사용자 정보를 찾을 수 없습니다.');
+        localStorage.removeItem('currentUser');
+        sessionStorage.removeItem('currentUser');
+        window.location.href = 'index.html';
+        return null;
+      }
+      
+      if (user.role !== 'admin') {
+        console.log('User is not admin, role:', user.role);
         alert('관리자 권한이 필요합니다.');
         window.location.href = 'book.html';
         return null;
       }
       
+      console.log('Admin authenticated successfully');
       return user;
     }
 
@@ -527,6 +627,8 @@
     function loadUsers() {
       const users = JSON.parse(localStorage.getItem('users') || '[]');
       const tbody = document.getElementById('user-table-body');
+      
+      console.log('Loading users:', users);
       
       // Update stats
       document.getElementById('total-users').textContent = users.length;
@@ -605,13 +707,20 @@
     function openEditModal(user) {
       currentEditUser = user;
       
+      console.log('Opening edit modal for user:', user);
+      
       // Display user info
       const userInfo = document.getElementById('modal-user-info');
       userInfo.innerHTML = `
         <p><strong>사용자명:</strong> ${user.username || user.name}</p>
         <p><strong>이메일:</strong> ${user.email}</p>
-        <p><strong>역할:</strong> ${user.role === 'admin' ? '관리자' : '일반 회원'}</p>
       `;
+      
+      // Set current role
+      const roleRadio = document.getElementById(`role-${user.role}`);
+      if (roleRadio) {
+        roleRadio.checked = true;
+      }
       
       // Set current permissions
       ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar'].forEach(lang => {
@@ -638,6 +747,12 @@
       
       if (userIndex === -1) return;
       
+      // Get selected role
+      const selectedRole = document.querySelector('input[name="user-role"]:checked');
+      if (selectedRole) {
+        users[userIndex].role = selectedRole.value;
+      }
+      
       // Get selected permissions
       const permissions = [];
       ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar'].forEach(lang => {
@@ -649,7 +764,15 @@
       
       // Update user
       users[userIndex].permissions = permissions;
+      
+      // If user is admin, give all permissions
+      if (users[userIndex].role === 'admin') {
+        users[userIndex].permissions = ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar'];
+      }
+      
       localStorage.setItem('users', JSON.stringify(users));
+      
+      console.log('Updated user:', users[userIndex]);
       
       // Reload table
       loadUsers();
@@ -667,9 +790,17 @@
       }
     }
 
-    // Initialize
+    // Prevent navigation away
+    window.addEventListener('beforeunload', function(e) {
+      // Allow navigation
+      return undefined;
+    });
+
+    // Initialize on page load
+    console.log('Admin page loaded');
     const admin = checkAuth();
     if (admin) {
+      console.log('Admin authenticated, loading users');
       loadUsers();
     }
 
