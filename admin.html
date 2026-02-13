@@ -5,11 +5,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>관리자 페이지 - 회원 관리</title>
   
-  <!-- Cache busting script -->
+  <!-- CRITICAL: Authentication check MUST come first -->
   <script>
-    const currentVersion = '1770984643';
+    // Step 1: Check authentication BEFORE anything else
+    (function() {
+      console.log('[ADMIN HEAD] Starting early authentication check...');
+      
+      const currentUserStr = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+      console.log('[ADMIN HEAD] currentUser:', currentUserStr);
+      
+      if (!currentUserStr) {
+        console.log('[ADMIN HEAD] ❌ No user logged in, redirecting to index');
+        window.location.replace('index.html');
+        return;
+      }
+      
+      let currentUser;
+      try {
+        currentUser = JSON.parse(currentUserStr);
+        console.log('[ADMIN HEAD] Parsed user:', currentUser.username, 'role:', currentUser.role);
+      } catch (e) {
+        console.error('[ADMIN HEAD] ❌ JSON parse error');
+        window.location.replace('index.html');
+        return;
+      }
+      
+      if (currentUser.role !== 'admin') {
+        console.log('[ADMIN HEAD] ❌ Not admin, redirecting to book');
+        window.location.replace('book.html');
+        return;
+      }
+      
+      console.log('[ADMIN HEAD] ✅ Admin confirmed, proceeding with page load');
+    })();
+    
+    // Step 2: Cache busting (only if auth passed)
+    const currentVersion = '1770984890';
     const urlVersion = new URLSearchParams(window.location.search).get('v');
     if (urlVersion !== currentVersion) {
+      console.log('[ADMIN HEAD] Updating version to', currentVersion);
       window.location.href = window.location.pathname + '?v=' + currentVersion;
     }
   </script>
