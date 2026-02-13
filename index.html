@@ -1,1091 +1,541 @@
 <!DOCTYPE html>
-<html lang="ko" data-theme="light" style="height: 100%;"><head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>살아본 뒤에야 비로소 읽히는 문장들</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&amp;family=Noto+Sans+KR:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
-    <style>
-      :root {
-        --font-main: 'Nanum Myeongjo', serif;
-        --font-sans: 'Noto Sans KR', sans-serif;
-        --color-text: #1a1a1a;
-        --color-heading: #000000;
-        --color-accent: #5d4037;
-        --color-link: #3d5afe;
-        --page-width: 880px;
-      }
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>살아본 뒤에야 비로소 읽히는 문장들 - 로그인</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-      body {
-        max-width: var(--page-width);
-        margin: 0 auto;
-        padding: 40px 80px;
-        padding-top: 80px; /* Space for fixed language menu */
-        color: var(--color-text);
-        font-family: var(--font-main);
-        line-height: 1.8;
-        font-size: 16px;
-        background-color: #ffffff;
-        word-break: keep-all;
-        text-align: justify;
-        position: relative;
-        box-sizing: border-box;
-      }
+    :root {
+      --font-main: 'Nanum Myeongjo', serif;
+      --font-sans: 'Noto Sans KR', sans-serif;
+      --color-primary: #5d4037;
+      --color-primary-dark: #4a332c;
+      --color-accent: #8d6e63;
+      --color-bg: #f5f5f5;
+      --color-text: #1a1a1a;
+    }
 
-      /* Typography */
-      h1,
-      h2,
-      h3,
-      h4,
-      h5,
-      h6 {
-        font-family: var(--font-sans);
-        color: var(--color-heading);
-        margin-top: 2em;
-        margin-bottom: 1em;
-        font-weight: 700;
-      }
+    body {
+      font-family: var(--font-sans);
+      background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
 
-      h1 {
-        font-size: 2.4em;
-        text-align: center;
-        margin-bottom: 0.5em;
-        line-height: 1.2;
-      }
-      h2 {
-        font-size: 1.8em;
-        border-bottom: 2px solid var(--color-accent);
-        padding-bottom: 0.5em;
-        margin-top: 3em;
-      }
-      h3 {
-        font-size: 1.4em;
-        margin-top: 2.5em;
-        color: var(--color-accent);
-      }
-      h4 {
-        font-size: 1.2em;
-        margin-top: 1.5em;
-        margin-bottom: 0.8em;
-        color: #333;
-      }
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      max-width: 450px;
+      width: 100%;
+    }
 
-      p {
-        margin-bottom: 1.2em;
-      }
+    .header {
+      background: var(--color-primary);
+      color: white;
+      padding: 40px 30px;
+      text-align: center;
+    }
 
-      a {
-        text-decoration: none;
-        color: var(--color-text);
-        transition: color 0.2s;
-      }
-      a:hover {
-        color: var(--color-link);
-        text-decoration: underline;
-      }
+    .header h1 {
+      font-family: var(--font-main);
+      font-size: 1.8em;
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
 
-      /* UN Style Language Selector */
-      #language-selector {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        background-color: #f8f8f8;
-        border-bottom: 1px solid #e0e0e0;
-        padding: 10px 40px;
-        z-index: 9999;
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        font-family: var(--font-sans);
-        font-size: 13px;
-        height: 45px;
-        box-sizing: border-box;
-      }
+    .header p {
+      font-size: 0.9em;
+      opacity: 0.9;
+    }
 
-      #language-selector a {
-        color: #333;
-        text-decoration: none;
-        padding: 0 8px;
-        cursor: pointer;
-      }
+    .form-container {
+      padding: 40px 30px;
+    }
 
-      #language-selector a:hover {
-        text-decoration: underline;
-      }
+    .tab-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #e0e0e0;
+    }
 
-      #language-selector span.divider {
-        color: #ccc;
-        font-size: 10px;
-      }
+    .tab-button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      background: none;
+      font-size: 1em;
+      font-weight: 500;
+      color: #999;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+    }
 
-      #language-selector a.active {
-        color: #0066cc;
-        font-weight: 700;
-      }
+    .tab-button.active {
+      color: var(--color-primary);
+    }
 
-      /* Hide Google Translate Widget */
-      .goog-te-banner-frame {
-        display: none !important;
-      }
-      .goog-te-gadget {
-        display: none !important;
-      }
-      body {
-        top: 0px !important;
-        position: relative !important;
-      }
-      
-      /* Prevent Google Translate from moving body */
-      body.translated-ltr {
-        top: 0px !important;
-      }
-      
-      /* Hide Google Translate tooltip and popup */
-      #goog-gt-tt, .goog-te-balloon-frame {
-        display: none !important;
-      }
-      
-      .goog-text-highlight {
-        background-color: transparent !important;
-        box-shadow: none !important;
-      }
+    .tab-button.active::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--color-primary);
+    }
 
-      /* Floating TOC Button */
-      #floating-toc-button {
-        position: fixed;
-        top: 60px;
-        right: 30px;
-        width: 56px;
-        height: 56px;
-        background: linear-gradient(135deg, #4a4a4a 0%, #2c2c2c 100%);
-        border-radius: 50%;
-        border: 2px solid #666;
-        cursor: pointer;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-        z-index: 9998;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-      }
+    .form-content {
+      display: none;
+    }
 
-      #floating-toc-button:hover {
-        transform: scale(1.1);
-        background: linear-gradient(135deg, #5a5a5a 0%, #3c3c3c 100%);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-        border-color: #888;
-      }
+    .form-content.active {
+      display: block;
+      animation: fadeIn 0.3s;
+    }
 
-      #floating-toc-button svg {
-        width: 28px;
-        height: 28px;
-        fill: #e0e0e0;
-      }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
-      /* TOC Panel */
-      #floating-toc-panel {
-        position: fixed;
-        top: 60px;
-        right: -400px;
-        width: 380px;
-        max-height: 85vh;
-        background: white;
-        border-radius: 12px 0 0 12px;
-        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
-        z-index: 9997;
-        overflow-y: auto;
-        transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        padding: 20px;
-      }
+    .form-group {
+      margin-bottom: 20px;
+    }
 
-      #floating-toc-panel.active {
-        right: 0;
-      }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--color-text);
+      font-weight: 500;
+      font-size: 0.9em;
+    }
 
-      #floating-toc-panel h3 {
-        margin: 0 0 20px 0;
-        font-size: 1.3em;
-        color: #333;
-        border-bottom: 2px solid #666;
-        padding-bottom: 10px;
-      }
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1em;
+      transition: all 0.3s;
+      font-family: var(--font-sans);
+    }
 
-      .toc-section {
-        margin-bottom: 20px;
-      }
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(93, 64, 55, 0.1);
+    }
 
-      .toc-section-title {
-        font-weight: bold;
-        font-size: 1em;
-        color: #444;
-        margin-bottom: 8px;
-        padding-left: 5px;
-        border-left: 3px solid #666;
-      }
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 15px 0;
+    }
 
-      .toc-item {
-        display: block;
-        padding: 8px 12px;
-        margin: 4px 0;
-        color: #333;
-        text-decoration: none;
-        border-radius: 6px;
-        transition: all 0.2s;
-        font-size: 0.9em;
-      }
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+      cursor: pointer;
+    }
 
-      .toc-item:hover {
-        background: #e8e8e8;
-        color: #000;
-        transform: translateX(5px);
-      }
+    .checkbox-group label {
+      margin: 0;
+      font-weight: normal;
+      cursor: pointer;
+    }
 
-      .toc-close {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        width: 30px;
-        height: 30px;
-        background: #f0f0f0;
-        border: none;
-        border-radius: 50%;
-        cursor: pointer;
-        font-size: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s;
-      }
+    .submit-button {
+      width: 100%;
+      padding: 14px;
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 10px;
+    }
 
-      .toc-close:hover {
-        background: #e0e0e0;
-        transform: rotate(90deg);
-      }
+    .submit-button:hover {
+      background: var(--color-primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(93, 64, 55, 0.3);
+    }
 
-      /* Overlay */
-      #toc-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.3);
-        z-index: 9996;
-        display: none;
-        transition: opacity 0.3s;
-      }
+    .submit-button:active {
+      transform: translateY(0);
+    }
 
-      #toc-overlay.active {
-        display: block;
-      }
+    .error-message {
+      background: #ffebee;
+      color: #c62828;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 0.9em;
+      display: none;
+    }
 
-      /* Page Layouts */
-      .cover-page {
-        height: 800px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-        page-break-after: always;
-        border-bottom: 1px solid #eee;
-        margin-bottom: 40px;
-      }
+    .error-message.show {
+      display: block;
+      animation: shake 0.3s;
+    }
 
-      .cover-title {
-        font-size: 3.5em;
-        font-weight: 700;
-        margin-bottom: 0.2em;
-        font-family: var(--font-sans);
-      }
-      .cover-subtitle {
-        font-size: 1.5em;
-        font-style: italic;
-        margin-bottom: 3em;
-        color: #555;
-      }
-      .cover-author {
-        font-size: 1.4em;
-        font-weight: 500;
-      }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      75% { transform: translateX(10px); }
+    }
 
-      .copyright-page,
-      .dedication-page,
-      .toc-page {
-        page-break-after: always;
-        margin-bottom: 60px;
-      }
+    .success-message {
+      background: #e8f5e9;
+      color: #2e7d32;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 0.9em;
+      display: none;
+    }
 
-      .copyright-page {
-        padding-top: 100px;
-        font-size: 0.9em;
-        color: #444;
-      }
-      .copyright-info {
-        border-top: 1px solid #ddd;
-        padding-top: 2em;
-        margin-top: 2em;
-      }
-      .copyright-row {
-        display: flex;
-        margin-bottom: 0.5em;
-      }
-      .copyright-label {
-        width: 120px;
-        font-weight: bold;
-      }
+    .success-message.show {
+      display: block;
+    }
 
-      .dedication-box {
-        border: 1px solid #ddd;
-        padding: 40px;
-        background-color: #fcfcfc;
-        margin: 100px 0;
-        font-style: italic;
-      }
+    .language-permissions {
+      margin-top: 15px;
+      padding: 15px;
+      background: #f9f9f9;
+      border-radius: 8px;
+    }
 
-      /* TOC Styling */
-      .toc-title {
-        text-align: center;
-        font-size: 2em;
-        margin-bottom: 2em;
-        font-family: var(--font-sans);
-      }
-      .toc-part {
-        margin-top: 1.5em;
-        font-weight: bold;
-        font-size: 1.1em;
-        color: var(--color-accent);
-        border-bottom: 1px solid #eee;
-        padding-bottom: 0.3em;
-        margin-bottom: 0.5em;
-      }
-      .toc-chapter {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 0.5em;
-        font-size: 0.95em;
-        padding-left: 10px;
-      }
-      .toc-chapter a:hover {
-        color: var(--color-link);
-      }
+    .language-permissions h4 {
+      font-size: 0.9em;
+      margin-bottom: 10px;
+      color: var(--color-text);
+    }
 
-      /* Content Elements */
-      .part-header {
-        text-align: center;
-        padding: 80px 0;
-        background-color: #f9f9f9;
-        margin: 4em 0;
-        border-top: 1px solid #eee;
-        border-bottom: 1px solid #eee;
-      }
-      .part-number {
-        font-size: 1.2em;
-        color: #777;
-        display: block;
-        margin-bottom: 0.5em;
-      }
-      .part-title {
-        font-size: 2em;
-        margin: 0;
-        color: var(--color-text);
-      }
+    .permission-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
 
-      .chapter-header {
-        margin-top: 4em;
-        margin-bottom: 2em;
-        text-align: left;
-      }
-      .chapter-number {
-        font-size: 1em;
-        color: var(--color-accent);
-        display: block;
-        margin-bottom: 0.5em;
-        font-weight: bold;
-      }
-      .chapter-title {
-        font-size: 1.8em;
-        margin: 0 0 0.5em 0;
-        line-height: 1.3;
-        color: #000;
-      }
-      .chapter-subtitle {
-        font-size: 1.1em;
-        color: #555;
-        font-weight: 500;
-        font-family: var(--font-main);
-      }
+    .permission-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
 
-      .blank-page-container {
-        border: 2px dashed #e0e0e0;
-        height: 500px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-top: 2em;
-        background-color: #fafafa;
-        border-radius: 8px;
-      }
-      .blank-page-text {
-        color: #aaa;
-        font-style: italic;
-      }
+    .permission-item input[type="checkbox"] {
+      width: auto;
+    }
 
-      /* Helper for placeholders */
-      .placeholder-content {
-        color: #888;
-        font-style: italic;
-        padding: 20px 0;
-        border-bottom: 1px solid #eee;
-      }
-    </style>
-  <link type="text/css" rel="stylesheet" charset="UTF-8" href="https://www.gstatic.com/_/translate_http/_/ss/k=translate_http.tr.2f3WBw8L4SI.L.W.O/am=AAgG/d=0/rs=AN8SPfrhKfLNQThwPXviXzekz-H_oLcqkw/m=el_main_css"><script type="text/javascript" charset="UTF-8" src="https://translate.googleapis.com/_/translate_http/_/js/k=translate_http.tr.ko.QZVK-3xxJq4.O/am=AABA/d=1/exm=el_conf/ed=1/rs=AN8SPfqWJuCE7deUiL828jIqy5dLAb-EFA/m=el_main"></script><link type="text/css" rel="stylesheet" charset="UTF-8" href="https://www.gstatic.com/_/translate_http/_/ss/k=translate_http.tr.2f3WBw8L4SI.L.W.O/am=AAgG/d=0/rs=AN8SPfrhKfLNQThwPXviXzekz-H_oLcqkw/m=el_main_css"><script type="text/javascript" charset="UTF-8" src="https://translate.googleapis.com/_/translate_http/_/js/k=translate_http.tr.ko.QZVK-3xxJq4.O/am=AABA/d=1/exm=el_conf/ed=1/rs=AN8SPfqWJuCE7deUiL828jIqy5dLAb-EFA/m=el_main"></script><link type="text/css" rel="stylesheet" charset="UTF-8" href="https://www.gstatic.com/_/translate_http/_/ss/k=translate_http.tr.2f3WBw8L4SI.L.W.O/am=AAgG/d=0/rs=AN8SPfrhKfLNQThwPXviXzekz-H_oLcqkw/m=el_main_css"><script type="text/javascript" charset="UTF-8" src="https://translate.googleapis.com/_/translate_http/_/js/k=translate_http.tr.ko.QZVK-3xxJq4.O/am=AABA/d=1/exm=el_conf/ed=1/rs=AN8SPfqWJuCE7deUiL828jIqy5dLAb-EFA/m=el_main"></script><link type="text/css" rel="stylesheet" charset="UTF-8" href="https://www.gstatic.com/_/translate_http/_/ss/k=translate_http.tr.2f3WBw8L4SI.L.W.O/am=AAgG/d=0/rs=AN8SPfrhKfLNQThwPXviXzekz-H_oLcqkw/m=el_main_css"><script type="text/javascript" charset="UTF-8" src="https://translate.googleapis.com/_/translate_http/_/js/k=translate_http.tr.ko.QZVK-3xxJq4.O/am=AABA/d=1/exm=el_conf/ed=1/rs=AN8SPfqWJuCE7deUiL828jIqy5dLAb-EFA/m=el_main"></script><link type="text/css" rel="stylesheet" charset="UTF-8" href="https://www.gstatic.com/_/translate_http/_/ss/k=translate_http.tr.2f3WBw8L4SI.L.W.O/am=AAgG/d=0/rs=AN8SPfrhKfLNQThwPXviXzekz-H_oLcqkw/m=el_main_css"><script type="text/javascript" charset="UTF-8" src="https://translate.googleapis.com/_/translate_http/_/js/k=translate_http.tr.ko.QZVK-3xxJq4.O/am=AABA/d=1/exm=el_conf/ed=1/rs=AN8SPfqWJuCE7deUiL828jIqy5dLAb-EFA/m=el_main"></script>
-  <script>
-    (function() {
-      const currentVersion = '1770981627';
-      
-      // Clear cache
-      if ('caches' in window) {
-        caches.keys().then(function(names) {
-          for (let name of names) {
-            caches.delete(name);
-          }
-        });
-      }
-      
-      // Check version
-      const url = new URL(window.location.href);
-      const hasVersion = url.searchParams.get('v');
-      
-      if (!hasVersion || hasVersion !== currentVersion) {
-        url.searchParams.set('v', currentVersion);
-        window.location.href = url.href;
-      }
-    })();
-  </script>
+    .permission-item label {
+      font-size: 0.85em;
+      margin: 0;
+    }
+
+    .admin-badge {
+      display: inline-block;
+      background: #ff6f00;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75em;
+      margin-left: 8px;
+      font-weight: 600;
+    }
+
+    .footer-links {
+      text-align: center;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .footer-links a {
+      color: var(--color-primary);
+      text-decoration: none;
+      font-size: 0.9em;
+    }
+
+    .footer-links a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
-  <body style="position: relative; min-height: 100%; top: 0px;">
-    <!-- Language Selector Menu (Fixed Top) -->
-    <div id="language-selector">
-      <a href="javascript:void(0)" onclick="switchLanguage('ar')" data-lang="ar">عربي</a>
-      <span class="divider">|</span>
-      <a href="javascript:void(0)" onclick="switchLanguage('zh-CN')" data-lang="zh-CN">中文</a>
-      <span class="divider">|</span>
-      <a href="javascript:void(0)" onclick="switchLanguage('en')" data-lang="en">English</a>
-      <span class="divider">|</span>
-      <a href="javascript:void(0)" onclick="switchLanguage('fr')" data-lang="fr">Français</a>
-      <span class="divider">|</span>
-      <a href="javascript:void(0)" onclick="switchLanguage('ru')" data-lang="ru">Русский</a>
-      <span class="divider">|</span>
-      <a href="javascript:void(0)" onclick="switchLanguage('es')" data-lang="es">Español</a>
-      <span class="divider">|</span>
-      <a href="javascript:void(0)" onclick="switchLanguage('ja')" data-lang="ja">日本語</a>
-      <span class="divider">|</span>
-      <a href="javascript:void(0)" onclick="switchLanguage('ko')" data-lang="ko" class="active">한국어</a>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>살아본 뒤에야<br>비로소 읽히는 문장들</h1>
+      <p>Lines Life Taught Me</p>
     </div>
 
-    <!-- Language Notice -->
-    <div id="translation-notice" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); color: white; padding: 30px 50px; border-radius: 12px; z-index: 10000; text-align: center; font-family: var(--font-sans);">
-      <h3 style="margin: 0 0 15px 0; color: white;">⚠️ 번역 기능 안내</h3>
-      <p style="margin: 0; line-height: 1.6;">
-        실시간 번역 기능은 웹 서버 환경에서만 작동합니다.<br>
-        로컬 파일에서는 보안 정책(CORS)으로 인해 제한됩니다.
-      </p>
-      <h4 style="margin: 20px 0 10px 0; color: #ffd700;">해결 방법:</h4>
-      <div style="text-align: left; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-        <p style="margin: 5px 0;"><strong>1. 웹 서버 실행 (추천)</strong></p>
-        <code style="background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 4px; display: block; margin: 5px 0;">
-          python -m http.server 8000
-        </code>
-        <p style="margin: 5px 0; font-size: 0.9em;">그 다음: http://localhost:8000 접속</p>
+    <div class="form-container">
+      <div class="tab-buttons">
+        <button class="tab-button active" onclick="switchTab('login')">로그인</button>
+        <button class="tab-button" onclick="switchTab('register')">회원가입</button>
       </div>
-      <button onclick="closeNotice()" style="background: #667eea; color: white; border: none; padding: 10px 30px; border-radius: 6px; cursor: pointer; font-size: 16px; margin-top: 10px;">확인</button>
+
+      <!-- Login Form -->
+      <div id="login-form" class="form-content active">
+        <div id="login-error" class="error-message"></div>
+        <form onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label for="login-username">사용자 이름</label>
+            <input type="text" id="login-username" required autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label for="login-password">비밀번호</label>
+            <input type="password" id="login-password" required autocomplete="current-password">
+          </div>
+          <div class="checkbox-group">
+            <input type="checkbox" id="remember-me">
+            <label for="remember-me">로그인 상태 유지</label>
+          </div>
+          <button type="submit" class="submit-button">로그인</button>
+        </form>
+        <div class="footer-links">
+          <a href="#" onclick="alert('관리자에게 문의하세요'); return false;">비밀번호를 잊으셨나요?</a>
+        </div>
+      </div>
+
+      <!-- Register Form -->
+      <div id="register-form" class="form-content">
+        <div id="register-error" class="error-message"></div>
+        <div id="register-success" class="success-message"></div>
+        <form onsubmit="handleRegister(event)">
+          <div class="form-group">
+            <label for="register-username">사용자 이름</label>
+            <input type="text" id="register-username" required minlength="3" autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label for="register-name">이름</label>
+            <input type="text" id="register-name" required>
+          </div>
+          <div class="form-group">
+            <label for="register-email">이메일</label>
+            <input type="email" id="register-email" required autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label for="register-password">비밀번호</label>
+            <input type="password" id="register-password" required minlength="6" autocomplete="new-password">
+          </div>
+          <div class="form-group">
+            <label for="register-password-confirm">비밀번호 확인</label>
+            <input type="password" id="register-password-confirm" required autocomplete="new-password">
+          </div>
+          
+          <div class="language-permissions">
+            <h4>열람 가능한 언어 선택</h4>
+            <div class="permission-grid">
+              <div class="permission-item">
+                <input type="checkbox" id="lang-ko" value="ko" checked disabled>
+                <label for="lang-ko">🇰🇷 한국어</label>
+              </div>
+              <div class="permission-item">
+                <input type="checkbox" id="lang-en" value="en">
+                <label for="lang-en">🇺🇸 English</label>
+              </div>
+              <div class="permission-item">
+                <input type="checkbox" id="lang-zh" value="zh">
+                <label for="lang-zh">🇨🇳 中文</label>
+              </div>
+              <div class="permission-item">
+                <input type="checkbox" id="lang-ja" value="ja">
+                <label for="lang-ja">🇯🇵 日本語</label>
+              </div>
+              <div class="permission-item">
+                <input type="checkbox" id="lang-es" value="es">
+                <label for="lang-es">🇪🇸 Español</label>
+              </div>
+              <div class="permission-item">
+                <input type="checkbox" id="lang-fr" value="fr">
+                <label for="lang-fr">🇫🇷 Français</label>
+              </div>
+              <div class="permission-item">
+                <input type="checkbox" id="lang-ru" value="ru">
+                <label for="lang-ru">🇷🇺 Русский</label>
+              </div>
+              <div class="permission-item">
+                <input type="checkbox" id="lang-ar" value="ar">
+                <label for="lang-ar">🇸🇦 عربي</label>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="submit-button">회원가입</button>
+        </form>
+      </div>
     </div>
+  </div>
 
-    <!-- Hidden Google Translate Element -->
-    <div id="google_translate_element" style="display: none"><div class="skiptranslate goog-te-gadget" dir="ltr" style=""><div id=":0.targetLanguage" class="goog-te-gadget-simple" style="white-space: nowrap;"><img src="https://www.google.com/images/cleardot.gif" class="goog-te-gadget-icon" alt="" style="background-image: url(&quot;https://translate.googleapis.com/translate_static/img/te_ctrl3.gif&quot;); background-position: -65px 0px;" data-height-listener-added="true"><span style="vertical-align: middle;"><a aria-haspopup="true" class="VIpgJd-ZVi9od-xl07Ob-lTBxed" href="#"><span>언어 선택</span><img src="https://www.google.com/images/cleardot.gif" alt="" width="1" height="1" data-height-listener-added="true"><span style="border-left: 1px solid rgb(187, 187, 187);">​</span><img src="https://www.google.com/images/cleardot.gif" alt="" width="1" height="1" data-height-listener-added="true"><span aria-hidden="true" style="color: rgb(118, 118, 118);">▼</span></a></span><img src="https://www.google.com/images/cleardot.gif" class="goog-te-gadget-icon" alt="" style="background-image: url(&quot;https://translate.googleapis.com/translate_static/img/te_ctrl3.gif&quot;); background-position: -65px 0px;" data-height-listener-added="true"><span style="vertical-align: middle;"><a aria-haspopup="true" class="VIpgJd-ZVi9od-xl07Ob-lTBxed" href="#"><span>언어 선택</span><img src="https://www.google.com/images/cleardot.gif" alt="" width="1" height="1" data-height-listener-added="true"><span style="border-left: 1px solid rgb(187, 187, 187);">​</span><img src="https://www.google.com/images/cleardot.gif" alt="" width="1" height="1" data-height-listener-added="true"><span aria-hidden="true" style="color: rgb(118, 118, 118);">▼</span></a></span><img src="https://www.google.com/images/cleardot.gif" class="goog-te-gadget-icon" alt="" style="background-image: url(&quot;https://translate.googleapis.com/translate_static/img/te_ctrl3.gif&quot;); background-position: -65px 0px;" data-height-listener-added="true"><span style="vertical-align: middle;"><a aria-haspopup="true" class="VIpgJd-ZVi9od-xl07Ob-lTBxed" href="#"><span>언어 선택</span><img src="https://www.google.com/images/cleardot.gif" alt="" width="1" height="1" data-height-listener-added="true"><span style="border-left: 1px solid rgb(187, 187, 187);">​</span><img src="https://www.google.com/images/cleardot.gif" alt="" width="1" height="1" data-height-listener-added="true"><span aria-hidden="true" style="color: rgb(118, 118, 118);">▼</span></a></span><img src="https://www.google.com/images/cleardot.gif" class="goog-te-gadget-icon" alt="" style="background-image: url(&quot;https://translate.googleapis.com/translate_static/img/te_ctrl3.gif&quot;); background-position: -65px 0px;" data-height-listener-added="true"><span style="vertical-align: middle;"><a aria-haspopup="true" class="VIpgJd-ZVi9od-xl07Ob-lTBxed" href="#"><span>언어 선택</span><img src="https://www.google.com/images/cleardot.gif" alt="" width="1" height="1" data-height-listener-added="true"><span style="border-left: 1px solid rgb(187, 187, 187);">​</span><img src="https://www.google.com/images/cleardot.gif" alt="" width="1" height="1" data-height-listener-added="true"><span aria-hidden="true" style="color: rgb(118, 118, 118);">▼</span></a></span><img src="https://www.google.com/images/cleardot.gif" class="goog-te-gadget-icon" alt="" style="background-image: url(&quot;https://translate.googleapis.com/translate_static/img/te_ctrl3.gif&quot;); background-position: -65px 0px;" data-height-listener-added="true"><span style="vertical-align: middle;"><a aria-haspopup="true" class="VIpgJd-ZVi9od-xl07Ob-lTBxed" href="#"><span>언어 선택</span><img src="https://www.google.com/images/cleardot.gif" alt="" width="1" height="1" data-height-listener-added="true"><span style="border-left: 1px solid rgb(187, 187, 187);">​</span><img src="https://www.google.com/images/cleardot.gif" alt="" width="1" height="1" data-height-listener-added="true"><span aria-hidden="true" style="color: rgb(118, 118, 118);">▼</span></a></span></div></div><div class="skiptranslate goog-te-gadget" dir="ltr" style=""><div id=":0.targetLanguage"></div></div><div class="skiptranslate goog-te-gadget" dir="ltr" style=""><div id=":0.targetLanguage"></div></div><div class="skiptranslate goog-te-gadget" dir="ltr" style=""><div id=":0.targetLanguage"></div></div><div class="skiptranslate goog-te-gadget" dir="ltr" style=""><div id=":0.targetLanguage"></div></div></div>
-
-    <!-- Floating TOC Button -->
-    <button id="floating-toc-button" onclick="toggleTOC()" title="목차 보기">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-        <path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"></path>
-      </svg>
-    </button>
-
-    <!-- TOC Overlay -->
-    <div id="toc-overlay" onclick="toggleTOC()"></div>
-
-    <!-- Floating TOC Panel -->
-    <div id="floating-toc-panel">
-      <button class="toc-close" onclick="toggleTOC()">✕</button>
-      <h3>📖 목차 (CONTENT)</h3>
+  <script>
+    // Initialize default admin account
+    function initializeDefaultAccounts() {
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
       
-      <div class="toc-section">
-        <a href="#opening" class="toc-item" onclick="navigateToSection('opening')">📌 여는 말</a>
-      </div>
+      // Create admin if doesn't exist
+      if (!users.find(u => u.username === 'admin')) {
+        users.push({
+          username: 'admin',
+          password: 'admin123',
+          name: '관리자',
+          email: 'admin@example.com',
+          role: 'admin',
+          permissions: ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar'],
+          createdAt: new Date().toISOString()
+        });
+        localStorage.setItem('users', JSON.stringify(users));
+      }
+    }
 
-      <div class="toc-section">
-        <div class="toc-section-title">제1부. 경제와 거래의 법칙</div>
-        <a href="#chapter-1" class="toc-item" onclick="navigateToSection('chapter-1')">1. 세상에 공짜는 없다</a>
-        <a href="#chapter-2" class="toc-item" onclick="navigateToSection('chapter-2')">2. 하이 리스크, 하이 리턴</a>
-        <a href="#chapter-3" class="toc-item" onclick="navigateToSection('chapter-3')">3. 계란을 한 바구니에 담지 마라</a>
-        <a href="#chapter-4" class="toc-item" onclick="navigateToSection('chapter-4')">4. 수요가 있으면 공급이 있다</a>
-        <a href="#chapter-5" class="toc-item" onclick="navigateToSection('chapter-5')">5. 싼 게 비지떡이다</a>
-        <a href="#chapter-6" class="toc-item" onclick="navigateToSection('chapter-6')">6. 돈은 거짓말을 하지 않는다</a>
-        <a href="#chapter-7" class="toc-item" onclick="navigateToSection('chapter-7')">7. 악화가 양화를 구축한다</a>
-        <a href="#chapter-8" class="toc-item" onclick="navigateToSection('chapter-8')">8. 늦게 배운 도둑질이 날 새는 줄 모른다</a>
-        <a href="#chapter-9" class="toc-item" onclick="navigateToSection('chapter-9')">9. 남의 돈 벌기가 제일 어렵다</a>
-        <a href="#chapter-10" class="toc-item" onclick="navigateToSection('chapter-10')">10. 재주는 곰이 부리고 돈은 왕서방이 받는다</a>
-        <a href="#chapter-11" class="toc-item" onclick="navigateToSection('chapter-11')">11. 밑 빠진 독에 물 붓기</a>
-      </div>
-
-      <div class="toc-section">
-        <div class="toc-section-title">제2부 ~ 제9부</div>
-        <a href="#chapter-12" class="toc-item" onclick="navigateToSection('chapter-12')">12. 아니 땐 굴뚝에 연기 나랴</a>
-        <div style="text-align: center; color: #999; padding: 10px; font-size: 0.85em;">(제13~99장 생략)</div>
-      </div>
-
-      <div class="toc-section">
-        <a href="#chapter-100" class="toc-item" onclick="navigateToSection('chapter-100')">100. 당신만의 지혜</a>
-        <a href="#closing" class="toc-item" onclick="navigateToSection('closing')">📌 맺음 말</a>
-      </div>
-    </div>
-
-    <!-- Cover Page -->
-    <div class="cover-page">
-      <div class="cover-title" style="line-height: 1.3; margin-bottom: 0.3em;">
-        살아본<br>뒤에야<br>비로소<br>읽히는<br>문장들
-      </div>
-      <div class="cover-subtitle"><span style="font-size: 28px; line-height: 2.7;">Lines Life Taught Me</span></div>
-      <div class="cover-author"><span style="font-size: 16px;">강림선생 지음</span></div>
-    </div>
-
-    <!-- Copyright Page -->
-    <div class="copyright-page">
-      <h3>살아본 뒤에야 비로소 읽히는 문장들</h3>
-      <div class="copyright-info">
-        <div class="copyright-row"><span class="copyright-label">발 행</span><span>2026년 01월 29일</span></div>
-        <div class="copyright-row"><span class="copyright-label">저 자</span><span>강림선생 (Forest Kang)</span></div>
-        <div class="copyright-row"><span class="copyright-label">펴낸이</span><span>한건희</span></div>
-        <div class="copyright-row"><span class="copyright-label">펴낸곳</span><span>주식회사 부크크</span></div>
-        <div class="copyright-row"><span class="copyright-label">ISBN</span><span>979-11-12-13569-8</span></div>
-        <br>
-        <p>ⓒ 강림선생 2026</p>
-        <p>본 책은 저작자의 지적 재산으로서 무단 전재와 복제를 금합니다.</p>
-      </div>
-    </div>
-
-    <!-- Dedication Page -->
-    <div class="dedication-page">
-      <div class="dedication-box">
-        <p style="text-align: center; margin-bottom: 2em; font-weight: bold">
-          “선물하고 싶은 사람에게 당신의 이름으로 마음을 전해보세요!”
-        </p>
-        <p>
-          "살아온 날들 속 모든 경험이 당신의 마음에 온전한 지혜의 문장으로 스며들기를. 그리하여 당신의 삶이 세상에서
-          가장 가치있는 이야기로 기억되기를 바라며, ____________________ 님께 사랑을 담아 드립니다."
-        </p>
-        <p style="text-align: right; margin-top: 2em">____________________ 드림.</p>
-      </div>
-    </div>
-
-    <!-- Table of Contents -->
-    <div class="toc-page">
-      <div class="toc-title">CONTENT</div>
-      <div class="toc-chapter"><a href="#opening">여는 말</a></div>
-
-      <div class="toc-part">제1부. 경제와 거래의 법칙: 세상에 공짜는 없다</div>
-      <div class="toc-chapter"><a href="#chapter-1">1. 세상에 공짜는 없다. (기회비용과 대가)</a></div>
-      <div class="toc-chapter"><a href="#chapter-2">2. 하이 리스크, 하이 리턴. (위험과 보상의 비례 관계)</a></div>
-      <div class="toc-chapter">
-        <a href="#chapter-3">3. 계란을 한 바구니에 담지 마라. (리스크 분산과 포트폴리오)</a>
-      </div>
-      <div class="toc-chapter"><a href="#chapter-4">4. 수요가 있으면 공급이 있다.</a></div>
-      <div class="toc-chapter"><a href="#chapter-5">5. 싼 게 비지떡이다.</a></div>
-      <div class="toc-chapter"><a href="#chapter-6">6. 돈은 거짓말을 하지 않는다.</a></div>
-      <div class="toc-chapter"><a href="#chapter-7">7. 악화가 양화를 구축한다.</a></div>
-      <div class="toc-chapter"><a href="#chapter-8">8. 늦게 배운 도둑질이 날 새는 줄 모른다.</a></div>
-      <div class="toc-chapter"><a href="#chapter-9">9. 남의 돈 벌기가 제일 어렵다.</a></div>
-      <div class="toc-chapter"><a href="#chapter-10">10. 재주는 곰이 부리고 돈은 왕서방이 받는다.</a></div>
-      <div class="toc-chapter"><a href="#chapter-11">11. 밑 빠진 독에 물 붓기.</a></div>
-
-      <div class="toc-part">제2부. 인과와 자연의 법칙: 아니 땐 굴뚝에 연기 나랴</div>
-      <!-- 12-22 -->
-      <div class="toc-chapter"><a href="#chapter-12">12. 아니 땐 굴뚝에 연기 나랴.</a></div>
-      <div class="toc-chapter"><a href="#chapter-13">13. 뿌린 대로 거둔다.</a></div>
-      <div class="toc-chapter"><a href="#chapter-100">... (중략) ...</a></div>
-
-      <!-- Abbreviated TOC for readability in code, but links function via ID logic below -->
-      <div class="toc-part">제3부 ~ 제9부</div>
-      <div class="toc-chapter"><a href="#chapter-100">100. 오롯한 당신만의 삶의 경험과 지혜의 말</a></div>
-      <div class="toc-chapter"><a href="#closing">맺음 말</a></div>
-    </div>
-
-    <!-- Opening Remarks -->
-    <div id="opening">
-      <h2>여는 말</h2>
-      <h3>복잡한 세상, 단순한 진실의 힘</h3>
-      <p>
-        우리는 매일같이 쏟아지는 정보의 홍수와 복잡한 이론들 속에서 살아갑니다. 하지만 인류의 역사를 수천 년 동안 관통해
-        온 진짜 지혜들은, 결코 어렵거나 난해한 말로 포장되어 있지 않았습니다.
-      </p>
-      <p>
-        ‘진리’란 복잡한 미로가 아닙니다. 그것은 듣는 순간 직관적으로 이해되고, 가슴으로 바로 공감할 수 있는 명쾌한
-        문장들로 이루어져 있습니다.
-      </p>
-      <p>
-        이 책은 바로 그런 이야기들을 담았습니다. 살면서 한 번쯤은 들어봤을 속담, 격언, 그리고 우리가 알게 모르게 직접
-        겪거나 간접적으로 체험해 온 삶의 법칙들입니다.
-      </p>
-      <p>
-        이 책에는 99가지의 지혜만이 담겨 있습니다. 숫자 100을 채우지 않고 99에서 멈춘 데에는 특별한 이유가 있습니다.
-        그것은 바로 우리 모두가 가진 각자의 '삶의 경험'은 특별히 존중되어야 하기 때문입니다.
-      </p>
-    </div>
-
-    <!-- PART 1 -->
-    <div class="part-header">
-      <span style="font-size: 24px;">제1부</span>
-      <h2 class="part-title" style="border-bottom: none; padding-bottom: 0;">경제와 거래의 법칙: 세상에 공짜는 없다</h2>
-      <div class="part-subtitle"><span style="font-size: 22px;">(경제학, 경영, 게임이론, 인간의 욕망)</span></div>
-    </div>
-
-    <!-- Chapter 1 (Full Content) -->
-    <div id="chapter-1">
-      <div class="chapter-header">
-        <span style="font-size: 24px;">제1장</span>
-        <h3 class="chapter-title">세상에 공짜는 없다.</h3>
-        <div class="chapter-subtitle">보이지 않는 청구서, 기회비용과 대가의 법칙</div>
-      </div>
-      <h4>달콤한 미끼와 청구서의 필연성</h4>
-      <p>
-        인간은 태어나는 순간부터 거래를 시작한다. 첫 울음을 터뜨려 폐 속에 공기를 채우는 순간조차 에너지를 소모한다.
-        우리는 무언가를 얻기 위해 끊임없이 무언가를 내어놓는다. 시간을 내어 돈을 벌고, 돈을 내어 안락함을 산다. 젊음을
-        바쳐 지혜를 얻고, 건강을 담보로 성공을 쫓기도 한다. 하지만 이 냉정한 교환의 법칙 앞에서 인간은 늘 헛된 꿈을
-        꾼다. 바로 ‘공짜’에 대한 갈망이다.
-      </p>
-      <p>
-        "이건 무료입니다." 이 짧은 한마디는 인간의 이성을 마비시키는 가장 강력한 주문이다. 마트의 시식 코너, 웹사이트의
-        무료 회원가입, 지인의 대가 없는 호의 앞에서 우리는 경계심을 푼다. 그러나 인류의 역사는, 그리고 우주의 법칙은
-        단호하게 말한다. 이 세상에 진정한 의미의 '무료'는 존재하지 않는다고. 누군가가 대가를 치르지 않은 것처럼
-        보인다면, 그 청구서는 단지 시간차를 두고 배달되고 있거나, 제3자에게 전가되었거나, 혹은 눈에 보이지 않는 더 큰
-        가치로 지불되고 있을 뿐이다.
-      </p>
-
-      <h4>19세기 미국 서부의 짠 햄과 맥주</h4>
-      <p>
-        이 유명한 문장, "세상에 공짜 점심은 없다(There ain't no such thing as a free lunch)"는 어디서 유래했을까?
-        시곗바늘을 19세기 말, 미국 서부 개척 시대로 돌려보자.
-      </p>
-      <p>
-        당시 뉴올리언스에서 샌프란시스코에 이르는 술집(Saloon)들은 노동자들로 북적였다. 거친 일을 마친 그들을 유혹하기
-        위해 술집 주인들은 기발한 마케팅을 고안해 냈다. 가게 앞에 커다란 간판을 내건 것이다. "맥주 한 잔을 시키면 점심
-        식사가 공짜!"
-      </p>
-      <p>
-        가난한 노동자들에게 이는 기적과도 같은 제안이었다. 단돈 5센트짜리 맥주 한 잔만 시키면 로스트비프, 햄, 치즈, 빵,
-        크래커가 가득 담긴 접시를 마음껏 먹을 수 있었다. 사람들은 구름처럼 몰려들었고, 주인은 자선사업가라는 칭송을
-        들었다. 하지만 이 '공짜 점심'에는 치밀하게 계산된 함정이 숨어 있었다. 제공된 음식들은 하나같이 소금기가
-        가득했다(Salty). 햄은 소금에 절어 있었고, 크래커는 짭짤했으며, 치즈는 강한 향과 짠맛을 냈다. 공짜 안주를 먹으면
-        먹을수록 손님들은 극심한 갈증을 느꼈다. 그 갈증을 해소할 방법은 오직 하나, 맥주를 더 시키는 것뿐이었다.
-      </p>
-
-      <h4>밀턴 프리드먼과 기회비용의 발견</h4>
-      <p>
-        노벨 경제학상 수상자 밀턴 프리드먼(Milton Friedman)은 1975년 그의 저서 제목으로 이 문장을 채택하며, 술집의
-        일화를 경제학의 황금률로 격상시켰다. 그는 정부의 복지 정책이나 무상 서비스가 결코 '공짜'가 아님을 경고했다.
-        경제학적으로 이 문장은 '희소성(Scarcity)'과 '기회비용(Opportunity Cost)'이라는 개념으로 설명된다. 자원은
-        한정되어 있다. 시간도, 돈도, 노동력도 무한하지 않다. 따라서 우리가 어떤 선택을 한다는 것은 필연적으로 다른 어떤
-        가능성을 포기한다는 것을 의미한다.
-      </p>
-
-      <h4>트로이의 목마와 파우스트의 거래</h4>
-      <p>
-        인류는 경제학이 탄생하기 훨씬 전부터 본능적으로 이 진리를 알고 있었다. 고대 신화와 문학은 '대가 없는 선물'이
-        가져오는 파국을 끊임없이 경고해 왔다. 가장 대표적인 사례가 그리스 로마 신화의 '트로이 목마'다. 트로이 사람들은
-        이를 신이 내린 선물이라 생각하고 성 안으로 들였다. 하지만 트로이의 사제 라오콘은 이렇게 외쳤다. "나는
-        그리스인들이 두렵다. 비록 그들이 선물을 가져올지라도." 그의 경고는 무시되었고, 트로이는 멸망했다.
-      </p>
-
-      <h4>엔트로피와 등가교환</h4>
-      <p>
-        시선을 인간 사회에서 우주로 돌려보자. 자연계는 인간보다 훨씬 더 철저하게 '공짜 없음'의 원칙을 고수한다. 물리학의
-        근간인 열역학 제1법칙(에너지 보존의 법칙)은 "에너지는 생성되거나 소멸되지 않고 형태만 바뀔 뿐"이라고 선언한다.
-        즉, 무(無)에서 유(有)는 절대 나올 수 없다. 애니메이션 &lt;강철의 연금술사&gt;에서 차용되어 유명해진
-        '등가교환(Equivalent Exchange)의 법칙'은 사실 연금술이 아닌 우주의 섭리다. "무언가를 얻으려면 그와 동등한 대가를
-        치러야 한다."
-      </p>
-
-      <h4>"당신이 상품이다"</h4>
-      <p>
-        21세기, 디지털 자본주의 시대에 '공짜'는 더욱 교묘하고 세련된 형태로 진화했다. 우리는 구글 검색, 페이스북,
-        인스타그램, 유튜브를 무료로 이용한다. 실리콘밸리의 보안 전문가들은 섬뜩한 명언을 남겼다. "상품이 무료라면,
-        당신이 바로 상품이다(If you're not paying for the product, you are the product)." 우리는 돈을 내지 않는 대신, 더
-        소중한 것을 지불하고 있다. 바로 우리의 '관심(Attention)'과 '데이터(Data)'다.
-      </p>
-
-      <h4>왜 우리는 공짜에 속는가?</h4>
-      <p>
-        행동경제학자 댄 애리얼리(Dan Ariely)는 그의 저서 &lt;상식 밖의 경제학&gt;에서 '0(Zero)의 마력'을 이야기한다.
-        인간은 '할인'이나 '저렴함'을 좋아하지만, '공짜'라는 단어 앞에서는 이성적인 판단 회로가 멈춰버린다. 사기꾼들은
-        바로 이 심리를 파고든다.
-      </p>
-
-      <h4>정당한 대가를 치를 용기</h4>
-      <p>
-        "세상에 공짜는 없다"는 말은 우리를 비관적으로 만들기 위한 말이 아니다. 오히려 세상을 투명하게 바라보고
-        주체적으로 살아가게 하는 힘이다. 이 법칙을 뼈저리게 이해한 사람은 요행을 바라지 않고, 타인의 호의에 감사할 줄
-        알며, 선택에 책임을 진다. 세상은 거대한 시장이다. 계산대는 언제나 열려 있고, 정당한 대가를 치르는 자에게 세상은
-        그 무엇이든 내어줄 준비가 되어 있다. 기억하라. 공짜는 없다. 그리고 그것이야말로 세상이 공평하다는 증거다.
-      </p>
-    </div>
-
-    <!-- Chapter 2 (Partial Content) -->
-    <div id="chapter-2">
-      <div class="chapter-header">
-        <span style="font-size: 24px;">제2장</span>
-        <h3 class="chapter-title">하이 리스크, 하이 리턴 (High Risk, High Return)</h3>
-        <div class="chapter-subtitle">심연을 건너는 대가, 위험과 보상의 잔혹한 비례 법칙</div>
-      </div>
-
-      <h4>안전한 대박은 존재하는가?</h4>
-      <p>
-        인류는 언제나 모순된 꿈을 꾼다. "원금은 절대 잃지 않으면서, 20% 이상의 수익을 내는 상품은 없을까?", "상처받을
-        위험은 전혀 없으면서도, 영화 같은 열정적인 사랑을 할 수는 없을까?"
-      </p>
-      <p>
-        금융 전문가, 인생의 멘토, 혹은 노련한 협상가에게 이 질문을 던지면 돌아오는 답은 냉정하다. 그런 것은 신화 속에나
-        존재한다는 것이다. 만약 누군가가 당신에게 "리스크는 제로(0)에 가까운데 수익은 확실하다"고 속삭인다면, 그는
-        금융의 연금술사가 아니라 당신의 지갑을 노리는 사기꾼일 확률이 99.9%다.
-      </p>
-      <p>
-        "하이 리스크, 하이 리턴(High Risk, High Return)." 위험이 높을수록 기대 수익도 높다. 반대로 위험이 낮으면(Low
-        Risk), 수익도 낮을 수밖에 없다(Low Return). 이것은 자본시장의 법칙이기 이전에, 우주의 에너지 보존 법칙과도 같은
-        자연계의 절대 진리다.
-      </p>
-
-      <h4>향신료 항로와 주식회사의 탄생</h4>
-      <p>
-        "위험을 감수하고 수익을 얻는다"는 개념이 인류 역사를 가장 드라마틱하게 바꾼 시점은 16~17세기 '대항해시대'였다.
-        당시 유럽인들에게 인도의 향신료는 '검은 황금'이었다. 하지만 그 대가는 가혹했다. 유럽에서 희망봉을 돌아
-        인도네시아의 향료 제도까지 가는 길은 말 그대로 '저승길'이었다.
-      </p>
-      <p>
-        이 극단적인 위험을 관리하기 위해 인류 최고의 발명품 중 하나인 '주식회사'가 탄생했다. 1602년 설립된 네덜란드
-        동인도 회사(VOC)가 그 주인공이다. 과거에는 부유한 선주 혼자 배를 띄웠다가 배가 침몰하면 파산했다. 하지만 VOC는
-        리스크를 잘게 쪼갰다. 수천 명의 시민들로부터 소액의 투자금을 모아 수십 척의 선단을 꾸린 것이다.
-      </p>
-      <p>
-        투자자들은 직접 험한 바다로 나가지 않았다. 대신 그들은 자신의 돈을 '침몰할지도 모른다는 공포(Risk)'에 노출시킨
-        대가로, 배가 돌아왔을 때 '배당금(Return)'을 챙겼다. 오늘날 주식 시장의 원리는 여기서 한 치도 벗어나지 않았다.
-      </p>
-      <div class="placeholder-content">... (제2장 후속 내용 계속) ...</div>
-    </div>
-
-    <!-- Chapter 3 (Full Content) -->
-    <div id="chapter-3">
-      <div class="chapter-header">
-        <span style="font-size: 24px;">제3장</span>
-        <h3 class="chapter-title">계란을 한 바구니에 담지 마라</h3>
-        <div class="chapter-subtitle">생존을 위한 위대한 쪼개기, 리스크 분산과 포트폴리오의 미학</div>
-      </div>
-
-      <h4>할머니의 장바구니와 파멸의 소리</h4>
-      <p>
-        상상해 보자. 19세기 유럽의 어느 시골 마을, 한 농부가 아침 일찍 닭장에서 갓 낳은 따뜻한 계란 30개를 꺼냈다. 이
-        계란은 장에 내다 팔아 가족들의 일주일 치 식량과 바꿀 소중한 재산이다. 농부는 튼튼해 보이는 커다란 바구니 하나에
-        지푸라기를 깔고 계란을 차곡차곡 쌓았다. 그리고 콧노래를 부르며 장터로 향했다.
-      </p>
-      <p>돌부리에 걸리기 전까지는 모든 것이 완벽했다.</p>
-      <p>
-        순식간이었다. 농부가 중심을 잃고 넘어지는 순간, 바구니는 허공을 가르며 땅으로 곤두박질쳤다. "철퍼덕." 둔탁하고
-        끈적한 소리와 함께 30개의 미래는 노란 액체가 되어 흙바닥으로 스며들었다. 바구니가 두 개였다면, 혹은 가족들에게
-        나누어 들게 했다면 절반은 건졌을 것이다. 하지만 농부의 선택은 '효율'을 위한 '집중'이었고, 그 대가는
-        '전멸'이었다.
-      </p>
-      <p>
-        "계란을 한 바구니에 담지 마라(Don't put all your eggs in one basket)." 이 오래된 격언은 인류가 생존을 위해
-        본능적으로 체득한 '분산(Diversification)'의 지혜를 담고 있다. 제3장에서는 인류가 어떻게 이 '몰빵'의 유혹을
-        이겨내고 시스템을 구축했는지 파헤쳐 본다.
-      </p>
-
-      <h4>돈키호테와 베니스의 상인</h4>
-      <p>
-        오늘날 분산 투자의 진리처럼 여겨지는 이 문장은 세르반테스의 걸작 &lt;돈키호테&gt;를 통해 세상에 널리 퍼졌다.
-        산초 판자는 무모한 모험에 목숨을 거는 주인 돈키호테를 향해 이렇게 호소한다. "나리, 물러설 줄 아는 것은 도망치는
-        게 아닙니다. 가진 모든 것을 한 곳에 거는 건 결코 지혜로운 태도가 아닙니다."
-      </p>
-      <p>
-        셰익스피어의 &lt;베니스의 상인&gt; 또한 이 철칙을 어긴 대가가 얼마나 혹독한지를 보여준다. 주인공 안토니오는
-        친구를 위해 고리대금업자 샤일록에게 살 1파운드를 담보로 돈을 빌린다. 그의 무역선들이 돌아올 것이라 맹신했기
-        때문이다. "자네의 전 재산이 저 배 한 척에 실려 있는가?" 안토니오의 부인에도 불구하고 배들은 난파되었고, 그는
-        위기에 처한다. 16세기 상인들은 이미 알고 있었다. 바다는 믿을 수 없으며, 단 한 척의 배에 모든 것을 거는 것은
-        파멸의 지름길임을.
-      </p>
-
-      <h4>해리 마코위츠와 "유일한 공짜 점심"</h4>
-      <p>
-        수백 년간 상인들의 감에 의존하던 이 지혜를 수학 이론으로 증명한 사람은 현대 포트폴리오 이론의 창시자 해리
-        마코위츠다. 1952년 그는 "어떻게 하면 수익률은 유지하면서 위험만 낮출 수 있을까?"를 고민했다. 그가 찾아낸 열쇠는
-        '상관관계'였다.
-      </p>
-      <p>
-        비가 오면 우산이 잘 팔리고, 해가 뜨면 선글라스가 잘 팔린다. 두 회사에 반반씩 투자하면 날씨에 상관없이 안정적인
-        수익을 올릴 수 있다. 마코위츠는 "분산 투자는 투자 세계에서 찾을 수 있는 유일한 공짜 점심(The only free lunch in
-        finance)이다."라는 명언을 남겼다.
-      </p>
-
-      <h4>아일랜드 대기근과 단일 품종의 저주</h4>
-      <p>
-        리스크 분산의 원칙을 무시했을 때 어떤 재앙이 닥치는지 보여주는 사례는 1845년 아일랜드 대기근이다. 당시
-        아일랜드는 '럼퍼'라는 단일 품종의 감자에 전적으로 의존했다. 감자 역병이 돌자 저항력이 없던 럼퍼 감자는 전멸했고,
-        100만 명이 굶어 죽었다. 자연은 다양성을 사랑하고 획일성을 벌한다.
-      </p>
-
-      <h4>로스차일드의 다섯 화살</h4>
-      <p>
-        반대로 철저한 분산을 통해 왕조를 지켜낸 로스차일드 가문이 있다. 마이어 암셸 로스차일드는 다섯 아들을 유럽의 5개
-        주요 도시(프랑크푸르트, 빈, 런던, 나폴리, 파리)로 흩어지게 했다. 전쟁이 터져도 어느 한 나라가 망해도 가문 전체는
-        살아남는 시스템을 구축한 것이다.
-      </p>
-
-      <h4>자연은 왜 섹스를 발명했는가?</h4>
-      <p>
-        자연계에서 유성 생식(Sex)이야말로 최고의 분산 투자 전략이다. 무성 생식은 효율적이지만 전염병에 취약하다. 암수가
-        만나 유전자를 섞는 유성 생식은 다양한 형질의 자손을 만들어 환경 변화에도 종이 살아남게 한다.
-      </p>
-
-      <h4>레이 달리오의 사계절 포트폴리오</h4>
-      <p>
-        브리지워터의 레이 달리오는 어떤 경제 상황(계절)이 닥쳐도 살아남을 수 있는 '올 웨더 포트폴리오'를 고안했다. 주식,
-        채권, 금, 원자재에 자산을 배분하여 2008년 금융위기 때도 수익을 냈다. 그는 예측하려 하지 말고 준비하라고 말한다.
-      </p>
-
-      <h4>워런 버핏의 "집중 투자"</h4>
-      <p>
-        반면 워런 버핏은 "분산 투자는 자신이 무엇을 하는지 모르는 사람들을 위한 보호막이다"라며 집중 투자를 강조한다.
-        부의 '축적' 단계에서는 집중이 필요하지만, '보존' 단계에서는 분산이 필수다. 대부분의 개인에게는 분산 전략이
-        생존에 유리하다.
-      </p>
-
-      <h4>삼성과 노키아, 그리고 피벗</h4>
-      <p>
-        기업 경영에서도 포트폴리오 전략은 생사를 가른다. 노키아는 휴대폰이라는 한 바구니에 의존하다 몰락했지만, 삼성은
-        반도체, 스마트폰, 가전 등 사업 포트폴리오를 다각화하여 위기를 넘긴다.
-      </p>
-
-      <h4>행복의 바구니를 나눠라</h4>
-      <p>
-        행복한 삶을 사는 사람들은 '인생 포트폴리오'가 잘 분산되어 있다. 직장, 가족, 취미, 혼자만의 시간 등에 자아를
-        분산시켜 놓으면, 한 곳에서 문제가 생겨도 무너지지 않는다. "계란을 한 바구니에 담지 마라." 이 말은 예측 불가능한
-        세상을 인정하는 겸손함이자 생존 의지다. 오늘 당신의 바구니를 점검해 보라. 당신의 행복은 안전하게 분산되어
-        있는가?
-      </p>
-    </div>
-
-    <!-- Placeholder for remaining chapters -->
-    <div id="chapters-remaining">
-      <div class="part-header"><span class="part-number">제1부 (계속)</span></div>
-      <div id="chapter-4" class="chapter-header">
-        <h3 class="chapter-title">4. 수요가 있으면 공급이 있다.</h3>
-        <p class="placeholder-content">Chapter content goes here...</p>
-      </div>
-      <div id="chapter-5" class="chapter-header">
-        <h3 class="chapter-title">5. 싼 게 비지떡이다.</h3>
-        <p class="placeholder-content">Chapter content goes here...</p>
-      </div>
-      <div id="chapter-6" class="chapter-header">
-        <h3 class="chapter-title">6. 돈은 거짓말을 하지 않는다.</h3>
-        <p class="placeholder-content">Chapter content goes here...</p>
-      </div>
-      <div id="chapter-7" class="chapter-header">
-        <h3 class="chapter-title">7. 악화가 양화를 구축한다.</h3>
-        <p class="placeholder-content">Chapter content goes here...</p>
-      </div>
-      <div id="chapter-8" class="chapter-header">
-        <h3 class="chapter-title">8. 늦게 배운 도둑질이 날 새는 줄 모른다.</h3>
-        <p class="placeholder-content">Chapter content goes here...</p>
-      </div>
-      <div id="chapter-9" class="chapter-header">
-        <h3 class="chapter-title">9. 남의 돈 벌기가 제일 어렵다.</h3>
-        <p class="placeholder-content">Chapter content goes here...</p>
-      </div>
-      <div id="chapter-10" class="chapter-header">
-        <h3 class="chapter-title">10. 재주는 곰이 부리고 돈은 왕서방이 받는다.</h3>
-        <p class="placeholder-content">Chapter content goes here...</p>
-      </div>
-      <div id="chapter-11" class="chapter-header">
-        <h3 class="chapter-title">11. 밑 빠진 독에 물 붓기.</h3>
-        <p class="placeholder-content">Chapter content goes here...</p>
-      </div>
-
-      <div class="part-header">
-        <span class="part-number">제2부 ~ 제9부</span>
-        <h2 class="part-title">나머지 장들</h2>
-      </div>
-      <div id="chapter-12" class="chapter-header">
-        <h3 class="chapter-title">12. 아니 땐 굴뚝에 연기 나랴.</h3>
-        <p class="placeholder-content">Chapter content goes here...</p>
-      </div>
-      <div style="text-align: center; color: #999; margin: 40px 0">(제13장 ~ 제99장 생략: 구조 동일)</div>
-    </div>
-
-    <!-- Chapter 100 -->
-    <div id="chapter-100">
-      <div class="chapter-header">
-        <span class="chapter-number">제100장</span>
-        <h3 class="chapter-title">오롯한 당신만의 삶의 경험과 지혜의 말</h3>
-      </div>
-      <div class="blank-page-container">
-        <div class="blank-page-text">(이곳은 당신의 이야기를 위한 공간입니다.)</div>
-      </div>
-    </div>
-
-    <!-- Closing Remarks -->
-    <div id="closing">
-      <h2>맺음 말</h2>
-      <h3>올바른 일을 올바르게, 지혜의 숲을 이루다</h3>
-      <p>
-        이 책 &lt;99개의 가장 이해하기 쉬운 지혜&gt;는 우리가 살면서 마주하는 수많은 문제에 대한 가장 직관적이고
-        보편적인 해답을 담고자 했습니다. 하지만 이것은 시작에 불과합니다.
-      </p>
-      <p>
-        "올바른 일을 올바르게 하는 것." 이것은 단순한 도덕률이 아닙니다. 자연과 우주가 공존하며 지속 가능한 생태계를
-        유지하게 만드는 근원적인 엔진입니다. 이 거대한 엔진을 멈추지 않게 하는 것이야말로, 깨어있는 인간의 역할이자
-        책임일 것입니다.
-      </p>
-      <p>이제 당신의 지혜가 흐를 차례입니다. 우리 함께, 더 나은 세상을 위한 지혜의 숲을 만들어 갑시다.</p>
-    </div>
-
-    <!-- Google Translate & Language Switch Script -->
-    <script type="text/javascript">
-      var translationReady = false;
-      var isLocalFile = window.location.protocol === 'file:';
+    // Switch between login and register tabs
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.form-content').forEach(form => form.classList.remove('active'));
       
-      function googleTranslateElementInit() {
-        if (isLocalFile) {
-          console.warn('⚠️ Google Translate는 로컬 파일(file://)에서 작동하지 않습니다.');
-          return;
-        }
-        
-        new google.translate.TranslateElement(
-          {
-            pageLanguage: 'ko',
-            includedLanguages: 'ar,zh-CN,en,fr,ru,es,ja,ko',
-            layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
-            autoDisplay: false,
-          },
-          'google_translate_element'
-        );
-        
-        var checkReady = setInterval(function() {
-          var selectElement = document.querySelector('.goog-te-combo');
-          if (selectElement) {
-            translationReady = true;
-            clearInterval(checkReady);
-            console.log('✅ Google Translate 준비 완료');
-          }
-        }, 100);
-        
-        setTimeout(function() {
-          clearInterval(checkReady);
-        }, 5000);
+      if (tab === 'login') {
+        document.querySelector('.tab-button:first-child').classList.add('active');
+        document.getElementById('login-form').classList.add('active');
+      } else {
+        document.querySelector('.tab-button:last-child').classList.add('active');
+        document.getElementById('register-form').classList.add('active');
       }
+    }
 
-      function switchLanguage(lang) {
-        console.log('언어 전환 시도:', lang);
+    // Handle login
+    function handleLogin(e) {
+      e.preventDefault();
+      
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+      const rememberMe = document.getElementById('remember-me').checked;
+      
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      const user = users.find(u => u.username === username && u.password === password);
+      
+      if (user) {
+        // Store user session
+        const storage = rememberMe ? localStorage : sessionStorage;
+        storage.setItem('currentUser', JSON.stringify({
+          username: user.username,
+          name: user.name,
+          role: user.role,
+          permissions: user.permissions
+        }));
         
-        // 로컬 파일 체크
-        if (isLocalFile) {
-          showTranslationNotice();
-          return;
-        }
-        
-        // Google Translate 사용
-        if (!translationReady) {
-          console.log('번역 위젯 대기 중...');
-          setTimeout(function() {
-            switchLanguage(lang);
-          }, 500);
-          return;
-        }
-        
-        var selectElement = document.querySelector('.goog-te-combo');
-        if (selectElement) {
-          selectElement.value = lang;
-          selectElement.dispatchEvent(new Event('change', { bubbles: true }));
-          
-          // 메뉴 활성화 상태 업데이트
-          document.querySelectorAll('#language-selector a').forEach(function(link) {
-            link.classList.remove('active');
-          });
-          document.querySelector('#language-selector a[data-lang="' + lang + '"]').classList.add('active');
-          
-          console.log('✅ 번역 완료:', lang);
-        }
+        // Redirect to book page
+        window.location.href = 'book.html';
+      } else {
+        showError('login-error', '사용자 이름 또는 비밀번호가 올바르지 않습니다.');
       }
+    }
 
-      function showTranslationNotice() {
-        document.getElementById('translation-notice').style.display = 'block';
+    // Handle registration
+    function handleRegister(e) {
+      e.preventDefault();
+      
+      const username = document.getElementById('register-username').value.trim();
+      const name = document.getElementById('register-name').value.trim();
+      const email = document.getElementById('register-email').value.trim();
+      const password = document.getElementById('register-password').value;
+      const passwordConfirm = document.getElementById('register-password-confirm').value;
+      
+      // Validate passwords match
+      if (password !== passwordConfirm) {
+        showError('register-error', '비밀번호가 일치하지 않습니다.');
+        return;
       }
-
-      function closeNotice() {
-        document.getElementById('translation-notice').style.display = 'none';
-      }
-
-      // 페이지 로드 시 환경 체크
-      window.addEventListener('DOMContentLoaded', function() {
-        if (isLocalFile) {
-          console.warn('⚠️ 로컬 파일 모드: 번역 기능이 제한됩니다.');
-          console.log('💡 해결 방법: python -m http.server 8000 실행 후 http://localhost:8000 접속');
-        }
+      
+      // Get selected language permissions
+      const permissions = ['ko']; // Korean is always included
+      document.querySelectorAll('.permission-item input[type="checkbox"]:checked:not(:disabled)').forEach(cb => {
+        if (cb.value !== 'ko') permissions.push(cb.value);
       });
-
-      // Floating TOC Functions
-      function toggleTOC() {
-        var panel = document.getElementById('floating-toc-panel');
-        var overlay = document.getElementById('toc-overlay');
-        
-        if (panel.classList.contains('active')) {
-          panel.classList.remove('active');
-          overlay.classList.remove('active');
-        } else {
-          panel.classList.add('active');
-          overlay.classList.add('active');
-        }
+      
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      
+      // Check if username exists
+      if (users.find(u => u.username === username)) {
+        showError('register-error', '이미 존재하는 사용자 이름입니다.');
+        return;
       }
-
-      function navigateToSection(sectionId) {
-        toggleTOC();
-        
-        var element = document.getElementById(sectionId);
-        if (element) {
-          var offset = 80;
-          var elementPosition = element.getBoundingClientRect().top;
-          var offsetPosition = elementPosition + window.pageYOffset - offset;
-          
-          window.scrollTo({
-            top: offsetPosition,
-            behavior: 'smooth'
-          });
-        }
-        
-        return false;
+      
+      // Check if email exists
+      if (users.find(u => u.email === email)) {
+        showError('register-error', '이미 등록된 이메일입니다.');
+        return;
       }
-
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-          var panel = document.getElementById('floating-toc-panel');
-          if (panel.classList.contains('active')) {
-            toggleTOC();
-          }
-        }
+      
+      // Create new user
+      users.push({
+        username,
+        name,
+        email,
+        password,
+        role: 'user',
+        permissions,
+        createdAt: new Date().toISOString()
       });
-    </script>
-    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script><div id="goog-gt-tt" class="VIpgJd-yAWNEb-L7lbkb skiptranslate" style="border-radius: 12px; margin: 0 0 0 -23px; padding: 0; font-family: 'Google Sans', Arial, sans-serif;" data-id=""><div id="goog-gt-vt" class="VIpgJd-yAWNEb-hvhgNd"><div class="VIpgJd-yAWNEb-hvhgNd-Ud7fr"><img src="https://fonts.gstatic.com/s/i/productlogos/translate/v14/24px.svg" width="24" height="24" alt="" data-height-listener-added="true"><div class=" VIpgJd-yAWNEb-hvhgNd-IuizWc-i3jM8c " dir="ltr">원본 텍스트</div></div><div class="VIpgJd-yAWNEb-hvhgNd-k77Iif"><div id="goog-gt-original-text" class="VIpgJd-yAWNEb-nVMfcd-fmcmS VIpgJd-yAWNEb-hvhgNd-axAV1"></div></div><div class="VIpgJd-yAWNEb-hvhgNd-N7Eqid ltr"><div class="VIpgJd-yAWNEb-hvhgNd-N7Eqid-B7I4Od ltr" dir="ltr"><div class="VIpgJd-yAWNEb-hvhgNd-UTujCb">번역 평가</div><div class="VIpgJd-yAWNEb-hvhgNd-eO9mKe">보내주신 의견은 Google 번역을 개선하는 데 사용됩니다.</div></div><div class="VIpgJd-yAWNEb-hvhgNd-xgov5 ltr"><button id="goog-gt-thumbUpButton" type="button" class="VIpgJd-yAWNEb-hvhgNd-bgm6sf" title="번역 품질 좋음" aria-label="번역 품질 좋음" aria-pressed="false"><span id="goog-gt-thumbUpIcon"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M21 7h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 0S7.08 6.85 7 7H2v13h16c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73V9c0-1.1-.9-2-2-2zM7 18H4V9h3v9zm14-7l-3 7H9V8l4.34-4.34L12 9h9v2z"></path></svg></span><span id="goog-gt-thumbUpIconFilled"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M21 7h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 0S7.08 6.85 7 7v13h11c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73V9c0-1.1-.9-2-2-2zM5 7H1v13h4V7z"></path></svg></span></button><button id="goog-gt-thumbDownButton" type="button" class="VIpgJd-yAWNEb-hvhgNd-bgm6sf" title="번역 품질 좋지 않음" aria-label="번역 품질 좋지 않음" aria-pressed="false"><span id="goog-gt-thumbDownIcon"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M3 17h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 24s7.09-6.85 7.17-7h5V4H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2zM17 6h3v9h-3V6zM3 13l3-7h9v10l-4.34 4.34L12 15H3v-2z"></path></svg></span><span id="goog-gt-thumbDownIconFilled"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M3 17h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 24s7.09-6.85 7.17-7V4H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2zm16 0h4V4h-4v13z"></path></svg></span></button></div></div><div id="goog-gt-votingHiddenPane" class="VIpgJd-yAWNEb-hvhgNd-aXYTce"><form id="goog-gt-votingForm" action="//translate.googleapis.com/translate_voting?client=te" method="post" target="votingFrame" class="VIpgJd-yAWNEb-hvhgNd-aXYTce"><input type="text" name="sl" id="goog-gt-votingInputSrcLang"><input type="text" name="tl" id="goog-gt-votingInputTrgLang"><input type="text" name="query" id="goog-gt-votingInputSrcText"><input type="text" name="gtrans" id="goog-gt-votingInputTrgText"><input type="text" name="vote" id="goog-gt-votingInputVote"></form><iframe name="votingFrame" frameborder="0"></iframe></div></div></div>
-  
+      
+      localStorage.setItem('users', JSON.stringify(users));
+      
+      showSuccess('register-success', '회원가입이 완료되었습니다! 로그인해주세요.');
+      
+      // Clear form
+      document.getElementById('register-form').querySelector('form').reset();
+      
+      // Switch to login tab after 2 seconds
+      setTimeout(() => {
+        switchTab('login');
+      }, 2000);
+    }
 
-<div class="VIpgJd-ZVi9od-aZ2wEe-wOHMyf"><div class="VIpgJd-ZVi9od-aZ2wEe-OiiCO"><svg xmlns="http://www.w3.org/2000/svg" class="VIpgJd-ZVi9od-aZ2wEe" width="96px" height="96px" viewBox="0 0 66 66"><circle class="VIpgJd-ZVi9od-aZ2wEe-Jt5cK" fill="none" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle></svg></div></div><div id="goog-gt-tt" class="VIpgJd-yAWNEb-L7lbkb skiptranslate" style="border-radius: 12px; margin: 0 0 0 -23px; padding: 0; font-family: 'Google Sans', Arial, sans-serif;" data-id=""><div id="goog-gt-vt" class="VIpgJd-yAWNEb-hvhgNd"><div class="VIpgJd-yAWNEb-hvhgNd-Ud7fr"><img src="https://fonts.gstatic.com/s/i/productlogos/translate/v14/24px.svg" width="24" height="24" alt="" data-height-listener-added="true"><div class=" VIpgJd-yAWNEb-hvhgNd-IuizWc-i3jM8c " dir="ltr">원본 텍스트</div></div><div class="VIpgJd-yAWNEb-hvhgNd-k77Iif"><div id="goog-gt-original-text" class="VIpgJd-yAWNEb-nVMfcd-fmcmS VIpgJd-yAWNEb-hvhgNd-axAV1"></div></div><div class="VIpgJd-yAWNEb-hvhgNd-N7Eqid ltr"><div class="VIpgJd-yAWNEb-hvhgNd-N7Eqid-B7I4Od ltr" dir="ltr"><div class="VIpgJd-yAWNEb-hvhgNd-UTujCb">번역 평가</div><div class="VIpgJd-yAWNEb-hvhgNd-eO9mKe">보내주신 의견은 Google 번역을 개선하는 데 사용됩니다.</div></div><div class="VIpgJd-yAWNEb-hvhgNd-xgov5 ltr"><button id="goog-gt-thumbUpButton" type="button" class="VIpgJd-yAWNEb-hvhgNd-bgm6sf" title="번역 품질 좋음" aria-label="번역 품질 좋음" aria-pressed="false"><span id="goog-gt-thumbUpIcon"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M21 7h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 0S7.08 6.85 7 7H2v13h16c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73V9c0-1.1-.9-2-2-2zM7 18H4V9h3v9zm14-7l-3 7H9V8l4.34-4.34L12 9h9v2z"></path></svg></span><span id="goog-gt-thumbUpIconFilled"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M21 7h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 0S7.08 6.85 7 7v13h11c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73V9c0-1.1-.9-2-2-2zM5 7H1v13h4V7z"></path></svg></span></button><button id="goog-gt-thumbDownButton" type="button" class="VIpgJd-yAWNEb-hvhgNd-bgm6sf" title="번역 품질 좋지 않음" aria-label="번역 품질 좋지 않음" aria-pressed="false"><span id="goog-gt-thumbDownIcon"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M3 17h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 24s7.09-6.85 7.17-7h5V4H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2zM17 6h3v9h-3V6zM3 13l3-7h9v10l-4.34 4.34L12 15H3v-2z"></path></svg></span><span id="goog-gt-thumbDownIconFilled"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M3 17h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 24s7.09-6.85 7.17-7V4H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2zm16 0h4V4h-4v13z"></path></svg></span></button></div></div><div id="goog-gt-votingHiddenPane" class="VIpgJd-yAWNEb-hvhgNd-aXYTce"><form id="goog-gt-votingForm" action="//translate.googleapis.com/translate_voting?client=te" method="post" target="votingFrame" class="VIpgJd-yAWNEb-hvhgNd-aXYTce"><input type="text" name="sl" id="goog-gt-votingInputSrcLang"><input type="text" name="tl" id="goog-gt-votingInputTrgLang"><input type="text" name="query" id="goog-gt-votingInputSrcText"><input type="text" name="gtrans" id="goog-gt-votingInputTrgText"><input type="text" name="vote" id="goog-gt-votingInputVote"></form><iframe name="votingFrame" frameborder="0"></iframe></div></div></div><iframe frameborder="0" class="VIpgJd-ZVi9od-xl07Ob-OEVmcd skiptranslate" title="언어 번역 위젯" style="visibility: visible; box-sizing: content-box; width: 92px; height: 228px; display: none;"></iframe><div class="VIpgJd-ZVi9od-aZ2wEe-wOHMyf"><div class="VIpgJd-ZVi9od-aZ2wEe-OiiCO"><svg xmlns="http://www.w3.org/2000/svg" class="VIpgJd-ZVi9od-aZ2wEe" width="96px" height="96px" viewBox="0 0 66 66"><circle class="VIpgJd-ZVi9od-aZ2wEe-Jt5cK" fill="none" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle></svg></div></div><div id="goog-gt-tt" class="VIpgJd-yAWNEb-L7lbkb skiptranslate" style="border-radius: 12px; margin: 0 0 0 -23px; padding: 0; font-family: 'Google Sans', Arial, sans-serif;" data-id=""><div id="goog-gt-vt" class="VIpgJd-yAWNEb-hvhgNd"><div class="VIpgJd-yAWNEb-hvhgNd-Ud7fr"><img src="https://fonts.gstatic.com/s/i/productlogos/translate/v14/24px.svg" width="24" height="24" alt="" data-height-listener-added="true"><div class=" VIpgJd-yAWNEb-hvhgNd-IuizWc-i3jM8c " dir="ltr">원본 텍스트</div></div><div class="VIpgJd-yAWNEb-hvhgNd-k77Iif"><div id="goog-gt-original-text" class="VIpgJd-yAWNEb-nVMfcd-fmcmS VIpgJd-yAWNEb-hvhgNd-axAV1"></div></div><div class="VIpgJd-yAWNEb-hvhgNd-N7Eqid ltr"><div class="VIpgJd-yAWNEb-hvhgNd-N7Eqid-B7I4Od ltr" dir="ltr"><div class="VIpgJd-yAWNEb-hvhgNd-UTujCb">번역 평가</div><div class="VIpgJd-yAWNEb-hvhgNd-eO9mKe">보내주신 의견은 Google 번역을 개선하는 데 사용됩니다.</div></div><div class="VIpgJd-yAWNEb-hvhgNd-xgov5 ltr"><button id="goog-gt-thumbUpButton" type="button" class="VIpgJd-yAWNEb-hvhgNd-bgm6sf" title="번역 품질 좋음" aria-label="번역 품질 좋음" aria-pressed="false"><span id="goog-gt-thumbUpIcon"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M21 7h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 0S7.08 6.85 7 7H2v13h16c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73V9c0-1.1-.9-2-2-2zM7 18H4V9h3v9zm14-7l-3 7H9V8l4.34-4.34L12 9h9v2z"></path></svg></span><span id="goog-gt-thumbUpIconFilled"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M21 7h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 0S7.08 6.85 7 7v13h11c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73V9c0-1.1-.9-2-2-2zM5 7H1v13h4V7z"></path></svg></span></button><button id="goog-gt-thumbDownButton" type="button" class="VIpgJd-yAWNEb-hvhgNd-bgm6sf" title="번역 품질 좋지 않음" aria-label="번역 품질 좋지 않음" aria-pressed="false"><span id="goog-gt-thumbDownIcon"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M3 17h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 24s7.09-6.85 7.17-7h5V4H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2zM17 6h3v9h-3V6zM3 13l3-7h9v10l-4.34 4.34L12 15H3v-2z"></path></svg></span><span id="goog-gt-thumbDownIconFilled"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M3 17h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 24s7.09-6.85 7.17-7V4H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2zm16 0h4V4h-4v13z"></path></svg></span></button></div></div><div id="goog-gt-votingHiddenPane" class="VIpgJd-yAWNEb-hvhgNd-aXYTce"><form id="goog-gt-votingForm" action="//translate.googleapis.com/translate_voting?client=te" method="post" target="votingFrame" class="VIpgJd-yAWNEb-hvhgNd-aXYTce"><input type="text" name="sl" id="goog-gt-votingInputSrcLang"><input type="text" name="tl" id="goog-gt-votingInputTrgLang"><input type="text" name="query" id="goog-gt-votingInputSrcText"><input type="text" name="gtrans" id="goog-gt-votingInputTrgText"><input type="text" name="vote" id="goog-gt-votingInputVote"></form><iframe name="votingFrame" frameborder="0"></iframe></div></div></div><iframe frameborder="0" class="VIpgJd-ZVi9od-xl07Ob-OEVmcd skiptranslate" title="언어 번역 위젯" style="visibility: visible; box-sizing: content-box; width: 92px; height: 228px; display: none;"></iframe><div class="VIpgJd-ZVi9od-aZ2wEe-wOHMyf"><div class="VIpgJd-ZVi9od-aZ2wEe-OiiCO"><svg xmlns="http://www.w3.org/2000/svg" class="VIpgJd-ZVi9od-aZ2wEe" width="96px" height="96px" viewBox="0 0 66 66"><circle class="VIpgJd-ZVi9od-aZ2wEe-Jt5cK" fill="none" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle></svg></div></div><div id="goog-gt-tt" class="VIpgJd-yAWNEb-L7lbkb skiptranslate" style="border-radius: 12px; margin: 0 0 0 -23px; padding: 0; font-family: 'Google Sans', Arial, sans-serif;" data-id=""><div id="goog-gt-vt" class="VIpgJd-yAWNEb-hvhgNd"><div class="VIpgJd-yAWNEb-hvhgNd-Ud7fr"><img src="https://fonts.gstatic.com/s/i/productlogos/translate/v14/24px.svg" width="24" height="24" alt="" data-height-listener-added="true"><div class=" VIpgJd-yAWNEb-hvhgNd-IuizWc-i3jM8c " dir="ltr">원본 텍스트</div></div><div class="VIpgJd-yAWNEb-hvhgNd-k77Iif"><div id="goog-gt-original-text" class="VIpgJd-yAWNEb-nVMfcd-fmcmS VIpgJd-yAWNEb-hvhgNd-axAV1"></div></div><div class="VIpgJd-yAWNEb-hvhgNd-N7Eqid ltr"><div class="VIpgJd-yAWNEb-hvhgNd-N7Eqid-B7I4Od ltr" dir="ltr"><div class="VIpgJd-yAWNEb-hvhgNd-UTujCb">번역 평가</div><div class="VIpgJd-yAWNEb-hvhgNd-eO9mKe">보내주신 의견은 Google 번역을 개선하는 데 사용됩니다.</div></div><div class="VIpgJd-yAWNEb-hvhgNd-xgov5 ltr"><button id="goog-gt-thumbUpButton" type="button" class="VIpgJd-yAWNEb-hvhgNd-bgm6sf" title="번역 품질 좋음" aria-label="번역 품질 좋음" aria-pressed="false"><span id="goog-gt-thumbUpIcon"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M21 7h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 0S7.08 6.85 7 7H2v13h16c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73V9c0-1.1-.9-2-2-2zM7 18H4V9h3v9zm14-7l-3 7H9V8l4.34-4.34L12 9h9v2z"></path></svg></span><span id="goog-gt-thumbUpIconFilled"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M21 7h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 0S7.08 6.85 7 7v13h11c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73V9c0-1.1-.9-2-2-2zM5 7H1v13h4V7z"></path></svg></span></button><button id="goog-gt-thumbDownButton" type="button" class="VIpgJd-yAWNEb-hvhgNd-bgm6sf" title="번역 품질 좋지 않음" aria-label="번역 품질 좋지 않음" aria-pressed="false"><span id="goog-gt-thumbDownIcon"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M3 17h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 24s7.09-6.85 7.17-7h5V4H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2zM17 6h3v9h-3V6zM3 13l3-7h9v10l-4.34 4.34L12 15H3v-2z"></path></svg></span><span id="goog-gt-thumbDownIconFilled"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M3 17h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 24s7.09-6.85 7.17-7V4H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2zm16 0h4V4h-4v13z"></path></svg></span></button></div></div><div id="goog-gt-votingHiddenPane" class="VIpgJd-yAWNEb-hvhgNd-aXYTce"><form id="goog-gt-votingForm" action="//translate.googleapis.com/translate_voting?client=te" method="post" target="votingFrame" class="VIpgJd-yAWNEb-hvhgNd-aXYTce"><input type="text" name="sl" id="goog-gt-votingInputSrcLang"><input type="text" name="tl" id="goog-gt-votingInputTrgLang"><input type="text" name="query" id="goog-gt-votingInputSrcText"><input type="text" name="gtrans" id="goog-gt-votingInputTrgText"><input type="text" name="vote" id="goog-gt-votingInputVote"></form><iframe name="votingFrame" frameborder="0"></iframe></div></div></div><iframe frameborder="0" class="VIpgJd-ZVi9od-xl07Ob-OEVmcd skiptranslate" title="언어 번역 위젯" style="visibility: visible; box-sizing: content-box; width: 92px; height: 228px; display: none;"></iframe><div class="VIpgJd-ZVi9od-aZ2wEe-wOHMyf"><div class="VIpgJd-ZVi9od-aZ2wEe-OiiCO"><svg xmlns="http://www.w3.org/2000/svg" class="VIpgJd-ZVi9od-aZ2wEe" width="96px" height="96px" viewBox="0 0 66 66"><circle class="VIpgJd-ZVi9od-aZ2wEe-Jt5cK" fill="none" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle></svg></div></div><div id="goog-gt-tt" class="VIpgJd-yAWNEb-L7lbkb skiptranslate" style="border-radius: 12px; margin: 0 0 0 -23px; padding: 0; font-family: 'Google Sans', Arial, sans-serif;" data-id=""><div id="goog-gt-vt" class="VIpgJd-yAWNEb-hvhgNd"><div class="VIpgJd-yAWNEb-hvhgNd-Ud7fr"><img src="https://fonts.gstatic.com/s/i/productlogos/translate/v14/24px.svg" width="24" height="24" alt="" data-height-listener-added="true"><div class=" VIpgJd-yAWNEb-hvhgNd-IuizWc-i3jM8c " dir="ltr">원본 텍스트</div></div><div class="VIpgJd-yAWNEb-hvhgNd-k77Iif"><div id="goog-gt-original-text" class="VIpgJd-yAWNEb-nVMfcd-fmcmS VIpgJd-yAWNEb-hvhgNd-axAV1"></div></div><div class="VIpgJd-yAWNEb-hvhgNd-N7Eqid ltr"><div class="VIpgJd-yAWNEb-hvhgNd-N7Eqid-B7I4Od ltr" dir="ltr"><div class="VIpgJd-yAWNEb-hvhgNd-UTujCb">번역 평가</div><div class="VIpgJd-yAWNEb-hvhgNd-eO9mKe">보내주신 의견은 Google 번역을 개선하는 데 사용됩니다.</div></div><div class="VIpgJd-yAWNEb-hvhgNd-xgov5 ltr"><button id="goog-gt-thumbUpButton" type="button" class="VIpgJd-yAWNEb-hvhgNd-bgm6sf" title="번역 품질 좋음" aria-label="번역 품질 좋음" aria-pressed="false"><span id="goog-gt-thumbUpIcon"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M21 7h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 0S7.08 6.85 7 7H2v13h16c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73V9c0-1.1-.9-2-2-2zM7 18H4V9h3v9zm14-7l-3 7H9V8l4.34-4.34L12 9h9v2z"></path></svg></span><span id="goog-gt-thumbUpIconFilled"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M21 7h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 0S7.08 6.85 7 7v13h11c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73V9c0-1.1-.9-2-2-2zM5 7H1v13h4V7z"></path></svg></span></button><button id="goog-gt-thumbDownButton" type="button" class="VIpgJd-yAWNEb-hvhgNd-bgm6sf" title="번역 품질 좋지 않음" aria-label="번역 품질 좋지 않음" aria-pressed="false"><span id="goog-gt-thumbDownIcon"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M3 17h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 24s7.09-6.85 7.17-7h5V4H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2zM17 6h3v9h-3V6zM3 13l3-7h9v10l-4.34 4.34L12 15H3v-2z"></path></svg></span><span id="goog-gt-thumbDownIconFilled"><svg width="24" height="24" viewBox="0 0 24 24" focusable="false" class="VIpgJd-yAWNEb-hvhgNd-THI6Vb NMm5M"><path d="M3 17h6.31l-.95 4.57-.03.32c0 .41.17.79.44 1.06L9.83 24s7.09-6.85 7.17-7V4H6c-.83 0-1.54.5-1.84 1.22l-3.02 7.05c-.09.23-.14.47-.14.73v2c0 1.1.9 2 2 2zm16 0h4V4h-4v13z"></path></svg></span></button></div></div><div id="goog-gt-votingHiddenPane" class="VIpgJd-yAWNEb-hvhgNd-aXYTce"><form id="goog-gt-votingForm" action="//translate.googleapis.com/translate_voting?client=te" method="post" target="votingFrame" class="VIpgJd-yAWNEb-hvhgNd-aXYTce"><input type="text" name="sl" id="goog-gt-votingInputSrcLang"><input type="text" name="tl" id="goog-gt-votingInputTrgLang"><input type="text" name="query" id="goog-gt-votingInputSrcText"><input type="text" name="gtrans" id="goog-gt-votingInputTrgText"><input type="text" name="vote" id="goog-gt-votingInputVote"></form><iframe name="votingFrame" frameborder="0"></iframe></div></div></div><iframe frameborder="0" class="VIpgJd-ZVi9od-xl07Ob-OEVmcd skiptranslate" title="언어 번역 위젯" style="visibility: visible; box-sizing: content-box; width: 92px; height: 228px; display: none;"></iframe><div class="VIpgJd-ZVi9od-aZ2wEe-wOHMyf"><div class="VIpgJd-ZVi9od-aZ2wEe-OiiCO"><svg xmlns="http://www.w3.org/2000/svg" class="VIpgJd-ZVi9od-aZ2wEe" width="96px" height="96px" viewBox="0 0 66 66"><circle class="VIpgJd-ZVi9od-aZ2wEe-Jt5cK" fill="none" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle></svg></div></div><iframe frameborder="0" class="VIpgJd-ZVi9od-xl07Ob-OEVmcd skiptranslate" title="언어 번역 위젯" style="visibility: visible; box-sizing: content-box; width: 92px; height: 228px; display: none;"></iframe></body></html>
+    // Show error message
+    function showError(elementId, message) {
+      const errorEl = document.getElementById(elementId);
+      errorEl.textContent = message;
+      errorEl.classList.add('show');
+      setTimeout(() => errorEl.classList.remove('show'), 5000);
+    }
+
+    // Show success message
+    function showSuccess(elementId, message) {
+      const successEl = document.getElementById(elementId);
+      successEl.textContent = message;
+      successEl.classList.add('show');
+      setTimeout(() => successEl.classList.remove('show'), 5000);
+    }
+
+    // Initialize on page load
+    initializeDefaultAccounts();
+    
+    // Check if already logged in
+    const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+    if (currentUser) {
+      window.location.href = 'book.html';
+    }
+  </script>
+</body>
+</html>

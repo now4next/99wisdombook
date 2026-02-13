@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>살아본 뒤에야 비로소 읽히는 문장들 - 로그인</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --font-main: 'Nanum Myeongjo', serif;
+            --font-sans: 'Noto Sans KR', sans-serif;
+            --color-primary: #5d4037;
+            --color-primary-dark: #4a332c;
+            --color-text: #1a1a1a;
+            --color-bg: #f5f5f5;
+            --color-white: #ffffff;
+            --color-error: #d32f2f;
+            --color-success: #388e3c;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e6e3 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 450px;
+            background: var(--color-white);
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: var(--color-primary);
+            color: var(--color-white);
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-family: var(--font-main);
+            font-size: 1.8em;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .header p {
+            font-size: 0.95em;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 500;
+            color: #757575;
+            transition: all 0.3s;
+            background: none;
+            border: none;
+            font-size: 1em;
+            position: relative;
+        }
+
+        .tab.active {
+            color: var(--color-primary);
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--color-primary);
+        }
+
+        .form-container {
+            display: none;
+        }
+
+        .form-container.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--color-text);
+            font-weight: 500;
+            font-size: 0.95em;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: var(--font-sans);
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        input.error {
+            border-color: var(--color-error);
+        }
+
+        .error-message {
+            color: var(--color-error);
+            font-size: 0.85em;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .success-message {
+            color: var(--color-success);
+            font-size: 0.85em;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--color-primary);
+            color: var(--color-white);
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-family: var(--font-sans);
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            background: var(--color-primary-dark);
+        }
+
+        .submit-btn:disabled {
+            background: #bdbdbd;
+            cursor: not-allowed;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 25px 0;
+            color: #9e9e9e;
+            font-size: 0.9em;
+            position: relative;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background: #e0e0e0;
+        }
+
+        .divider::before {
+            left: 0;
+        }
+
+        .divider::after {
+            right: 0;
+        }
+
+        .guest-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .guest-link a {
+            color: var(--color-primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: opacity 0.3s;
+        }
+
+        .guest-link a:hover {
+            opacity: 0.7;
+            text-decoration: underline;
+        }
+
+        .info-text {
+            font-size: 0.85em;
+            color: #757575;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0;
+            font-size: 0.9em;
+            font-weight: 400;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                max-width: 100%;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .content {
+                padding: 30px 20px;
+            }
+        }
+    
+    /* ========================================
+       반응형 웹 디자인 - 로그인 페이지
+       ======================================== */
+    
+    /* 태블릿 (768px ~ 1024px) */
+    @media screen and (max-width: 1024px) {
+      .container {
+        max-width: 600px;
+        padding: 40px 30px;
+      }
+      
+      h1 {
+        font-size: 2em;
+      }
+      
+      .tabs {
+        font-size: 16px;
+      }
+    }
+    
+    /* 모바일 (768px 이하) */
+    @media screen and (max-width: 768px) {
+      body {
+        padding: 20px 16px;
+      }
+      
+      .container {
+        max-width: 100%;
+        padding: 30px 20px;
+        margin: 20px 0;
+      }
+      
+      h1 {
+        font-size: 1.6em;
+        margin-bottom: 20px;
+      }
+      
+      .subtitle {
+        font-size: 0.9em;
+      }
+      
+      .tabs {
+        font-size: 15px;
+        gap: 20px;
+      }
+      
+      .tab {
+        padding: 10px 16px;
+      }
+      
+      form {
+        margin-top: 20px;
+      }
+      
+      input[type="text"],
+      input[type="email"],
+      input[type="password"] {
+        padding: 10px 12px;
+        font-size: 14px;
+      }
+      
+      button[type="submit"] {
+        padding: 12px;
+        font-size: 15px;
+      }
+      
+      .error-message,
+      .success-message {
+        font-size: 13px;
+        padding: 8px 12px;
+      }
+      
+      .remember-me {
+        font-size: 13px;
+      }
+      
+      .divider {
+        margin: 20px 0;
+        font-size: 13px;
+      }
+      
+      .footer {
+        font-size: 12px;
+        margin-top: 30px;
+      }
+    }
+    
+    /* 아주 작은 모바일 (480px 이하) */
+    @media screen and (max-width: 480px) {
+      body {
+        padding: 10px 12px;
+      }
+      
+      .container {
+        padding: 20px 16px;
+        margin: 10px 0;
+      }
+      
+      h1 {
+        font-size: 1.4em;
+        margin-bottom: 16px;
+      }
+      
+      .subtitle {
+        font-size: 0.85em;
+      }
+      
+      .tabs {
+        font-size: 14px;
+        gap: 15px;
+      }
+      
+      .tab {
+        padding: 8px 12px;
+      }
+      
+      input[type="text"],
+      input[type="email"],
+      input[type="password"] {
+        padding: 9px 10px;
+        font-size: 13px;
+      }
+      
+      button[type="submit"] {
+        padding: 11px;
+        font-size: 14px;
+      }
+      
+      .remember-me {
+        font-size: 12px;
+      }
+      
+      .footer {
+        font-size: 11px;
+        margin-top: 20px;
+      }
+    }
+    
+    /* 가로 모드 모바일 */
+    @media screen and (max-width: 768px) and (orientation: landscape) {
+      .container {
+        max-width: 80%;
+        margin: 20px auto;
+      }
+      
+      h1 {
+        margin-bottom: 16px;
+      }
+      
+      form {
+        margin-top: 16px;
+      }
+    }
+    
+    /* 큰 화면 (1440px 이상) */
+    @media screen and (min-width: 1440px) {
+      .container {
+        max-width: 500px;
+        padding: 60px 50px;
+      }
+      
+      h1 {
+        font-size: 2.4em;
+      }
+      
+      .subtitle {
+        font-size: 1.1em;
+      }
+    }
+
+  </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>살아본 뒤에야<br>비로소 읽히는 문장들</h1>
+            <p>Lines Life Taught Me</p>
+        </div>
+
+        <div class="content">
+            <div class="tabs">
+                <button class="tab active" data-tab="login">로그인</button>
+                <button class="tab" data-tab="signup">회원가입</button>
+            </div>
+
+            <!-- 로그인 폼 -->
+            <div class="form-container active" id="login-form">
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="login-email">이메일</label>
+                        <input type="email" id="login-email" placeholder="example@email.com" required>
+                        <div class="error-message" id="login-email-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="login-password">비밀번호</label>
+                        <input type="password" id="login-password" placeholder="비밀번호를 입력하세요" required>
+                        <div class="error-message" id="login-password-error"></div>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="remember-me">
+                        <label for="remember-me">로그인 상태 유지</label>
+                    </div>
+
+                    <button type="submit" class="submit-btn">로그인</button>
+                </form>
+            </div>
+
+            <!-- 회원가입 폼 -->
+            <div class="form-container" id="signup-form">
+                <form onsubmit="handleSignup(event)">
+                    <div class="form-group">
+                        <label for="signup-name">이름</label>
+                        <input type="text" id="signup-name" placeholder="홍길동" required>
+                        <div class="error-message" id="signup-name-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signup-email">이메일</label>
+                        <input type="email" id="signup-email" placeholder="example@email.com" required>
+                        <div class="error-message" id="signup-email-error"></div>
+                        <div class="success-message" id="signup-email-success"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signup-password">비밀번호</label>
+                        <input type="password" id="signup-password" placeholder="8자 이상 입력하세요" required>
+                        <div class="error-message" id="signup-password-error"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signup-password-confirm">비밀번호 확인</label>
+                        <input type="password" id="signup-password-confirm" placeholder="비밀번호를 다시 입력하세요" required>
+                        <div class="error-message" id="signup-password-confirm-error"></div>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="terms-agree" required>
+                        <label for="terms-agree">이용약관 및 개인정보처리방침에 동의합니다</label>
+                    </div>
+
+                    <button type="submit" class="submit-btn">회원가입</button>
+
+                    <p class="info-text">이미 계정이 있으신가요? 로그인 탭을 클릭하세요.</p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 탭 전환
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const targetTab = this.getAttribute('data-tab');
+                
+                // 모든 탭과 폼 컨테이너에서 active 제거
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.form-container').forEach(f => f.classList.remove('active'));
+                
+                // 선택된 탭과 폼 컨테이너에 active 추가
+                this.classList.add('active');
+                document.getElementById(targetTab + '-form').classList.add('active');
+            });
+        });
+
+        // 로그인 처리
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const rememberMe = document.getElementById('remember-me').checked;
+
+            // 에러 메시지 초기화
+            clearErrors('login');
+
+            // 로컬 스토리지에서 사용자 정보 확인
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const user = users.find(u => u.email === email && u.password === password);
+
+            if (user) {
+                // 로그인 성공
+                const sessionData = {
+                    email: user.email,
+                    name: user.name,
+                    loginTime: new Date().toISOString()
+                };
+
+                if (rememberMe) {
+                    localStorage.setItem('currentUser', JSON.stringify(sessionData));
+                } else {
+                    sessionStorage.setItem('currentUser', JSON.stringify(sessionData));
+                }
+
+                // 책 페이지로 이동
+                window.location.href = 'book.html?v=1770981439&_=' + Date.now();
+            } else {
+                // 로그인 실패
+                showError('login-email', '이메일 또는 비밀번호가 올바르지 않습니다.');
+            }
+        }
+
+        // 회원가입 처리
+        function handleSignup(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const passwordConfirm = document.getElementById('signup-password-confirm').value;
+
+            // 에러 메시지 초기화
+            clearErrors('signup');
+
+            // 유효성 검사
+            let isValid = true;
+
+            // 이름 검사
+            if (name.length < 2) {
+                showError('signup-name', '이름은 2자 이상이어야 합니다.');
+                isValid = false;
+            }
+
+            // 이메일 형식 검사
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showError('signup-email', '올바른 이메일 형식이 아닙니다.');
+                isValid = false;
+            }
+
+            // 이메일 중복 검사
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            if (users.some(u => u.email === email)) {
+                showError('signup-email', '이미 등록된 이메일입니다.');
+                isValid = false;
+            }
+
+            // 비밀번호 검사
+            if (password.length < 8) {
+                showError('signup-password', '비밀번호는 8자 이상이어야 합니다.');
+                isValid = false;
+            }
+
+            // 비밀번호 확인 검사
+            if (password !== passwordConfirm) {
+                showError('signup-password-confirm', '비밀번호가 일치하지 않습니다.');
+                isValid = false;
+            }
+
+            if (!isValid) return;
+
+            // 회원가입 처리
+            const newUser = {
+                name: name,
+                email: email,
+                password: password,
+                registeredAt: new Date().toISOString()
+            };
+
+            users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(users));
+
+            // 성공 메시지 표시
+            showSuccess('signup-email', '회원가입이 완료되었습니다! 로그인해주세요.');
+
+            // 2초 후 로그인 탭으로 이동
+            setTimeout(() => {
+                document.querySelector('[data-tab="login"]').click();
+                document.getElementById('login-email').value = email;
+            }, 2000);
+        }
+
+        // 에러 메시지 표시
+        function showError(fieldId, message) {
+            const errorElement = document.getElementById(fieldId + '-error');
+            const inputElement = document.getElementById(fieldId);
+            
+            errorElement.textContent = message;
+            errorElement.classList.add('show');
+            inputElement.classList.add('error');
+        }
+
+        // 성공 메시지 표시
+        function showSuccess(fieldId, message) {
+            const successElement = document.getElementById(fieldId + '-success');
+            successElement.textContent = message;
+            successElement.classList.add('show');
+        }
+
+        // 에러 메시지 초기화
+        function clearErrors(formType) {
+            const form = document.getElementById(formType + '-form');
+            form.querySelectorAll('.error-message').forEach(el => {
+                el.classList.remove('show');
+                el.textContent = '';
+            });
+            form.querySelectorAll('.success-message').forEach(el => {
+                el.classList.remove('show');
+                el.textContent = '';
+            });
+            form.querySelectorAll('input').forEach(input => {
+                input.classList.remove('error');
+            });
+        }
+
+        // 페이지 로드 시 로그인 상태 확인
+        window.addEventListener('load', function() {
+            const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+            if (currentUser) {
+                window.location.href = 'book.html?v=1770981439&_=' + Date.now();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -2,8 +2,55 @@
 <html lang="ko" data-theme="light" style="height: 100%;"><head>
   <!-- 🔴 초강력 캐시 무효화 -->
   <script>
+
+  // Authentication and permission check
+  (function() {
+    const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+    if (!currentUser) {
+      window.location.href = 'index.html';
+      return;
+    }
+    
+    const user = JSON.parse(currentUser);
+    
+    // Update userName display
+    const userNameElement = document.getElementById('userName');
+    if (userNameElement) {
+      userNameElement.textContent = user.name || '사용자';
+      
+      // Add admin badge if user is admin
+      if (user.role === 'admin') {
+        const badge = document.createElement('span');
+        badge.className = 'admin-badge';
+        badge.textContent = 'ADMIN';
+        badge.style.cssText = 'display:inline-block;background:#ff6f00;color:white;padding:2px 8px;border-radius:4px;font-size:10px;margin-left:8px;font-weight:600;';
+        userNameElement.appendChild(badge);
+      }
+    }
+    
+    // Check language permissions
+    window.checkLanguagePermission = function(langCode) {
+      if (user.role === 'admin') return true;
+      return user.permissions && user.permissions.includes(langCode);
+    };
+    
+    // Filter language menu based on permissions
+    const languageMenu = document.querySelector('.language-menu');
+    if (languageMenu && user.role !== 'admin') {
+      const links = languageMenu.querySelectorAll('a[data-lang]');
+      links.forEach(link => {
+        const lang = link.getAttribute('data-lang');
+        if (!user.permissions.includes(lang)) {
+          link.style.opacity = '0.5';
+          link.style.pointerEvents = 'none';
+          link.style.textDecoration = 'line-through';
+          link.title = '이 언어에 대한 권한이 없습니다';
+        }
+      });
+    }
+  })();
     (function() {
-      const currentVersion = '1770981439';
+      const currentVersion = '1770981878';
       
       // 1. Service Worker 무효화
       if ('serviceWorker' in navigator) {
@@ -298,33 +345,64 @@
       border-bottom: none;
     }
     
-    /* Improved TOC Panel */
+    /* ===============================
+       Improved TOC Panel Design
+       =============================== */
+    
     #floating-toc-panel {
       position: fixed;
-      top: 70px;
-      right: -400px;
-      width: 380px;
-      max-height: calc(100vh - 100px);
+      top: 60px;
+      right: -420px;
+      width: 400px;
+      max-height: calc(100vh - 80px);
       background: #ffffff;
       border: 1px solid #e0e0e0;
-      border-radius: 12px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-      padding: 24px;
-      overflow-y: auto;
-      transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 12px 0 0 12px;
+      box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+      padding: 0;
+      overflow: hidden;
+      transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 9999;
+      display: flex;
+      flex-direction: column;
     }
     
     #floating-toc-panel.active {
-      right: 20px;
+      right: 0;
     }
     
     #floating-toc-panel h3 {
-      margin: 0 0 20px 0;
-      font-size: 1.3em;
+      margin: 0;
+      padding: 20px 24px;
+      font-size: 1.4em;
+      color: white;
+      background: var(--color-accent);
+      border-bottom: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .toc-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+    
+    .toc-section {
+      margin-bottom: 16px;
+    }
+    
+    .toc-section-title {
+      font-weight: 700;
       color: var(--color-accent);
-      border-bottom: 2px solid var(--color-accent);
-      padding-bottom: 10px;
+      margin: 20px 0 12px;
+      padding: 8px 12px;
+      background: #f9f9f9;
+      border-left: 4px solid var(--color-accent);
+      font-size: 0.9em;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
     
     .toc-item {
@@ -333,49 +411,85 @@
       margin: 4px 0;
       color: #333;
       text-decoration: none;
-      border-radius: 6px;
+      border-radius: 8px;
       transition: all 0.2s ease;
       font-size: 14px;
       line-height: 1.5;
+      border-left: 3px solid transparent;
     }
     
     .toc-item:hover {
       background: #f5f5f5;
       color: var(--color-accent);
       transform: translateX(4px);
+      border-left-color: var(--color-accent);
     }
     
-    .toc-section-title {
-      font-weight: 600;
-      color: var(--color-accent);
-      margin-top: 16px;
-      margin-bottom: 8px;
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+    .toc-item:active {
+      background: #e8e8e8;
     }
     
     .toc-close {
-      position: absolute;
-      top: 20px;
-      right: 20px;
       background: none;
       border: none;
       font-size: 28px;
-      color: #999;
+      color: white;
       cursor: pointer;
-      width: 32px;
-      height: 32px;
+      width: 36px;
+      height: 36px;
       display: flex;
       align-items: center;
       justify-content: center;
       border-radius: 50%;
       transition: all 0.2s ease;
+      padding: 0;
+      line-height: 1;
     }
     
     .toc-close:hover {
-      background: #f5f5f5;
-      color: #333;
+      background: rgba(255, 255, 255, 0.2);
+      transform: rotate(90deg);
+    }
+    
+    #toc-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 9998;
+      backdrop-filter: blur(3px);
+    }
+    
+    #toc-overlay.active {
+      display: block;
+      animation: fadeIn 0.3s;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    /* TOC scrollbar styling */
+    .toc-content::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .toc-content::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+    
+    .toc-content::-webkit-scrollbar-thumb {
+      background: var(--color-accent);
+      border-radius: 4px;
+    }
+    
+    .toc-content::-webkit-scrollbar-thumb:hover {
+      background: var(--color-primary-dark);
     }
     
     #toc-overlay {
