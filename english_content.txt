@@ -1,0 +1,92 @@
+<h1>Chapter 1. There Is No Such Thing as a Free Lunch</h1>
+    <div class="subtitle">The Invisible Invoice: The Laws of Opportunity Cost and Consequences</div>
+
+    <h2>The Sweet Bait and the Inevitability of the Invoice</h2>
+
+    <p class="first-paragraph">
+      From the moment of birth, human beings are engaged in transaction. Even that first, piercing cry that fills a
+      newborn’s lungs with air consumes energy. We are constantly giving something up to gain something else. We trade
+      our time to earn money, and then trade that money to purchase comfort. We dedicate our youth to acquire wisdom,
+      and sometimes, we mortgage our health in the pursuit of success. Yet, in the face of this cold, transactional law,
+      humanity persistently dreams a futile dream: the craving for something "free."
+    </p>
+
+    <blockquote>"This is complimentary."</blockquote>
+
+    <p>
+      This short sentence is perhaps the most powerful incantation to paralyze human reason. In front of a sample
+      station at the supermarket, a free sign-up page on a website, or a seemingly selfless favor from an acquaintance,
+      we lower our guard. However, the history of mankind—and indeed, the laws of the universe—state firmly: in the
+      truest sense, "free" does not exist in this world. If it appears that no one has paid a price, it simply means the
+      invoice is being delivered with a time delay, has been transferred to a third party, or is being paid in a form of
+      value invisible to the naked eye.
+    </p>
+
+    <p>
+      In Chapter 1, we uncover the truth behind the proposition that "there is no such thing as a free lunch"—humanity’s
+      oldest wisdom and the absolute law governing both economics and nature.
+    </p>
+
+    <h2>The Salty Ham and Beer of the 19th Century American West</h2>
+
+    <p>
+      Where did the famous adage, "There ain't no such thing as a free lunch," originate? Let us turn the clock back to
+      the late 19th century, to the era of the American frontier.
+    </p>
+
+    <p>
+      At that time, saloons stretching from New Orleans to San Francisco were bustling with laborers. To lure in these
+      men, exhausted from rough work, saloon owners devised a brilliant marketing scheme. They hung large signs outside
+      their establishments:
+    </p>
+
+    <blockquote>"Buy one beer, get lunch for free!"</blockquote>
+
+    <p>
+      For impoverished workers, this was a miraculous offer. For the price of a single beer—mere nickels—they could
+      feast on a plate piled high with roast beef, ham, cheese, bread, and crackers. People flocked in droves, praising
+      the owner as a philanthropist. However, hidden within this "free lunch" was a meticulously calculated trap.
+    </p>
+
+    <p>
+      Every item of food provided was excessively salty. The ham was cured in brine, the crackers were salted, and the
+      pungent cheese induced thirst. The more of the free appetizers the patrons ate, the more parched they became.
+      There was only one way to quench that burning thirst: order more beer.
+    </p>
+
+    <p>
+      Ultimately, customers ended up drinking two or three times more than usual, and the saloon owner earned massive
+      profits that far exceeded the cost of the snacks. What the customers consumed was not a "free lunch." They paid
+      for it dearly with their health, their drunkenness, and an inflated tab for alcohol. This anecdote lays bare the
+      essence of commercialism wrapped in the packaging of "free." When the visible price tag reads "zero," we are
+      paying the price with something other than our wallets.
+    </p>
+
+    <h2>Milton Friedman and the Discovery of Opportunity Cost</h2>
+
+    <p>
+      Nobel laureate in Economics, Milton Friedman, elevated this saloon anecdote to the golden rule of economics by
+      adopting it as the title of his 1975 book. He warned that government welfare policies and free services are never
+      truly "free."
+    </p>
+
+    <p>
+      economically, this phrase is explained through the concepts of <strong>Scarcity</strong> and
+      <strong>Opportunity Cost</strong>. Resources are finite. Time, money, and labor are not infinite. Therefore, the
+      act of making a choice inevitably means giving up another possibility.
+    </p>
+
+    <p>
+      Suppose you say to a friend, "Dinner is on me tonight!" and pay for the meal. Is that meal free for your friend?
+      Economically speaking, no. To attend that dinner, your friend has "paid" with the time they could have spent
+      resting at home, meeting someone else, or catching up on work.
+    </p>
+
+    <p>
+      The national economy operates the same way. When a government implements "free healthcare" or "free school meals,"
+      doctors and farmers are not volunteering their services for free. The cost ultimately comes from the taxpayers'
+      pockets. If I do not pay for it now, it remains as debt (government bonds) that future generations must repay.
+    </p>
+
+    <p>
+      Economists 
