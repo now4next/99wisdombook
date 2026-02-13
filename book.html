@@ -1361,7 +1361,131 @@
         stroke: #666 !important;
       }
 
-      </style>
+      
+    
+    /* Main TOC Page Styles - Enhanced */
+    .toc-page {
+      max-width: 900px;
+      margin: 60px auto;
+      padding: 40px 30px;
+      background: linear-gradient(to bottom, #ffffff 0%, #f9f9f9 100%);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    
+    .toc-title {
+      font-size: 2.8em;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 15px;
+      color: #1a1a1a;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #333 0%, #666 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .toc-intro {
+      text-align: center;
+      margin-bottom: 40px;
+      padding: 0 20px;
+    }
+    
+    .toc-part {
+      font-size: 1.4em;
+      font-weight: 700;
+      color: var(--color-accent);
+      margin: 35px 0 10px;
+      padding: 15px 25px;
+      background: linear-gradient(to right, #f5f5f5 0%, transparent 100%);
+      border-left: 6px solid var(--color-accent);
+      border-radius: 0 10px 10px 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+    }
+    
+    .toc-part:hover {
+      background: linear-gradient(to right, #eeeeee 0%, #f9f9f9 100%);
+      transform: translateX(4px);
+    }
+    
+    .toc-part-subtitle {
+      font-size: 0.95em;
+      color: #777;
+      margin: -5px 0 15px 31px;
+      font-style: italic;
+      font-weight: 400;
+    }
+    
+    .toc-chapter {
+      margin: 8px 0;
+      padding-left: 15px;
+    }
+    
+    .toc-chapter a {
+      display: block;
+      padding: 14px 20px;
+      color: #444;
+      text-decoration: none;
+      border-radius: 10px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      border-left: 4px solid transparent;
+      font-size: 1.05em;
+      line-height: 1.6;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .toc-chapter a::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 0;
+      background: rgba(51, 51, 51, 0.03);
+      transition: width 0.3s ease;
+      z-index: -1;
+    }
+    
+    .toc-chapter a:hover::before {
+      width: 100%;
+    }
+    
+    .toc-chapter a:hover {
+      color: var(--color-accent);
+      background: #f8f8f8;
+      border-left-color: var(--color-accent);
+      transform: translateX(8px);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    
+    .toc-chapter a:active {
+      background: #eeeeee;
+      transform: translateX(6px);
+    }
+    
+    .toc-subtitle {
+      color: #888;
+      font-size: 0.9em;
+      font-weight: 400;
+      margin-left: 8px;
+    }
+    
+    .toc-chapter.special a {
+      background: linear-gradient(to right, #fff9e6 0%, transparent 100%);
+      border-left-color: #ffc107;
+      font-weight: 600;
+      color: #d68400;
+    }
+    
+    .toc-chapter.special a:hover {
+      background: linear-gradient(to right, #fff4d4 0%, #fff9e6 100%);
+      color: #b86f00;
+      box-shadow: 0 3px 12px rgba(255, 193, 7, 0.25);
+    }
+    </style>
 
 
     <script>
@@ -1665,37 +1789,148 @@
 
     <!-- Table of Contents -->
     <div class="toc-page">
-      <div class="toc-title">CONTENT</div>
+      <div class="toc-title">목차 (CONTENTS)</div>
+      <div class="toc-intro">
+        <p style="text-align: center; color: #666; font-size: 0.95em; margin: 20px 0; padding: 0 20px;">
+          총 9부 100장으로 구성된 삶의 지혜
+        </p>
+      </div>
+      
       <div class="toc-chapter"><a href="#opening">여는 말</a></div>
 
+
       <div class="toc-part">제1부. 경제와 거래의 법칙: 세상에 공짜는 없다</div>
-      <div class="toc-chapter"><a href="#chapter-1">1. 세상에 공짜는 없다. (기회비용과 대가)</a></div>
-      <div class="toc-chapter"><a href="#chapter-2">2. 하이 리스크, 하이 리턴. (위험과 보상의 비례 관계)</a></div>
-      <div class="toc-chapter">
-        <a href="#chapter-3">3. 계란을 한 바구니에 담지 마라. (리스크 분산과 포트폴리오)</a>
-      </div>
-      <div class="toc-chapter"><a href="#chapter-4">4. 수요가 있으면 공급이 있다.</a></div>
-      <div class="toc-chapter"><a href="#chapter-5">5. 싼 게 비지떡이다.</a></div>
-      <div class="toc-chapter"><a href="#chapter-6">6. 돈은 거짓말을 하지 않는다.</a></div>
-      <div class="toc-chapter"><a href="#chapter-7">7. 악화가 양화를 구축한다.</a></div>
-      <div class="toc-chapter"><a href="#chapter-8">8. 늦게 배운 도둑질이 날 새는 줄 모른다.</a></div>
-      <div class="toc-chapter"><a href="#chapter-9">9. 남의 돈 벌기가 제일 어렵다.</a></div>
-      <div class="toc-chapter"><a href="#chapter-10">10. 재주는 곰이 부리고 돈은 왕서방이 받는다.</a></div>
-      <div class="toc-chapter"><a href="#chapter-11">11. 밑 빠진 독에 물 붓기.</a></div>
+      <div class="toc-part-subtitle">(경제학, 경영, 게임이론, 인간의 욕망)</div>
+      <div class="toc-chapter"><a href="#chapter-1">1. 세상에 공짜는 없다 <span class="toc-subtitle">(기회비용과 대가)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-2">2. 하이 리스크, 하이 리턴 <span class="toc-subtitle">(위험과 보상의 비례 관계)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-3">3. 계란을 한 바구니에 담지 마라 <span class="toc-subtitle">(리스크 분산과 포트폴리오)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-4">4. 수요가 있으면 공급이 있다 <span class="toc-subtitle">(시장의 보이지 않는 손)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-5">5. 싼 게 비지떡이다 <span class="toc-subtitle">(가격과 가치의 상관관계)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-6">6. 돈은 거짓말을 하지 않는다 <span class="toc-subtitle">(자본의 냉정함과 실리)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-7">7. 악화가 양화를 구축한다 <span class="toc-subtitle">(그레샴의 법칙과 시장의 역설)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-8">8. 늦게 배운 도둑질이 날 새는 줄 모른다 <span class="toc-subtitle">(중독과 보상의 메커니즘)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-9">9. 남의 돈 벌기가 제일 어렵다 <span class="toc-subtitle">(노동의 가치와 생존 경쟁)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-10">10. 재주는 곰이 부리고 돈은 왕서방이 받는다 <span class="toc-subtitle">(플랫폼 경제와 소유권)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-11">11. 밑 빠진 독에 물 붓기 <span class="toc-subtitle">(한계효용 체감과 매몰 비용)</span></a></div>
 
       <div class="toc-part">제2부. 인과와 자연의 법칙: 아니 땐 굴뚝에 연기 나랴</div>
-      <!-- 12-22 -->
-      <div class="toc-chapter"><a href="#chapter-12">12. 아니 땐 굴뚝에 연기 나랴.</a></div>
-      <div class="toc-chapter"><a href="#chapter-13">13. 뿌린 대로 거둔다.</a></div>
-      <div class="toc-chapter"><a href="#chapter-100">... (중략) ...</a></div>
+      <div class="toc-part-subtitle">(물리학, 환경, 농업, 논리학, 우주)</div>
+      <div class="toc-chapter"><a href="#chapter-12">12. 아니 땐 굴뚝에 연기 나랴 <span class="toc-subtitle">(원인과 결과의 필연성)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-13">13. 뿌린 대로 거둔다 <span class="toc-subtitle">(인과응보와 농경의 지혜)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-14">14. 고인 물은 썩는다 <span class="toc-subtitle">(엔트로피 증가와 순환의 중요성)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-15">15. 오르막이 있으면 내리막이 있다 <span class="toc-subtitle">(파동과 주기의 원리)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-16">16. 빈 수레가 요란하다 <span class="toc-subtitle">(밀도와 소리의 물리학적/인격적 은유)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-17">17. 윗물이 맑아야 아랫물이 맑다 <span class="toc-subtitle">(중력과 계층 구조의 영향력)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-18">18. 낙숫물이 바위를 뚫는다 <span class="toc-subtitle">(시간의 축적과 물리적 변화)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-19">19. 모든 것은 흙으로 돌아간다 <span class="toc-subtitle">(유기체의 생명 주기와 순환)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-20">20. 해는 반드시 동쪽에서 뜬다 <span class="toc-subtitle">(자연 법칙의 불변성)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-21">21. 바람이 없으면 파도도 없다 <span class="toc-subtitle">(외부 자극과 반응)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-22">22. 피는 물보다 진하다 <span class="toc-subtitle">(유전자의 힘과 생물학적 본능)</span></a></div>
 
-      <!-- Abbreviated TOC for readability in code, but links function via ID logic below -->
-      <div class="toc-part">제3부 ~ 제9부</div>
-      <div class="toc-chapter"><a href="#chapter-100">100. 오롯한 당신만의 삶의 경험과 지혜의 말</a></div>
-      <div class="toc-chapter"><a href="#closing">맺음 말</a></div>
+      <div class="toc-part">제3부. 시간과 변화의 법칙: 이 또한 지나가리라</div>
+      <div class="toc-part-subtitle">(역사, 고전, 문명사, 미래학)</div>
+      <div class="toc-chapter"><a href="#chapter-23">23. 이 또한 지나가리라 <span class="toc-subtitle">(시간의 유한성과 치유)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-24">24. 로마는 하루아침에 이루어지지 않았다 <span class="toc-subtitle">(문명의 축적과 시간)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-25">25. 역사는 반복된다 <span class="toc-subtitle">(인간 행동의 패턴과 순환)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-26">26. 세월 앞에 장사 없다 <span class="toc-subtitle">(노화와 시간의 불가항력)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-27">27. 늦었다고 생각할 때가 가장 빠른 때다 <span class="toc-subtitle">(상대성 이론과 심리적 시간)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-28">28. 내일은 내일의 태양이 뜬다 <span class="toc-subtitle">(미래에 대한 희망과 단절)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-29">29. 십 년이면 강산도 변한다 <span class="toc-subtitle">(지질학적/사회적 변화의 속도)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-30">30. 기회는 준비된 자에게 온다 <span class="toc-subtitle">(타이밍과 역량의 결합)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-31">31. 쇠뿔도 단김에 빼라 <span class="toc-subtitle">(속도와 타이밍의 중요성)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-32">32. 과거를 잊은 민족에게 미래는 없다 <span class="toc-subtitle">(기록과 기억의 힘)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-33">33. 영원한 것은 없다 <span class="toc-subtitle">(우주의 팽창과 소멸)</span></a></div>
+
+      <div class="toc-part">제4부. 인간 본성과 심리의 법칙: 열 길 물속은 알아도</div>
+      <div class="toc-part-subtitle">(심리학, 뇌과학, 문학, 철학)</div>
+      <div class="toc-chapter"><a href="#chapter-34">34. 열 길 물속은 알아도 한 길 사람 속은 모른다 <span class="toc-subtitle">(인간 내면의 복잡성)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-35">35. 팔은 안으로 굽는다 <span class="toc-subtitle">(확증 편향과 내집단 선호)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-36">36. 남의 떡이 더 커 보인다 <span class="toc-subtitle">(비교 심리와 상대적 박탈감)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-37">37. 등잔 밑이 어둡다 <span class="toc-subtitle">(인지적 사각지대)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-38">38. 제 눈에 안경이다 <span class="toc-subtitle">(주관적 인식과 취향의 다양성)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-39">39. 믿는 도끼에 발등 찍힌다 <span class="toc-subtitle">(배신과 신뢰의 역설)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-40">40. 개구리 올챙이 적 생각 못 한다 <span class="toc-subtitle">(기억의 왜곡과 상황의 변화)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-41">41. 세 살 버릇 여든까지 간다 <span class="toc-subtitle">(뇌의 가소성과 습관의 힘)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-42">42. 호랑이도 제 말 하면 온다 <span class="toc-subtitle">(우연의 일치와 심리적 환기)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-43">43. 똥 묻은 개가 겨 묻은 개 나무란다 <span class="toc-subtitle">(투사와 자기 방어 기제)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-44">44. 간에 붙었다 쓸개에 붙었다 한다 <span class="toc-subtitle">(기회주의와 생존 본능)</span></a></div>
+
+      <div class="toc-part">제5부. 관계와 처세의 법칙: 가는 말이 고와야</div>
+      <div class="toc-part-subtitle">(사회학, 정치, 외교, 커뮤니케이션)</div>
+      <div class="toc-chapter"><a href="#chapter-45">45. 가는 말이 고와야 오는 말이 곱다 <span class="toc-subtitle">(상호 호혜성의 원칙)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-46">46. 이 세상에 비밀은 없다 <span class="toc-subtitle">(정보의 확산과 네트워크 이론)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-47">47. 낮말은 새가 듣고 밤말은 쥐가 듣는다 <span class="toc-subtitle">(보안과 감시 사회)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-48">48. 발 없는 말이 천 리를 간다 <span class="toc-subtitle">(소문의 전파 속도와 파급력)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-49">49. 사공이 많으면 배가 산으로 간다 <span class="toc-subtitle">(의사결정 구조와 리더십)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-50">50. 끼리끼리 논다 <span class="toc-subtitle">(유유상종과 소셜 네트워크 형성)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-51">51. 중이 제 머리 못 깎는다 <span class="toc-subtitle">(자기 객관화의 한계)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-52">52. 모르는 게 약이다 <span class="toc-subtitle">(정보의 비대칭과 알 권리)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-53">53. 침묵은 금이다 <span class="toc-subtitle">(언어의 한계와 비언어적 소통)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-54">54. 웃는 얼굴에 침 뱉으랴 <span class="toc-subtitle">(감정 노동과 표정의 사회학)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-55">55. 친구 따라 강남 간다 <span class="toc-subtitle">(동조 심리와 군중 심리)</span></a></div>
+
+      <div class="toc-part">제6부. 실행과 노력의 법칙: 천 리 길도 한 걸음부터</div>
+      <div class="toc-part-subtitle">(자기계발, 경영, 스포츠, 도전)</div>
+      <div class="toc-chapter"><a href="#chapter-56">56. 천 리 길도 한 걸음부터 <span class="toc-subtitle">(실행의 착수와 미적분)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-57">57. 티끌 모아 태산 <span class="toc-subtitle">(복리의 마법과 축적의 힘)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-58">58. 구슬이 서 말이라도 꿰어야 보배다 <span class="toc-subtitle">(실행력과 가치 창출)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-59">59. 실패는 성공의 어머니 <span class="toc-subtitle">(시행착오와 데이터 마이닝)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-60">60. 두드려라, 그러면 열릴 것이다 <span class="toc-subtitle">(적극성과 확률의 게임)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-61">61. 지렁이도 밟으면 꿈틀한다 <span class="toc-subtitle">(임계점과 반작용)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-62">62. 급할수록 돌아가라 <span class="toc-subtitle">(프로세스와 효율성의 역설)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-63">63. 우물을 파도 한 우물을 파라 <span class="toc-subtitle">(전문화와 집중의 전략)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-64">64. 돌다리도 두들겨 보고 건너라 <span class="toc-subtitle">(리스크 관리와 검증)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-65">65. 백지장도 맞들면 낫다 <span class="toc-subtitle">(협업과 집단 지성)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-66">66. 고생 끝에 낙이 온다 <span class="toc-subtitle">(보상 체계와 동기 부여)</span></a></div>
+
+      <div class="toc-part">제7부. 위기와 생존의 법칙: 호랑이 굴에 들어가야</div>
+      <div class="toc-part-subtitle">(전쟁사, 위기관리, 생물학, 전략)</div>
+      <div class="toc-chapter"><a href="#chapter-67">67. 호랑이 굴에 들어가야 호랑이를 잡는다 <span class="toc-subtitle">(위험 감수와 돌파)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-68">68. 뛰는 놈 위에 나는 놈 있다 <span class="toc-subtitle">(경쟁의 무한성과 겸손)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-69">69. 소 잃고 외양간 고친다 <span class="toc-subtitle">(사후 대처와 예방 시스템)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-70">70. 쥐구멍에도 볕 들 날 있다 <span class="toc-subtitle">(희망과 생존의 사이클)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-71">71. 하늘이 무너져도 솟아날 구멍이 있다 <span class="toc-subtitle">(위기 속의 기회 포착)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-72">72. 약육강식 <span class="toc-subtitle">(먹이사슬과 권력의 이동)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-73">73. 뭉치면 살고 흩어지면 죽는다 <span class="toc-subtitle">(동맹과 조직의 생존 원리)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-74">74. 적의 적은 나의 친구다 <span class="toc-subtitle">(지정학적 관계와 전략적 제휴)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-75">75. 강한 자가 살아남는 것이 아니라, 살아남는 자가 강한 것이다 <span class="toc-subtitle">(적자생존과 진화)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-76">76. 병 주고 약 준다 <span class="toc-subtitle">(채찍과 당근의 통치술)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-77">77. 도둑이 제 발 저린다 <span class="toc-subtitle">(범죄 심리와 죄수의 딜레마)</span></a></div>
+
+      <div class="toc-part">제8부. 지혜와 통찰의 법칙: 아는 것이 힘이다</div>
+      <div class="toc-part-subtitle">(교육, 철학, 정보학, 메타인지)</div>
+      <div class="toc-chapter"><a href="#chapter-78">78. 아는 것이 힘이다 <span class="toc-subtitle">(지식 정보 사회와 권력)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-79">79. 무식이 용감이다 <span class="toc-subtitle">(더닝-크루거 효과)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-80">80. 벼는 익을수록 고개를 숙인다 <span class="toc-subtitle">(겸손과 리더십의 미덕)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-81">81. 등잔 밑이 어둡다 <span class="toc-subtitle">(관찰과 발견의 맹점)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-82">82. 시작이 반이다 <span class="toc-subtitle">(초기값 설정과 관성의 법칙)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-83">83. 개천에서 용 난다 <span class="toc-subtitle">(계층 이동과 교육의 사다리)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-84">84. 하나를 보면 열을 안다 <span class="toc-subtitle">(패턴 인식과 추론 능력)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-85">85. 독 안에 든 쥐 <span class="toc-subtitle">(폐쇄계와 탈출 불가능성)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-86">86. 낫 놓고 기역 자도 모른다 <span class="toc-subtitle">(문해력과 정보 격차)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-87">87. 구관이 명관이다 <span class="toc-subtitle">(경험 데이터의 가치)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-88">88. 겉 다르고 속 다르다 <span class="toc-subtitle">(현상과 본질의 이중성)</span></a></div>
+
+      <div class="toc-part">제9부. 운명과 수용의 법칙: 될 놈은 된다</div>
+      <div class="toc-part-subtitle">(종교, 운명론, 통계학, 카오스 이론)</div>
+      <div class="toc-chapter"><a href="#chapter-89">89. 될 놈은 된다 <span class="toc-subtitle">(운과 확률, 그리고 마태 효과)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-90">90. 사람 일은 모른다 <span class="toc-subtitle">(불확실성과 블랙 스완)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-91">91. 죽은 자는 말이 없다 <span class="toc-subtitle">(역사의 승자 독식 구조)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-92">92. 가지 많은 나무에 바람 잘 날 없다 <span class="toc-subtitle">(복잡계와 리스크 관리)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-93">93. 미운 놈 떡 하나 더 준다 <span class="toc-subtitle">(역설적 포용과 포섭 전략)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-94">94. 목마른 사람이 우물 판다 <span class="toc-subtitle">(결핍과 혁신의 동기)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-95">95. 산 입에 거미줄 치랴 <span class="toc-subtitle">(생명력과 최저 생존 본능)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-96">96. 매도 먼저 맞는 게 낫다 <span class="toc-subtitle">(불확실성의 해소와 스트레스)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-97">97. 무소식이 희소식이다 <span class="toc-subtitle">(평온함의 가치와 엔트로피)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-98">98. 공수래공수거 <span class="toc-subtitle">(소유의 허무함과 미니멀리즘)</span></a></div>
+      <div class="toc-chapter"><a href="#chapter-99">99. 진리는 단순하다 <span class="toc-subtitle">(오컴의 면도날과 본질)</span></a></div>
+
+      <div class="toc-part">특별장</div>
+      <div class="toc-chapter special"><a href="#chapter-100">100. 오롯한 당신만의 삶의 경험과 지혜의 말</a></div>
+      
+      <div class="toc-chapter"><a href="#closing">맺음말</a></div>
     </div>
 
-    
     <!-- Language Content Wrapper -->
     <!-- Opening Remarks -->
     <div id="opening">
