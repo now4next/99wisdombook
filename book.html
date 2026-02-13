@@ -3,7 +3,7 @@
   <!-- 🔴 초강력 캐시 무효화 -->
   <script>
     (function() {
-      const currentVersion = '1770958256';
+      const currentVersion = '1770971268';
       
       // 1. Service Worker 무효화
       if ('serviceWorker' in navigator) {
@@ -52,7 +52,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="version" content="1770958256">
+  <meta name="version" content="1770971268">
   <title>살아본 뒤에야 비로소 읽히는 문장들</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -78,6 +78,50 @@
         --color-link: #3d5afe;
         --page-width: 880px;
       }
+      /* ============================================
+         🔴 사용자 정보 영역 - 전역 강제 스타일
+         ============================================ */
+      #user-info {
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        flex-wrap: nowrap !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      #user-info .user-name {
+        display: inline-flex !important;
+        align-items: center !important;
+        white-space: nowrap !important;
+        line-height: 1 !important;
+        color: #333 !important;
+        font-weight: 500 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      #user-info .logout-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        line-height: 1 !important;
+        white-space: nowrap !important;
+        background-color: var(--color-accent) !important;
+        color: white !important;
+        border: none !important;
+        padding: 8px 16px !important;
+        border-radius: 4px !important;
+        font-size: 13px !important;
+        margin: 0 !important;
+        height: auto !important;
+      }
+
+      #user-info .logout-btn:hover {
+        background-color: var(--color-primary-dark, #4a332c) !important;
+      }
+
+
 
       body {
         max-width: var(--page-width);
@@ -709,12 +753,7 @@
           font-size: 13px;
         }
         
-        #user-info {
-        display: flex !important;
-        align-items: center !important;
-        gap: 12px !important;
-        flex-wrap: nowrap !important;
-      }
+
         
         
         
@@ -738,9 +777,7 @@
         .chapter-header {
           margin-bottom: 16px;
         }
-      }
-      
-      }
+            }
       
       /* 모바일 (최대 768px) */
       @media screen and (max-width: 768px) {
@@ -854,12 +891,7 @@
         #mobile-toc-button,
         #floating-toc-panel,
         #toc-overlay,
-        #user-info {
-        display: flex !important;
-        align-items: center !important;
-        gap: 12px !important;
-        flex-wrap: nowrap !important;
-      }
+
         
         body {
           padding: 20px;
@@ -1119,12 +1151,7 @@
           height: 55px;
         }
         
-        #user-info {
-        display: flex !important;
-        align-items: center !important;
-        gap: 12px !important;
-        flex-wrap: nowrap !important;
-      }
+
         
         .header-icons {
           gap: 8px;
