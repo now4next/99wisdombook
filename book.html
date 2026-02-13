@@ -342,7 +342,8 @@
           height: 10px !important !important;
         }
         
-        .language-menu {
+        
+      .language-menu {
         display: none !important;
         position: absolute !important;
         top: 42px !important;
@@ -354,6 +355,10 @@
         min-width: 200px !important;
         z-index: 100000 !important;
         padding: 8px 0 !important;
+      }
+      
+      .language-menu.show {
+        display: block !important;
       }
       
       .language-menu.show {
@@ -1004,7 +1009,7 @@
     
     <div id="language-selector">
       <div id="user-info">
-        <span class="user-name" id="userName"></span>
+        <span class="user-name" id="userName" style="color: #333; font-weight: 500; line-height: 32px; display: flex; align-items: center;"></span>
         <button class="logout-btn" onclick="logout()">로그아웃</button>
       </div>
       
