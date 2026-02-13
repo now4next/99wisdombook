@@ -49,8 +49,27 @@
       });
     }
   })();
+
+    // Enhanced language menu with permission alert
+    document.querySelectorAll('.language-menu a[data-lang]').forEach(link => {
+      link.addEventListener('click', function(e) {
+        const lang = this.getAttribute('data-lang');
+        const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+        
+        if (currentUser) {
+          const user = JSON.parse(currentUser);
+          
+          // Check if user has permission
+          if (user.role !== 'admin' && !user.permissions.includes(lang)) {
+            e.preventDefault();
+            alert('⚠️ 언어 열람 권한이 없습니다\n\n해당 언어에 대한 열람 접근 승인이 안되어 있습니다.\n관리자에게 문의하세요.');
+            return false;
+          }
+        }
+      });
+    });
     (function() {
-      const currentVersion = '1770981878';
+      const currentVersion = '1770982446';
       
       // 1. Service Worker 무효화
       if ('serviceWorker' in navigator) {
@@ -451,22 +470,7 @@
       transform: rotate(90deg);
     }
     
-    #toc-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.4);
-      z-index: 9998;
-      backdrop-filter: blur(3px);
-    }
-    
-    #toc-overlay.active {
-      display: block;
-      animation: fadeIn 0.3s;
-    }
+
     
     @keyframes fadeIn {
       from { opacity: 0; }
@@ -1373,8 +1377,7 @@
     <div id="floating-toc-panel">
       <button class="toc-close" onclick="toggleTOC()">×</button>
       <h3>CONTENTS</h3>
-      
-      <div class="toc-section">
+      <div class="toc-content"><div class="toc-section">
         <a href="#opening" class="toc-item" onclick="navigateToSection('opening')">여는 말</a>
       </div>
 
@@ -1404,6 +1407,9 @@
         <a href="#closing" class="toc-item" onclick="navigateToSection('closing')">맺음 말</a>
       </div>
     </div>
+      </div>
+    <!-- TOC Overlay -->
+    <div id="toc-overlay" onclick="toggleTOC()"></div>
 
     <!-- Cover Page -->
     <div class="cover-page">
@@ -2116,6 +2122,29 @@
         checkTranslateReady();
       }
     })();
+  
+    // TOC Panel Toggle
+    function toggleTOC() {
+      const tocPanel = document.getElementById('floating-toc-panel');
+      const tocOverlay = document.getElementById('toc-overlay');
+      
+      if (tocPanel && tocOverlay) {
+        tocPanel.classList.toggle('active');
+        tocOverlay.classList.toggle('active');
+      }
+    }
+    
+    // Navigate to section and close TOC
+    function navigateToSection(sectionId) {
+      const section = document.getElementById(sectionId);
+      if (section) {
+        toggleTOC();
+        setTimeout(() => {
+          section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 300);
+      }
+    }
+
   </script>
 
 </body></html>

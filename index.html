@@ -446,7 +446,12 @@
         }));
         
         // Redirect to book page
-        window.location.href = 'book.html';
+        // Redirect to admin page if user is admin
+        if (user.role === 'admin') {
+          window.location.href = 'admin.html';
+        } else {
+          window.location.href = 'book.html';
+        }
       } else {
         showError('login-error', '사용자 이름 또는 비밀번호가 올바르지 않습니다.');
       }
@@ -534,7 +539,12 @@
     // Check if already logged in
     const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
     if (currentUser) {
-      window.location.href = 'book.html';
+      // Redirect to admin page if user is admin
+        if (user.role === 'admin') {
+          window.location.href = 'admin.html';
+        } else {
+          window.location.href = 'book.html';
+        }
     }
   </script>
 </body>
