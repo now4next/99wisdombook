@@ -1504,16 +1504,16 @@
     
 
     
-    <div id="language-selector">
-      <div id="user-info">
+    <div id="language-selector" style="display: flex !important; flex-direction: row !important; justify-content: space-between !important; align-items: center !important; padding: 10px 40px !important; min-height: 52px !important; box-sizing: border-box !important;">
+      <div id="user-info" style="display: inline-flex !important; align-items: center !important; gap: 12px !important; flex: 0 0 auto !important; width: auto !important;">
         <span class="user-name" id="userName"></span>
-        <button class="logout-btn" onclick="logout()">로그아웃</button>
+        <button class="logout-btn" style="display: inline-flex !important; align-items: center !important; justify-content: center !important; padding: 5px 14px !important; height: 32px !important; line-height: 1 !important; font-size: 13px !important; width: auto !important; flex: 0 0 auto !important;" onclick="logout()">로그아웃</button>
       </div>
       
       <!-- 언어 선택 드롭다운 -->
-      <div class="header-icons">
+      <div class="header-icons" style="display: inline-flex !important; align-items: center !important; gap: 10px !important; flex: 0 0 auto !important; width: auto !important;">
         <div class="language-dropdown">
-          <button class="text-btn language-btn" id="languageBtn" onclick="toggleLanguageMenu(event)" title="언어 선택" aria-label="언어 선택">
+          <button class="text-btn" style="width: auto !important; flex: 0 0 auto !important; max-width: none !important; padding: 5px 14px !important; height: 32px !important; line-height: 1 !important; font-size: 13px !important;" language-btn" id="languageBtn" onclick="toggleLanguageMenu(event)" title="언어 선택" aria-label="언어 선택">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="2" y1="12" x2="22" y2="12"></line>
@@ -1537,7 +1537,7 @@
         </div>
         
         <!-- 목차 버튼 -->
-        <button class="text-btn contents-btn" id="tocBtn" onclick="toggleTOC()" title="목차" aria-label="목차">
+        <button class="text-btn" style="width: auto !important; flex: 0 0 auto !important; max-width: none !important; padding: 5px 14px !important; height: 32px !important; line-height: 1 !important; font-size: 13px !important;" contents-btn" id="tocBtn" onclick="toggleTOC()" title="목차" aria-label="목차">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
             <line x1="3" y1="6" x2="21" y2="6"></line>
             <line x1="3" y1="12" x2="21" y2="12"></line>
