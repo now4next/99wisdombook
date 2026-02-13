@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Auth Debug Test</title>
+</head>
+<body>
+  <h1>Authentication Debug</h1>
+  <button onclick="checkData()">Check localStorage Data</button>
+  <button onclick="createAdmin()">Create Admin</button>
+  <button onclick="loginAsAdmin()">Login as Admin</button>
+  <button onclick="clearAll()">Clear All Data</button>
+  <pre id="output"></pre>
+  
+  <script>
+    function log(msg) {
+      const output = document.getElementById('output');
+      output.textContent += msg + '\n';
+      console.log(msg);
+    }
+    
+    function checkData() {
+      document.getElementById('output').textContent = '';
+      log('=== localStorage Data ===');
+      log('users: ' + localStorage.getItem('users'));
+      log('\ncurrentUser: ' + localStorage.getItem('currentUser'));
+      
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      log('\nParsed users:');
+      users.forEach((u, i) => {
+        log(`  [${i}] ${u.username} - role: ${u.role} - email: ${u.email}`);
+      });
+    }
+    
+    function createAdmin() {
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      
+      // Remove existing admin
+      const filtered = users.filter(u => u.username !== 'admin');
+      
+      // Add fresh admin
+      filtered.push({
+        username: 'admin',
+        password: 'admin123',
+        name: '관리자',
+        email: 'admin@example.com',
+        role: 'admin',
+        permissions: ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar'],
+        createdAt: new Date().toISOString()
+      });
+      
+      localStorage.setItem('users', JSON.stringify(filtered));
+      log('✅ Admin account created/updated');
+      checkData();
+    }
+    
+    function loginAsAdmin() {
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      const admin = users.find(u => u.username === 'admin' && u.password === 'admin123');
+      
+      if (admin) {
+        const currentUser = {
+          username: admin.username,
+          name: admin.name,
+          role: admin.role,
+          permissions: admin.permissions
+        };
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        log('✅ Logged in as admin');
+        log('currentUser stored: ' + JSON.stringify(currentUser));
+        
+        // Test redirect
+        log('\n🔗 Redirecting to admin.html...');
+        setTimeout(() => {
+          window.location.href = 'admin.html';
+        }, 1000);
+      } else {
+        log('❌ Admin account not found or password incorrect');
+      }
+    }
+    
+    function clearAll() {
+      localStorage.removeItem('users');
+      localStorage.removeItem('currentUser');
+      sessionStorage.clear();
+      log('🗑️ All data cleared');
+    }
+  </script>
+</body>
+</html>

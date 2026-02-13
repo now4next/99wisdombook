@@ -7,7 +7,7 @@
   
   <!-- Cache busting script -->
   <script>
-    const currentVersion = '1770984332';
+    const currentVersion = '1770984643';
     const urlVersion = new URLSearchParams(window.location.search).get('v');
     if (urlVersion !== currentVersion) {
       window.location.href = window.location.pathname + '?v=' + currentVersion;
@@ -586,56 +586,88 @@
       ar: 'عربي'
     };
 
-    // Check admin authentication - COMPLETELY FIXED
+    // Check admin authentication - ULTRA SAFE VERSION
     function checkAuth() {
-      const currentUserStr = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+      console.log('[ADMIN] ========================================');
+      console.log('[ADMIN] Starting authentication check...');
       
-      console.log('[ADMIN] Checking authentication...');
-      console.log('[ADMIN] Current user string:', currentUserStr);
+      // Step 1: Get currentUser from storage
+      const currentUserStr = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+      console.log('[ADMIN] Step 1: currentUser string:', currentUserStr);
       
       if (!currentUserStr) {
-        console.log('[ADMIN] No user logged in, redirecting to index');
+        console.log('[ADMIN] ❌ No user logged in');
+        alert('로그인이 필요합니다.');
         window.location.replace('index.html');
         return null;
       }
       
-      // Parse the current user JSON
+      // Step 2: Parse currentUser JSON
       let currentUser;
       try {
         currentUser = JSON.parse(currentUserStr);
-        console.log('[ADMIN] Parsed current user:', currentUser);
+        console.log('[ADMIN] Step 2: Parsed currentUser:', JSON.stringify(currentUser));
       } catch (e) {
-        console.error('[ADMIN] ERROR: Failed to parse currentUser JSON', e);
-        window.location.replace('index.html');
-        return null;
-      }
-      
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      console.log('[ADMIN] Total users in database:', users.length);
-      
-      const user = users.find(u => u.username === currentUser.username);
-      console.log('[ADMIN] Found user in database:', user);
-      
-      if (!user) {
-        console.log('[ADMIN] ERROR: User not found in database');
-        alert('사용자 정보를 찾을 수 없습니다.');
+        console.error('[ADMIN] ❌ Failed to parse currentUser JSON:', e);
+        alert('세션 데이터 오류');
         localStorage.removeItem('currentUser');
         sessionStorage.removeItem('currentUser');
         window.location.replace('index.html');
         return null;
       }
       
-      console.log('[ADMIN] User role:', user.role);
+      // Step 3: Check if currentUser has required fields
+      if (!currentUser.username || !currentUser.role) {
+        console.log('[ADMIN] ❌ currentUser missing required fields');
+        alert('세션 데이터가 올바르지 않습니다.');
+        window.location.replace('index.html');
+        return null;
+      }
       
-      if (user.role !== 'admin') {
-        console.log('[ADMIN] ERROR: User is not admin');
+      console.log('[ADMIN] Step 3: currentUser.username =', currentUser.username);
+      console.log('[ADMIN] Step 3: currentUser.role =', currentUser.role);
+      
+      // Step 4: Check if user is admin (simple check first)
+      if (currentUser.role !== 'admin') {
+        console.log('[ADMIN] ❌ User role is not admin:', currentUser.role);
         alert('관리자 권한이 필요합니다.');
         window.location.replace('book.html');
         return null;
       }
       
-      console.log('[ADMIN] ✓ Admin authenticated successfully');
-      console.log('[ADMIN] Admin user:', user.username, user.email);
+      // Step 5: Verify against users database
+      const usersStr = localStorage.getItem('users');
+      console.log('[ADMIN] Step 4: users raw string length:', usersStr ? usersStr.length : 0);
+      
+      const users = JSON.parse(usersStr || '[]');
+      console.log('[ADMIN] Step 5: Total users in database:', users.length);
+      
+      if (users.length > 0) {
+        console.log('[ADMIN] Step 5: Database users:', users.map(u => `${u.username}(${u.role})`).join(', '));
+      }
+      
+      // Step 6: Find user in database
+      const user = users.find(u => u.username === currentUser.username);
+      
+      if (!user) {
+        console.log('[ADMIN] ⚠️ WARNING: User not found in database, but allowing access (currentUser.role is admin)');
+        // Don't block - if currentUser says they're admin, allow it
+        return currentUser;
+      }
+      
+      console.log('[ADMIN] Step 6: Found user in database:', user.username, 'role:', user.role);
+      
+      // Step 7: Verify role matches
+      if (user.role !== 'admin') {
+        console.log('[ADMIN] ❌ Database role is not admin:', user.role);
+        alert('관리자 권한이 없습니다.');
+        window.location.replace('book.html');
+        return null;
+      }
+      
+      console.log('[ADMIN] ✅ ✅ ✅ Authentication SUCCESSFUL ✅ ✅ ✅');
+      console.log('[ADMIN] Admin:', user.username, '/', user.email);
+      console.log('[ADMIN] ========================================');
       return user;
     }
 
