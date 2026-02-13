@@ -7,7 +7,7 @@
   
   <!-- Cache busting script -->
   <script>
-    const currentVersion = '1770984130';
+    const currentVersion = '1770984332';
     const urlVersion = new URLSearchParams(window.location.search).get('v');
     if (urlVersion !== currentVersion) {
       window.location.href = window.location.pathname + '?v=' + currentVersion;
@@ -588,13 +588,24 @@
 
     // Check admin authentication - COMPLETELY FIXED
     function checkAuth() {
-      const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+      const currentUserStr = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
       
       console.log('[ADMIN] Checking authentication...');
-      console.log('[ADMIN] Current user:', currentUser);
+      console.log('[ADMIN] Current user string:', currentUserStr);
       
-      if (!currentUser) {
+      if (!currentUserStr) {
         console.log('[ADMIN] No user logged in, redirecting to index');
+        window.location.replace('index.html');
+        return null;
+      }
+      
+      // Parse the current user JSON
+      let currentUser;
+      try {
+        currentUser = JSON.parse(currentUserStr);
+        console.log('[ADMIN] Parsed current user:', currentUser);
+      } catch (e) {
+        console.error('[ADMIN] ERROR: Failed to parse currentUser JSON', e);
         window.location.replace('index.html');
         return null;
       }
@@ -602,8 +613,8 @@
       const users = JSON.parse(localStorage.getItem('users') || '[]');
       console.log('[ADMIN] Total users in database:', users.length);
       
-      const user = users.find(u => u.username === currentUser);
-      console.log('[ADMIN] Found user:', user);
+      const user = users.find(u => u.username === currentUser.username);
+      console.log('[ADMIN] Found user in database:', user);
       
       if (!user) {
         console.log('[ADMIN] ERROR: User not found in database');
