@@ -6,7 +6,7 @@
   <title>관리자 페이지 - 회원 관리</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -17,155 +17,213 @@
     :root {
       --font-sans: 'Noto Sans KR', sans-serif;
       --color-primary: #5d4037;
-      --color-primary-dark: #4a332c;
-      --color-accent: #8d6e63;
+      --color-primary-light: #8d6e63;
+      --color-bg: #f8f9fa;
+      --color-white: #ffffff;
+      --color-text: #212529;
+      --color-text-secondary: #6c757d;
+      --border-color: #dee2e6;
+      --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.12);
     }
 
     body {
       font-family: var(--font-sans);
-      background: #f5f5f5;
-      padding: 20px;
+      background: var(--color-bg);
+      min-height: 100vh;
+      color: var(--color-text);
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 1400px;
       margin: 0 auto;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      overflow: hidden;
+      padding: 20px;
     }
 
+    /* Header */
     .header {
-      background: var(--color-primary);
-      color: white;
-      padding: 30px;
+      background: var(--color-white);
+      padding: 24px 32px;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
     .header h1 {
-      font-size: 1.8em;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--color-primary);
     }
 
     .logout-btn {
-      background: rgba(255, 255, 255, 0.2);
+      background: var(--color-primary);
       color: white;
       border: none;
       padding: 10px 20px;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
-      font-size: 0.9em;
-      transition: all 0.3s;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.2s;
     }
 
     .logout-btn:hover {
-      background: rgba(255, 255, 255, 0.3);
+      background: var(--color-primary-light);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-hover);
     }
 
-    .content {
-      padding: 30px;
-    }
-
+    /* Stats Cards */
     .stats {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 20px;
-      margin-bottom: 30px;
+      margin-bottom: 24px;
     }
 
     .stat-card {
-      background: linear-gradient(135deg, var(--color-accent), var(--color-primary));
-      color: white;
-      padding: 20px;
-      border-radius: 8px;
+      background: var(--color-white);
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
       text-align: center;
+      transition: all 0.2s;
     }
 
-    .stat-card h3 {
-      font-size: 2em;
-      margin-bottom: 5px;
+    .stat-card:hover {
+      box-shadow: var(--shadow-hover);
+      transform: translateY(-2px);
     }
 
-    .stat-card p {
-      opacity: 0.9;
-      font-size: 0.9em;
+    .stat-card .number {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin-bottom: 8px;
+    }
+
+    .stat-card .label {
+      font-size: 0.9rem;
+      color: var(--color-text-secondary);
+      font-weight: 500;
+    }
+
+    /* Members Table */
+    .table-container {
+      background: var(--color-white);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .table-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .table-header h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--color-text);
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
-    }
-
-    th, td {
-      padding: 15px;
-      text-align: left;
-      border-bottom: 1px solid #e0e0e0;
     }
 
     th {
-      background: #f9f9f9;
+      background: var(--color-bg);
+      padding: 16px 24px;
+      text-align: left;
+      font-size: 0.85rem;
       font-weight: 600;
-      color: var(--color-primary);
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid var(--border-color);
     }
 
-    tr:hover {
-      background: #f9f9f9;
+    td {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.9rem;
     }
 
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr {
+      transition: background 0.2s;
+    }
+
+    tbody tr:hover {
+      background: #f8f9fa;
+    }
+
+    /* Badges */
     .badge {
       display: inline-block;
-      padding: 4px 10px;
-      border-radius: 4px;
-      font-size: 0.8em;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
       font-weight: 600;
+      letter-spacing: 0.3px;
     }
 
     .badge-admin {
-      background: #ff6f00;
-      color: white;
+      background: #fff3e0;
+      color: #e65100;
     }
 
     .badge-user {
-      background: #4caf50;
-      color: white;
+      background: #e8f5e9;
+      color: #2e7d32;
     }
 
-    .permission-badges {
+    /* Language Permissions */
+    .permissions {
       display: flex;
       flex-wrap: wrap;
-      gap: 4px;
+      gap: 6px;
     }
 
     .lang-badge {
-      padding: 3px 8px;
-      border-radius: 3px;
-      font-size: 0.75em;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.75rem;
       background: #e3f2fd;
-      color: #1976d2;
+      color: #1565c0;
+      font-weight: 500;
     }
 
+    /* Buttons */
     .btn {
       padding: 8px 16px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 0.85em;
-      transition: all 0.3s;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.2s;
       font-family: var(--font-sans);
     }
 
     .btn-edit {
-      background: var(--color-accent);
+      background: var(--color-primary);
       color: white;
     }
 
     .btn-edit:hover {
-      background: var(--color-primary);
+      background: var(--color-primary-light);
+      transform: translateY(-1px);
     }
 
+    /* Modal */
     .modal {
       display: none;
       position: fixed;
@@ -177,6 +235,7 @@
       z-index: 10000;
       align-items: center;
       justify-content: center;
+      backdrop-filter: blur(4px);
     }
 
     .modal.active {
@@ -185,120 +244,183 @@
 
     .modal-content {
       background: white;
-      border-radius: 12px;
-      padding: 30px;
+      border-radius: 16px;
+      padding: 32px;
       max-width: 500px;
       width: 90%;
       max-height: 80vh;
       overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     }
 
     .modal-header {
-      margin-bottom: 20px;
-      padding-bottom: 15px;
-      border-bottom: 2px solid #e0e0e0;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid var(--border-color);
     }
 
     .modal-header h2 {
+      font-size: 1.3rem;
+      font-weight: 600;
       color: var(--color-primary);
     }
 
-    .form-group {
+    .modal-body {
+      margin-bottom: 24px;
+    }
+
+    .user-info {
+      background: var(--color-bg);
+      padding: 16px;
+      border-radius: 8px;
       margin-bottom: 20px;
     }
 
-    .form-group label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 500;
-      color: #333;
+    .user-info p {
+      margin: 8px 0;
+      font-size: 0.9rem;
+    }
+
+    .user-info strong {
+      color: var(--color-primary);
+      font-weight: 600;
+    }
+
+    .permission-section {
+      margin-top: 20px;
+    }
+
+    .permission-section h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--color-text);
     }
 
     .permission-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
+      gap: 12px;
     }
 
     .permission-item {
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px;
-      background: #f9f9f9;
-      border-radius: 6px;
+      padding: 12px;
+      background: var(--color-bg);
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .permission-item:hover {
+      background: #e9ecef;
     }
 
     .permission-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin-right: 10px;
       cursor: pointer;
+      accent-color: var(--color-primary);
     }
 
     .permission-item label {
-      margin: 0;
       cursor: pointer;
-      font-size: 0.9em;
+      font-size: 0.9rem;
+      user-select: none;
     }
 
-    .modal-actions {
+    .modal-footer {
       display: flex;
-      gap: 10px;
-      margin-top: 20px;
+      gap: 12px;
+      justify-content: flex-end;
     }
 
     .btn-save {
-      flex: 1;
       background: var(--color-primary);
       color: white;
-      padding: 12px;
+      padding: 12px 24px;
     }
 
     .btn-save:hover {
-      background: var(--color-primary-dark);
+      background: var(--color-primary-light);
     }
 
     .btn-cancel {
-      flex: 1;
-      background: #999;
-      color: white;
-      padding: 12px;
+      background: #e9ecef;
+      color: var(--color-text);
+      padding: 12px 24px;
     }
 
     .btn-cancel:hover {
-      background: #777;
+      background: #dee2e6;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--color-text-secondary);
+    }
+
+    .empty-state p {
+      font-size: 1.1rem;
+      margin-top: 12px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .table-container {
+        overflow-x: auto;
+      }
+
+      table {
+        min-width: 800px;
+      }
+
+      .permission-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
+    <!-- Header -->
     <div class="header">
-      <div>
-        <h1>👤 회원 관리</h1>
-        <p>관리자 페이지</p>
-      </div>
+      <h1>회원 관리</h1>
       <button class="logout-btn" onclick="logout()">로그아웃</button>
     </div>
 
-    <div class="content">
-      <div class="stats">
-        <div class="stat-card">
-          <h3 id="total-users">0</h3>
-          <p>전체 회원</p>
-        </div>
-        <div class="stat-card">
-          <h3 id="admin-count">0</h3>
-          <p>관리자</p>
-        </div>
-        <div class="stat-card">
-          <h3 id="user-count">0</h3>
-          <p>일반 회원</p>
-        </div>
+    <!-- Stats Cards -->
+    <div class="stats">
+      <div class="stat-card">
+        <div class="number" id="total-users">0</div>
+        <div class="label">전체 회원</div>
       </div>
+      <div class="stat-card">
+        <div class="number" id="admin-count">0</div>
+        <div class="label">관리자</div>
+      </div>
+      <div class="stat-card">
+        <div class="number" id="user-count">0</div>
+        <div class="label">일반 회원</div>
+      </div>
+    </div>
 
-      <table id="users-table">
+    <!-- Members Table -->
+    <div class="table-container">
+      <div class="table-header">
+        <h2>회원 목록</h2>
+      </div>
+      <table>
         <thead>
           <tr>
             <th>사용자명</th>
-            <th>이름</th>
             <th>이메일</th>
             <th>역할</th>
             <th>언어 권한</th>
@@ -306,181 +428,199 @@
             <th>관리</th>
           </tr>
         </thead>
-        <tbody id="users-tbody">
+        <tbody id="user-table-body">
+          <!-- Users will be loaded here -->
         </tbody>
       </table>
     </div>
   </div>
 
-  <!-- Edit Permissions Modal -->
+  <!-- Edit User Modal -->
   <div id="edit-modal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>언어 권한 수정</h2>
-        <p id="edit-user-name"></p>
+        <h2>회원 권한 편집</h2>
       </div>
-      
-      <div class="form-group">
-        <label>열람 가능한 언어 선택</label>
-        <div class="permission-grid">
-          <div class="permission-item">
-            <input type="checkbox" id="edit-lang-ko" value="ko" checked disabled>
-            <label for="edit-lang-ko">🇰🇷 한국어</label>
-          </div>
-          <div class="permission-item">
-            <input type="checkbox" id="edit-lang-en" value="en">
-            <label for="edit-lang-en">🇺🇸 English</label>
-          </div>
-          <div class="permission-item">
-            <input type="checkbox" id="edit-lang-zh" value="zh">
-            <label for="edit-lang-zh">🇨🇳 中文</label>
-          </div>
-          <div class="permission-item">
-            <input type="checkbox" id="edit-lang-ja" value="ja">
-            <label for="edit-lang-ja">🇯🇵 日本語</label>
-          </div>
-          <div class="permission-item">
-            <input type="checkbox" id="edit-lang-es" value="es">
-            <label for="edit-lang-es">🇪🇸 Español</label>
-          </div>
-          <div class="permission-item">
-            <input type="checkbox" id="edit-lang-fr" value="fr">
-            <label for="edit-lang-fr">🇫🇷 Français</label>
-          </div>
-          <div class="permission-item">
-            <input type="checkbox" id="edit-lang-ru" value="ru">
-            <label for="edit-lang-ru">🇷🇺 Русский</label>
-          </div>
-          <div class="permission-item">
-            <input type="checkbox" id="edit-lang-ar" value="ar">
-            <label for="edit-lang-ar">🇸🇦 عربي</label>
+      <div class="modal-body">
+        <div class="user-info" id="modal-user-info">
+          <!-- User info will be loaded here -->
+        </div>
+        <div class="permission-section">
+          <h3>언어 권한 설정</h3>
+          <div class="permission-grid">
+            <div class="permission-item">
+              <input type="checkbox" id="perm-ko" value="ko">
+              <label for="perm-ko">🇰🇷 한국어</label>
+            </div>
+            <div class="permission-item">
+              <input type="checkbox" id="perm-en" value="en">
+              <label for="perm-en">🇺🇸 English</label>
+            </div>
+            <div class="permission-item">
+              <input type="checkbox" id="perm-zh" value="zh">
+              <label for="perm-zh">🇨🇳 中文</label>
+            </div>
+            <div class="permission-item">
+              <input type="checkbox" id="perm-ja" value="ja">
+              <label for="perm-ja">🇯🇵 日本語</label>
+            </div>
+            <div class="permission-item">
+              <input type="checkbox" id="perm-es" value="es">
+              <label for="perm-es">🇪🇸 Español</label>
+            </div>
+            <div class="permission-item">
+              <input type="checkbox" id="perm-fr" value="fr">
+              <label for="perm-fr">🇫🇷 Français</label>
+            </div>
+            <div class="permission-item">
+              <input type="checkbox" id="perm-ru" value="ru">
+              <label for="perm-ru">🇷🇺 Русский</label>
+            </div>
+            <div class="permission-item">
+              <input type="checkbox" id="perm-ar" value="ar">
+              <label for="perm-ar">🇸🇦 عربي</label>
+            </div>
           </div>
         </div>
       </div>
-
-      <div class="modal-actions">
-        <button class="btn btn-save" onclick="savePermissions()">저장</button>
+      <div class="modal-footer">
         <button class="btn btn-cancel" onclick="closeModal()">취소</button>
+        <button class="btn btn-save" onclick="savePermissions()">저장</button>
       </div>
     </div>
   </div>
 
   <script>
     let currentEditUser = null;
+    const langNames = {
+      ko: '한국어',
+      en: 'English',
+      zh: '中文',
+      ja: '日本語',
+      es: 'Español',
+      fr: 'Français',
+      ru: 'Русский',
+      ar: 'عربي'
+    };
 
     // Check admin authentication
-    const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
-    if (!currentUser) {
-      window.location.href = 'index.html';
-    } else {
-      const user = JSON.parse(currentUser);
-      if (user.role !== 'admin') {
-        alert('관리자만 접근할 수 있습니다.');
-        window.location.href = 'book.html';
+    function checkAuth() {
+      const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+      if (!currentUser) {
+        window.location.href = 'index.html';
+        return null;
       }
+      
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      const user = users.find(u => u.username === currentUser);
+      
+      if (!user || user.role !== 'admin') {
+        alert('관리자 권한이 필요합니다.');
+        window.location.href = 'book.html';
+        return null;
+      }
+      
+      return user;
     }
 
-    // Load users
+    // Load users and display
     function loadUsers() {
       const users = JSON.parse(localStorage.getItem('users') || '[]');
+      const tbody = document.getElementById('user-table-body');
       
       // Update stats
       document.getElementById('total-users').textContent = users.length;
       document.getElementById('admin-count').textContent = users.filter(u => u.role === 'admin').length;
       document.getElementById('user-count').textContent = users.filter(u => u.role === 'user').length;
-
-      // Render table
-      const tbody = document.getElementById('users-tbody');
+      
+      // Clear table
       tbody.innerHTML = '';
-
-      users.forEach(user => {
+      
+      if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><p>등록된 회원이 없습니다.</p></td></tr>';
+        return;
+      }
+      
+      // Add users to table
+      users.forEach((user, index) => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${user.username}</td>
-          <td>${user.name}</td>
-          <td>${user.email}</td>
-          <td>
-            <span class="badge ${user.role === 'admin' ? 'badge-admin' : 'badge-user'}">
-              ${user.role === 'admin' ? '관리자' : '일반회원'}
-            </span>
-          </td>
-          <td>
-            <div class="permission-badges">
-              ${user.permissions.map(lang => {
-                const langNames = {ko: '🇰🇷 한국어', en: '🇺🇸 English', zh: '🇨🇳 中文', ja: '🇯🇵 日本語', 
-                                  es: '🇪🇸 Español', fr: '🇫🇷 Français', ru: '🇷🇺 Русский', ar: '🇸🇦 عربي'};
-                return `<span class="lang-badge">${langNames[lang] || lang}</span>`;
-              }).join('')}
-            </div>
-          </td>
-          <td>${new Date(user.createdAt).toLocaleDateString()}</td>
-          <td>
-            ${user.role !== 'admin' ? 
-              `<button class="btn btn-edit" onclick="editPermissions('${user.username}')">권한 수정</button>` : 
-              '-'}
-          </td>
-        `;
+        
+        // Username
+        const tdUsername = document.createElement('td');
+        tdUsername.textContent = user.username || user.name;
+        tr.appendChild(tdUsername);
+        
+        // Email
+        const tdEmail = document.createElement('td');
+        tdEmail.textContent = user.email;
+        tr.appendChild(tdEmail);
+        
+        // Role
+        const tdRole = document.createElement('td');
+        const roleBadge = document.createElement('span');
+        roleBadge.className = user.role === 'admin' ? 'badge badge-admin' : 'badge badge-user';
+        roleBadge.textContent = user.role === 'admin' ? '관리자' : '일반 회원';
+        tdRole.appendChild(roleBadge);
+        tr.appendChild(tdRole);
+        
+        // Permissions
+        const tdPermissions = document.createElement('td');
+        const permDiv = document.createElement('div');
+        permDiv.className = 'permissions';
+        
+        if (user.permissions && user.permissions.length > 0) {
+          user.permissions.forEach(lang => {
+            const langBadge = document.createElement('span');
+            langBadge.className = 'lang-badge';
+            langBadge.textContent = langNames[lang] || lang;
+            permDiv.appendChild(langBadge);
+          });
+        } else {
+          permDiv.textContent = '-';
+        }
+        
+        tdPermissions.appendChild(permDiv);
+        tr.appendChild(tdPermissions);
+        
+        // Created date
+        const tdDate = document.createElement('td');
+        const date = new Date(user.createdAt);
+        tdDate.textContent = date.toLocaleDateString('ko-KR');
+        tr.appendChild(tdDate);
+        
+        // Actions
+        const tdActions = document.createElement('td');
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn btn-edit';
+        editBtn.textContent = '편집';
+        editBtn.onclick = () => openEditModal(user);
+        tdActions.appendChild(editBtn);
+        tr.appendChild(tdActions);
+        
         tbody.appendChild(tr);
       });
     }
 
-    // Edit permissions
-    function editPermissions(username) {
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const user = users.find(u => u.username === username);
+    // Open edit modal
+    function openEditModal(user) {
+      currentEditUser = user;
       
-      if (!user) return;
+      // Display user info
+      const userInfo = document.getElementById('modal-user-info');
+      userInfo.innerHTML = `
+        <p><strong>사용자명:</strong> ${user.username || user.name}</p>
+        <p><strong>이메일:</strong> ${user.email}</p>
+        <p><strong>역할:</strong> ${user.role === 'admin' ? '관리자' : '일반 회원'}</p>
+      `;
       
-      currentEditUser = username;
-      document.getElementById('edit-user-name').textContent = `${user.name} (${user.username})`;
-      
-      // Reset checkboxes
+      // Set current permissions
       ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar'].forEach(lang => {
-        const checkbox = document.getElementById(`edit-lang-${lang}`);
-        if (checkbox && !checkbox.disabled) {
-          checkbox.checked = user.permissions.includes(lang);
-        }
+        const checkbox = document.getElementById(`perm-${lang}`);
+        checkbox.checked = user.permissions && user.permissions.includes(lang);
       });
       
+      // Show modal
       document.getElementById('edit-modal').classList.add('active');
-    }
-
-    // Save permissions
-    function savePermissions() {
-      if (!currentEditUser) return;
-      
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const userIndex = users.findIndex(u => u.username === currentEditUser);
-      
-      if (userIndex === -1) return;
-      
-      // Get selected permissions
-      const permissions = ['ko']; // Korean is always included
-      ['en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar'].forEach(lang => {
-        const checkbox = document.getElementById(`edit-lang-${lang}`);
-        if (checkbox && checkbox.checked) {
-          permissions.push(lang);
-        }
-      });
-      
-      // Update user
-      users[userIndex].permissions = permissions;
-      localStorage.setItem('users', JSON.stringify(users));
-      
-      // Update current user session if editing self
-      const currentUserData = JSON.parse(localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser'));
-      if (currentUserData && currentUserData.username === currentEditUser) {
-        currentUserData.permissions = permissions;
-        if (localStorage.getItem('currentUser')) {
-          localStorage.setItem('currentUser', JSON.stringify(currentUserData));
-        } else {
-          sessionStorage.setItem('currentUser', JSON.stringify(currentUserData));
-        }
-      }
-      
-      closeModal();
-      loadUsers();
-      alert('권한이 성공적으로 수정되었습니다.');
     }
 
     // Close modal
@@ -489,22 +629,56 @@
       currentEditUser = null;
     }
 
-    // Logout
-    function logout() {
-      localStorage.removeItem('currentUser');
-      sessionStorage.removeItem('currentUser');
-      window.location.href = 'index.html';
+    // Save permissions
+    function savePermissions() {
+      if (!currentEditUser) return;
+      
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      const userIndex = users.findIndex(u => u.username === currentEditUser.username);
+      
+      if (userIndex === -1) return;
+      
+      // Get selected permissions
+      const permissions = [];
+      ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar'].forEach(lang => {
+        const checkbox = document.getElementById(`perm-${lang}`);
+        if (checkbox.checked) {
+          permissions.push(lang);
+        }
+      });
+      
+      // Update user
+      users[userIndex].permissions = permissions;
+      localStorage.setItem('users', JSON.stringify(users));
+      
+      // Reload table
+      loadUsers();
+      closeModal();
+      
+      alert('권한이 저장되었습니다.');
     }
 
-    // Close modal when clicking outside
+    // Logout
+    function logout() {
+      if (confirm('로그아웃하시겠습니까?')) {
+        localStorage.removeItem('currentUser');
+        sessionStorage.removeItem('currentUser');
+        window.location.href = 'index.html';
+      }
+    }
+
+    // Initialize
+    const admin = checkAuth();
+    if (admin) {
+      loadUsers();
+    }
+
+    // Close modal on outside click
     document.getElementById('edit-modal').addEventListener('click', (e) => {
       if (e.target.id === 'edit-modal') {
         closeModal();
       }
     });
-
-    // Load users on page load
-    loadUsers();
   </script>
 </body>
 </html>
