@@ -1404,80 +1404,7 @@
       }
 
 
-      /* ============================================
-         🎯 최종 헤더 정렬 - 완벽한 수평 배치
-         ============================================ */
       
-      #language-selector {
-        display: flex !important;
-        flex-direction: row !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        gap: 0 !important;
-        padding: 10px 40px !important;
-        min-height: 52px !important;
-        box-sizing: border-box !important;
-      }
-      
-      #user-info {
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 12px !important;
-        flex: 0 0 auto !important;
-        width: auto !important;
-      }
-      
-      .user-name {
-        color: #333 !important;
-        font-weight: 500 !important;
-        font-size: 13px !important;
-        white-space: nowrap !important;
-        line-height: var(--header-btn-h) !important;
-        display: inline-block !important;
-      }
-      
-      #user-info .logout-btn {
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        padding: var(--header-btn-py) var(--header-btn-px) !important;
-        height: var(--header-btn-h) !important;
-        min-height: var(--header-btn-h) !important;
-        line-height: 1 !important;
-        font-size: var(--header-btn-fs) !important;
-        background: var(--color-accent) !important;
-        color: #fff !important;
-        border: none !important;
-        border-radius: 6px !important;
-        cursor: pointer !important;
-        white-space: nowrap !important;
-        font-weight: 500 !important;
-        box-sizing: border-box !important;
-        flex: 0 0 auto !important;
-        width: auto !important;
-      }
-      
-      .header-icons {
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 10px !important;
-        flex: 0 0 auto !important;
-        width: auto !important;
-      }
-      
-      .text-btn,
-      .header-icons button {
-        width: auto !important;
-        flex: 0 0 auto !important;
-        max-width: none !important;
-      }
-      
-      /* 모바일 반응형 */
-      @media (max-width: 768px) {
-        #language-selector {
-          padding: 10px 16px !important;
-          gap: 8px !important;
-        }
         
         #user-info {
           gap: 8px !important;
@@ -1494,7 +1421,63 @@
         }
       }
 
-  </style>
+  
+      /* ============================================
+         🚨 CRITICAL: 헤더 정렬 최우선 규칙
+         ============================================ */
+      
+      #language-selector {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding: 10px 40px !important;
+        min-height: 52px !important;
+        box-sizing: border-box !important;
+        /* Grid 속성 완전 제거 */
+        grid-template-columns: none !important;
+        grid-column: unset !important;
+      }
+      
+      #user-info {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 12px !important;
+        flex: 0 0 auto !important;
+        width: auto !important;
+        /* Grid 속성 완전 제거 */
+        grid-column: unset !important;
+        justify-self: unset !important;
+      }
+      
+      .header-icons {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        flex: 0 0 auto !important;
+        width: auto !important;
+        /* Grid 속성 완전 제거 */
+        grid-column: unset !important;
+        justify-self: end !important;  /* 오른쪽 정렬 강제 */
+      }
+      
+      .user-name {
+        line-height: 32px !important;
+        font-size: 13px !important;
+      }
+      
+      #user-info .logout-btn,
+      .text-btn {
+        width: auto !important;
+        flex: 0 0 auto !important;
+        max-width: none !important;
+        height: 32px !important;
+        padding: 5px 14px !important;
+        line-height: 1 !important;
+        font-size: 13px !important;
+      }
+
+</style>
 
 </head>
   <body>

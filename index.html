@@ -577,7 +577,7 @@
                 }
 
                 // 책 페이지로 이동
-                window.location.href = 'book.html?v=1770977452&_=' + Date.now();
+                window.location.href = 'book.html?v=1770977634&_=' + Date.now();
             } else {
                 // 로그인 실패
                 showError('login-email', '이메일 또는 비밀번호가 올바르지 않습니다.');
@@ -691,7 +691,7 @@
         window.addEventListener('load', function() {
             const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
             if (currentUser) {
-                window.location.href = 'book.html?v=1770977452&_=' + Date.now();
+                window.location.href = 'book.html?v=1770977634&_=' + Date.now();
             }
         });
     </script>
