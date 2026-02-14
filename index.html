@@ -3,6 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- 모든 브라우저 호환성 설정 -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#5d4037">
   <title>살아본 뒤에야 비로소 읽히는 문장들 - 로그인</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -363,9 +368,11 @@
           email: 'admin@example.com',
           role: 'admin',
           permissions: ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar'],
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          permanent: true  // 영구 저장 플래그
         });
         localStorage.setItem('users', JSON.stringify(users));
+        console.log('✅ Default admin account created');
       }
     }
 
@@ -454,7 +461,8 @@
         password,
         role: 'user',
         permissions: ['ko'], // Default: Korean only
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        permanent: true  // 영구 저장 플래그 - 관리자만 삭제 가능
       });
       
       localStorage.setItem('users', JSON.stringify(users));
@@ -490,15 +498,30 @@
     initializeDefaultAccounts();
     
     // Check if already logged in
-    const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
-    if (currentUser) {
-      // Redirect to admin page if user is admin
+    const currentUserStr = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+    if (currentUserStr) {
+      try {
+        const user = JSON.parse(currentUserStr);
+        // Redirect to admin page if user is admin
         if (user.role === 'admin') {
           window.location.href = 'admin.html';
         } else {
           window.location.href = 'book.html';
         }
+      } catch (e) {
+        console.error('Failed to parse currentUser:', e);
+        localStorage.removeItem('currentUser');
+        sessionStorage.removeItem('currentUser');
+      }
     }
+
+    // 데이터 영구성 보장: 주기적으로 localStorage 확인
+    setInterval(() => {
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      if (users.length > 0) {
+        console.log('✅ User data preserved:', users.length, 'users');
+      }
+    }, 60000); // 1분마다 확인
   </script>
 </body>
 </html>

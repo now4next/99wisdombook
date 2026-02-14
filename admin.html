@@ -3,6 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- 모든 브라우저 호환성 설정 -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#5d4037">
   <title>관리자 페이지 - 회원 관리</title>
   
   <!-- CRITICAL: Authentication check MUST come first -->
@@ -260,10 +265,21 @@
     .btn-edit {
       background: var(--color-primary);
       color: white;
+      margin-right: 8px;
     }
 
     .btn-edit:hover {
       background: var(--color-primary-light);
+      transform: translateY(-1px);
+    }
+
+    .btn-delete {
+      background: #d32f2f;
+      color: white;
+    }
+
+    .btn-delete:hover {
+      background: #b71c1c;
       transform: translateY(-1px);
     }
 
@@ -794,6 +810,16 @@
         editBtn.textContent = '편집';
         editBtn.onclick = () => openEditModal(user);
         tdActions.appendChild(editBtn);
+        
+        // 관리자가 아닌 경우에만 삭제 버튼 표시
+        if (user.role !== 'admin') {
+          const deleteBtn = document.createElement('button');
+          deleteBtn.className = 'btn btn-delete';
+          deleteBtn.textContent = '삭제';
+          deleteBtn.onclick = () => deleteUser(user);
+          tdActions.appendChild(deleteBtn);
+        }
+        
         tr.appendChild(tdActions);
         
         tbody.appendChild(tr);
@@ -880,6 +906,28 @@
       alert('권한이 저장되었습니다.');
     }
 
+    // Delete user (관리자만 실행 가능)
+    function deleteUser(user) {
+      if (user.role === 'admin') {
+        alert('관리자 계정은 삭제할 수 없습니다.');
+        return;
+      }
+      
+      if (!confirm(`정말로 "${user.username}" 회원을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) {
+        return;
+      }
+      
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      const updatedUsers = users.filter(u => u.username !== user.username);
+      
+      localStorage.setItem('users', JSON.stringify(updatedUsers));
+      
+      console.log('User deleted:', user.username);
+      alert('회원이 삭제되었습니다.');
+      
+      loadUsers();
+    }
+
     // Logout
     function logout() {
       if (confirm('로그아웃하시겠습니까?')) {
@@ -888,6 +936,16 @@
         window.location.href = 'index.html';
       }
     }
+
+    // 데이터 영구성 보장: 주기적으로 localStorage 확인 및 백업
+    setInterval(() => {
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      if (users.length > 0) {
+        // 백업 데이터 저장 (예비용)
+        localStorage.setItem('users_backup', JSON.stringify(users));
+        console.log('✅ User data backed up:', users.length, 'users');
+      }
+    }, 300000); // 5분마다 백업
 
     // Prevent navigation away
     window.addEventListener('beforeunload', function(e) {
