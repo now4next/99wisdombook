@@ -260,6 +260,7 @@
       font-weight: 500;
       transition: all 0.2s;
       font-family: var(--font-sans);
+      display: inline-block;
     }
 
     .btn-edit {
@@ -271,6 +272,7 @@
     .btn-edit:hover {
       background: var(--color-primary-light);
       transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(93, 64, 55, 0.3);
     }
 
     .btn-delete {
@@ -281,6 +283,20 @@
     .btn-delete:hover {
       background: #b71c1c;
       transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(211, 47, 47, 0.3);
+    }
+
+    .btn-create {
+      background: #2e7d32;
+      color: white;
+      padding: 10px 20px;
+      margin-bottom: 20px;
+    }
+
+    .btn-create:hover {
+      background: #1b5e20;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(46, 125, 50, 0.3);
     }
 
     /* Modal */
@@ -532,6 +548,9 @@
     <div class="table-container">
       <div class="table-header">
         <h2>회원 목록</h2>
+      </div>
+      <div style="padding: 20px 24px; border-bottom: 1px solid var(--border-color);">
+        <button class="btn btn-create" onclick="openCreateModal()">➕ 새 회원 추가</button>
       </div>
       <table>
         <thead>
@@ -853,6 +872,9 @@
         checkbox.checked = user.permissions && user.permissions.includes(lang);
       });
       
+      // Update modal title
+      document.querySelector('.modal-header h2').textContent = '회원 권한 편집';
+      
       // Show modal
       document.getElementById('edit-modal').classList.add('active');
     }
@@ -868,42 +890,136 @@
       if (!currentEditUser) return;
       
       const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const userIndex = users.findIndex(u => u.username === currentEditUser.username);
       
-      if (userIndex === -1) return;
-      
-      // Get selected role
-      const selectedRole = document.querySelector('input[name="user-role"]:checked');
-      if (selectedRole) {
-        users[userIndex].role = selectedRole.value;
-      }
-      
-      // Get selected permissions
-      const permissions = [];
-      ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar'].forEach(lang => {
-        const checkbox = document.getElementById(`perm-${lang}`);
-        if (checkbox.checked) {
-          permissions.push(lang);
+      // Check if creating new user
+      if (currentEditUser._isNew) {
+        const username = document.getElementById('new-username').value.trim();
+        const email = document.getElementById('new-email').value.trim();
+        const password = document.getElementById('new-password').value;
+        
+        // Validation
+        if (!username || !email || !password) {
+          alert('모든 필드를 입력해주세요.');
+          return;
         }
-      });
-      
-      // Update user
-      users[userIndex].permissions = permissions;
-      
-      // If user is admin, give all permissions
-      if (users[userIndex].role === 'admin') {
-        users[userIndex].permissions = ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar'];
+        
+        if (users.find(u => u.username === username)) {
+          alert('이미 존재하는 사용자명입니다.');
+          return;
+        }
+        
+        if (users.find(u => u.email === email)) {
+          alert('이미 등록된 이메일입니다.');
+          return;
+        }
+        
+        // Get selected role
+        const selectedRole = document.querySelector('input[name="user-role"]:checked');
+        const role = selectedRole ? selectedRole.value : 'user';
+        
+        // Get selected permissions
+        const permissions = [];
+        ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar'].forEach(lang => {
+          const checkbox = document.getElementById(`perm-${lang}`);
+          if (checkbox.checked) {
+            permissions.push(lang);
+          }
+        });
+        
+        // Create new user
+        const newUser = {
+          username,
+          name: username,
+          email,
+          password,
+          role,
+          permissions: role === 'admin' ? ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar'] : permissions,
+          createdAt: new Date().toISOString(),
+          permanent: true
+        };
+        
+        users.push(newUser);
+        localStorage.setItem('users', JSON.stringify(users));
+        
+        console.log('Created new user:', newUser);
+        alert('새 회원이 생성되었습니다.');
+      } else {
+        // Update existing user
+        const userIndex = users.findIndex(u => u.username === currentEditUser.username);
+        
+        if (userIndex === -1) return;
+        
+        // Get selected role
+        const selectedRole = document.querySelector('input[name="user-role"]:checked');
+        if (selectedRole) {
+          users[userIndex].role = selectedRole.value;
+        }
+        
+        // Get selected permissions
+        const permissions = [];
+        ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar'].forEach(lang => {
+          const checkbox = document.getElementById(`perm-${lang}`);
+          if (checkbox.checked) {
+            permissions.push(lang);
+          }
+        });
+        
+        // Update user
+        users[userIndex].permissions = permissions;
+        
+        // If user is admin, give all permissions
+        if (users[userIndex].role === 'admin') {
+          users[userIndex].permissions = ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar'];
+        }
+        
+        localStorage.setItem('users', JSON.stringify(users));
+        
+        console.log('Updated user:', users[userIndex]);
+        alert('권한이 저장되었습니다.');
       }
-      
-      localStorage.setItem('users', JSON.stringify(users));
-      
-      console.log('Updated user:', users[userIndex]);
       
       // Reload table
       loadUsers();
       closeModal();
+    }
+
+    // Open create user modal
+    function openCreateModal() {
+      currentEditUser = { _isNew: true };
       
-      alert('권한이 저장되었습니다.');
+      // Clear user info
+      const userInfo = document.getElementById('modal-user-info');
+      userInfo.innerHTML = `
+        <p style="color: #2e7d32; font-weight: 600;">새로운 회원을 생성합니다</p>
+        <div class="form-group" style="margin-top: 15px;">
+          <label>사용자명:</label>
+          <input type="text" id="new-username" placeholder="사용자명 입력" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-top: 5px;">
+        </div>
+        <div class="form-group" style="margin-top: 10px;">
+          <label>이메일:</label>
+          <input type="email" id="new-email" placeholder="이메일 입력" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-top: 5px;">
+        </div>
+        <div class="form-group" style="margin-top: 10px;">
+          <label>비밀번호:</label>
+          <input type="password" id="new-password" placeholder="비밀번호 입력" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-top: 5px;">
+        </div>
+      `;
+      
+      // Set default role to user
+      document.getElementById('role-user').checked = true;
+      
+      // Clear all permissions
+      ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar'].forEach(lang => {
+        document.getElementById(`perm-${lang}`).checked = false;
+      });
+      // Default: Korean only
+      document.getElementById('perm-ko').checked = true;
+      
+      // Update modal title
+      document.querySelector('.modal-header h2').textContent = '새 회원 생성';
+      
+      // Show modal
+      document.getElementById('edit-modal').classList.add('active');
     }
 
     // Delete user (관리자만 실행 가능)
