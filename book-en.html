@@ -5,13 +5,36 @@
 
   // Authentication and permission check
   (function() {
-    const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
-    if (!currentUser) {
+    const currentUserStr = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+    if (!currentUserStr) {
+      console.log('❌ No user logged in, redirecting to index.html');
       window.location.href = 'index.html';
       return;
     }
     
-    const user = JSON.parse(currentUser);
+    const currentUser = JSON.parse(currentUserStr);
+    
+    // Get fresh user data from users list to check latest permissions
+    const usersStr = localStorage.getItem('users') || '[]';
+    const users = JSON.parse(usersStr);
+    const freshUser = users.find(u => u.username === currentUser.username);
+    
+    // Use fresh user data if available, otherwise fall back to currentUser
+    const user = freshUser || currentUser;
+    
+    console.log('🔍 [English Page Load] Current user:', user);
+    console.log('🔍 [English Page Load] User role:', user.role);
+    console.log('🔍 [English Page Load] User permissions:', user.permissions);
+    
+    // Check if user has permission for English (en)
+    if (user.role !== 'admin' && (!user.permissions || !user.permissions.includes('en'))) {
+      console.log('❌ [English Page Load] No permission for English, redirecting to book.html');
+      alert('⚠️ 언어 열람 권한이 없습니다\n\n영어에 대한 접근 권한이 없습니다.\n관리자에게 문의하세요.\n\n한국어 페이지로 이동합니다.');
+      window.location.href = 'book.html';
+      return;
+    }
+    
+    console.log('✅ [English Page Load] Permission granted for English');
     
     // Update userName display
     const userNameElement = document.getElementById('userName');
@@ -50,28 +73,42 @@
     }
   })();
 
-    // Enhanced language menu with permission alert and content switching
+    // Enhanced language menu with permission alert and navigation control
     document.querySelectorAll('.language-menu a[data-lang]').forEach(link => {
       link.addEventListener('click', function(e) {
         const lang = this.getAttribute('data-lang');
-        const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+        const currentUserStr = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
         
-        if (currentUser) {
-          const user = JSON.parse(currentUser);
+        if (currentUserStr) {
+          const currentUser = JSON.parse(currentUserStr);
+          
+          // Get fresh user data from users list to check latest permissions
+          const usersStr = localStorage.getItem('users') || '[]';
+          const users = JSON.parse(usersStr);
+          const freshUser = users.find(u => u.username === currentUser.username);
+          
+          // Use fresh user data if available, otherwise fall back to currentUser
+          const user = freshUser || currentUser;
           
           // Check if user has permission
-          if (user.role !== 'admin' && !user.permissions.includes(lang)) {
+          if (user.role !== 'admin' && (!user.permissions || !user.permissions.includes(lang))) {
             e.preventDefault();
-            alert('⚠️ 언어 열람 권한이 없습니다
-
-해당 언어에 대한 열람 접근 승인이 안되어 있습니다.
-관리자에게 문의하세요.');
+            e.stopPropagation();
+            alert('⚠️ 언어 열람 권한이 없습니다\n\n해당 언어에 대한 접근 권한이 없습니다.\n관리자에게 문의하세요.\n\n한국어 페이지로 이동합니다.');
+            window.location.href = 'book.html';
             return false;
           }
+          
+          // If English is selected and user already on English page
+          if (lang === 'en' && window.location.pathname.includes('book-en.html')) {
+            e.preventDefault();
+            console.log('Already on English page');
+            return false;
+          }
+        } else {
+          e.preventDefault();
+          window.location.href = 'index.html';
         }
-        
-        // Switch content based on language
-        switchLanguageContent(lang);
       });
     });
     

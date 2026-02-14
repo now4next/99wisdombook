@@ -54,16 +54,36 @@
     document.querySelectorAll('.language-menu a[data-lang]').forEach(link => {
       link.addEventListener('click', function(e) {
         const lang = this.getAttribute('data-lang');
-        const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+        const currentUserStr = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
         
-        if (currentUser) {
-          const user = JSON.parse(currentUser);
+        console.log('🔍 [Language Check] Clicked language:', lang);
+        console.log('🔍 [Language Check] Current user string:', currentUserStr);
+        
+        if (currentUserStr) {
+          const currentUser = JSON.parse(currentUserStr);
+          
+          // Get fresh user data from users list to check latest permissions
+          const usersStr = localStorage.getItem('users') || '[]';
+          const users = JSON.parse(usersStr);
+          const freshUser = users.find(u => u.username === currentUser.username);
+          
+          // Use fresh user data if available, otherwise fall back to currentUser
+          const user = freshUser || currentUser;
+          
+          console.log('🔍 [Language Check] Current user (from session):', currentUser);
+          console.log('🔍 [Language Check] Fresh user (from users list):', freshUser);
+          console.log('🔍 [Language Check] Using user:', user);
+          console.log('🔍 [Language Check] User role:', user.role);
+          console.log('🔍 [Language Check] User permissions:', user.permissions);
+          console.log('🔍 [Language Check] Has permission for ' + lang + ':', user.permissions ? user.permissions.includes(lang) : false);
           
           // Check if user has permission for this language
-          if (user.role !== 'admin' && !user.permissions.includes(lang)) {
+          if (user.role !== 'admin' && (!user.permissions || !user.permissions.includes(lang))) {
             // ALWAYS prevent default navigation first
             e.preventDefault();
             e.stopPropagation();
+            
+            console.log('❌ [Language Check] Permission DENIED for', lang);
             
             // Show alert and redirect to Korean page
             alert('⚠️ 언어 열람 권한이 없습니다\n\n해당 언어에 대한 접근 권한이 없습니다.\n관리자에게 문의하세요.\n\n한국어 페이지로 이동합니다.');
@@ -82,10 +102,11 @@
           
           // For other languages with permission, allow normal navigation
           // The href will handle navigation to book-en.html, book-zh.html, etc.
-          console.log('✅ Permission granted for language:', lang);
+          console.log('✅ [Language Check] Permission granted for language:', lang);
           // Let the default href action proceed
         } else {
           // No user logged in, redirect to login
+          console.log('❌ [Language Check] No user logged in');
           e.preventDefault();
           window.location.href = 'index.html';
         }
