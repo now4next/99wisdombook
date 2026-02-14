@@ -409,17 +409,15 @@
     
     #floating-toc-panel {
       position: fixed;
-      top: 60px;
-      right: -420px;
-      width: 400px;
-      max-height: calc(100vh - 80px);
+      top: 0;
+      right: -380px;
+      width: 360px;
+      height: 100vh;
       background: #ffffff;
-      border: 1px solid #e0e0e0;
-      border-radius: 12px 0 0 12px;
-      box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+      box-shadow: -2px 0 16px rgba(0, 0, 0, 0.12);
       padding: 0;
       overflow: hidden;
-      transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 9999;
       display: flex;
       flex-direction: column;
@@ -431,82 +429,93 @@
     
     #floating-toc-panel h3 {
       margin: 0;
-      padding: 20px 24px;
-      font-size: 1.4em;
-      color: white;
-      background: var(--color-accent);
-      border-bottom: none;
+      padding: 18px 20px;
+      font-size: 1.1em;
+      font-weight: 600;
+      color: #1a1a1a;
+      background: #ffffff;
+      border-bottom: 1px solid #e8e8e8;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      letter-spacing: -0.02em;
     }
     
-    .toc-content {
+    #floating-toc-panel ul {
       flex: 1;
       overflow-y: auto;
-      padding: 16px;
+      overflow-x: hidden;
+      padding: 8px 0;
+      margin: 0;
+      list-style: none;
+      scrollbar-width: thin;
+      scrollbar-color: #c0c0c0 #f5f5f5;
     }
     
-    .toc-section {
-      margin-bottom: 16px;
+    #floating-toc-panel ul li {
+      margin: 0;
     }
     
-    .toc-section-title {
-      font-weight: 700;
-      color: var(--color-accent);
-      margin: 20px 0 12px;
-      padding: 8px 12px;
-      background: #f9f9f9;
-      border-left: 4px solid var(--color-accent);
-      font-size: 0.9em;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    
-    .toc-item {
+    #floating-toc-panel ul li a {
       display: block;
-      padding: 12px 16px;
-      margin: 4px 0;
-      color: #333;
+      padding: 6px 20px;
+      color: #444;
       text-decoration: none;
-      border-radius: 8px;
-      transition: all 0.2s ease;
-      font-size: 14px;
-      line-height: 1.5;
+      transition: all 0.15s ease;
+      font-size: 13.5px;
+      line-height: 1.4;
       border-left: 3px solid transparent;
     }
     
-    .toc-item:hover {
+    #floating-toc-panel ul li a:hover {
       background: #f5f5f5;
-      color: var(--color-accent);
-      transform: translateX(4px);
+      color: #000;
       border-left-color: var(--color-accent);
+      padding-left: 22px;
     }
     
-    .toc-item:active {
-      background: #e8e8e8;
+    #floating-toc-panel ul li a:active {
+      background: #f0f0f0;
+    }
+    
+    #floating-toc-panel ul li[style*="font-weight: bold"] {
+      margin-top: 12px;
+      padding: 6px 20px 3px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+    
+    #floating-toc-panel ul li:first-child {
+      margin-top: 4px;
     }
     
     .toc-close {
       background: none;
       border: none;
-      font-size: 28px;
-      color: white;
+      font-size: 24px;
+      color: #666;
       cursor: pointer;
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 50%;
+      border-radius: 6px;
       transition: all 0.2s ease;
       padding: 0;
       line-height: 1;
     }
     
     .toc-close:hover {
-      background: rgba(255, 255, 255, 0.2);
-      transform: rotate(90deg);
+      background: #f0f0f0;
+      color: #000;
+    }
+    
+    .toc-close:active {
+      background: #e8e8e8;
     }
     
 
@@ -516,23 +525,24 @@
       to { opacity: 1; }
     }
     
-    /* TOC scrollbar styling */
-    .toc-content::-webkit-scrollbar {
-      width: 8px;
+    /* Modern minimal scrollbar */
+    #floating-toc-panel ul::-webkit-scrollbar {
+      width: 6px;
     }
     
-    .toc-content::-webkit-scrollbar-track {
-      background: #f1f1f1;
-      border-radius: 4px;
+    #floating-toc-panel ul::-webkit-scrollbar-track {
+      background: #f5f5f5;
+      border-radius: 3px;
     }
     
-    .toc-content::-webkit-scrollbar-thumb {
-      background: var(--color-accent);
-      border-radius: 4px;
+    #floating-toc-panel ul::-webkit-scrollbar-thumb {
+      background: #c0c0c0;
+      border-radius: 3px;
+      transition: background 0.2s ease;
     }
     
-    .toc-content::-webkit-scrollbar-thumb:hover {
-      background: var(--color-primary-dark);
+    #floating-toc-panel ul::-webkit-scrollbar-thumb:hover {
+      background: #a0a0a0;
     }
     
     #toc-overlay {
@@ -542,7 +552,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.3);
+      background: rgba(0, 0, 0, 0.25);
       z-index: 9998;
       backdrop-filter: blur(2px);
     }
@@ -596,6 +606,31 @@
       /* ===============================
          Mobile Responsive (maintain button sizes)
          =============================== */
+      
+    /* Mobile responsive for TOC */
+    @media (max-width: 768px) {
+      #floating-toc-panel {
+        width: 85%;
+        max-width: 340px;
+        right: -90%;
+      }
+      
+      #floating-toc-panel h3 {
+        font-size: 1em;
+        padding: 16px 18px;
+      }
+      
+      #floating-toc-panel ul li a {
+        font-size: 13px;
+        padding: 8px 18px;
+      }
+      
+      #floating-toc-panel ul li[style*="font-weight: bold"] {
+        font-size: 10px;
+        padding: 5px 18px 2px;
+      }
+    }
+    
       @media screen and (max-width: 768px) {
         /* Header uses global styles */
       }
@@ -1485,83 +1520,162 @@
     </div>
 
     <!-- Floating TOC Panel -->
+    <!-- Floating TOC Panel -->
     <div id="floating-toc-panel">
       <button class="toc-close" onclick="toggleTOC()">×</button>
-      <h3>CONTENTS</h3>
-      <div class="toc-content"><div class="toc-section">
-        <a href="#opening" class="toc-item" onclick="navigateToSection('opening')">여는 말</a>
-      </div>
+      <h3 style="margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px;">CONTENTS</h3>
+      <ul style="list-style: none; padding: 0;">
+        <li><a href="#opening" onclick="navigateToSection('opening')">Opening Reflections</a></li>
 
-      <div class="toc-section">
-        <div class="toc-section-title">제1부. 경제와 거래의 법칙</div>
-        <a href="#chapter-1" class="toc-item" onclick="navigateToSection('chapter-1')">1. 세상에 공짜는 없다</a>
-        <a href="#chapter-2" class="toc-item" onclick="navigateToSection('chapter-2')">2. 하이 리스크, 하이 리턴</a>
-        <a href="#chapter-3" class="toc-item" onclick="navigateToSection('chapter-3')">3. 계란을 한 바구니에 담지 마라</a>
-        <a href="#chapter-4" class="toc-item" onclick="navigateToSection('chapter-4')">4. 수요가 있으면 공급이 있다</a>
-        <a href="#chapter-5" class="toc-item" onclick="navigateToSection('chapter-5')">5. 싼 게 비지떡이다</a>
-        <a href="#chapter-6" class="toc-item" onclick="navigateToSection('chapter-6')">6. 돈은 거짓말을 하지 않는다</a>
-        <a href="#chapter-7" class="toc-item" onclick="navigateToSection('chapter-7')">7. 악화가 양화를 구축한다</a>
-        <a href="#chapter-8" class="toc-item" onclick="navigateToSection('chapter-8')">8. 늦게 배운 도둑질이 날 새는 줄 모른다</a>
-        <a href="#chapter-9" class="toc-item" onclick="navigateToSection('chapter-9')">9. 남의 돈 벌기가 제일 어렵다</a>
-        <a href="#chapter-10" class="toc-item" onclick="navigateToSection('chapter-10')">10. 재주는 곰이 부리고 돈은 왕서방이 받는다</a>
-        <a href="#chapter-11" class="toc-item" onclick="navigateToSection('chapter-11')">11. 밑 빠진 독에 물 붓기</a>
-      </div>
+        <!-- Part 1 -->
+        <li style="margin-top: 15px; font-weight: bold; color: #666; font-size: 0.9em;">PART I. The Laws of Economics and Exchange</li>
+        <li><a href="#chapter-1" onclick="navigateToSection('chapter-1')">1. There is no such thing as a free lunch</a></li>
+        <li><a href="#chapter-2" onclick="navigateToSection('chapter-2')">2. High risk, high return</a></li>
+        <li><a href="#chapter-3" onclick="navigateToSection('chapter-3')">3. Don't put all your eggs in one basket</a></li>
+        <li><a href="#chapter-4" onclick="navigateToSection('chapter-4')">4. Where there is demand, there is supply</a></li>
+        <li><a href="#chapter-5" onclick="navigateToSection('chapter-5')">5. You get what you pay for</a></li>
+        <li><a href="#chapter-6" onclick="navigateToSection('chapter-6')">6. Money doesn't lie</a></li>
+        <li><a href="#chapter-7" onclick="navigateToSection('chapter-7')">7. Bad money drives out good</a></li>
+        <li><a href="#chapter-8" onclick="navigateToSection('chapter-8')">8. A late thief works through the night</a></li>
+        <li><a href="#chapter-9" onclick="navigateToSection('chapter-9')">9. Making money for others is the hardest</a></li>
+        <li><a href="#chapter-10" onclick="navigateToSection('chapter-10')">10. The bear does the tricks, but the ringmaster takes the money</a></li>
+        <li><a href="#chapter-11" onclick="navigateToSection('chapter-11')">11. Pouring water into a bottomless jar</a></li>
 
-      <div class="toc-section">
-        <div class="toc-section-title">제2부 ~ 제9부</div>
-        <a href="#chapter-12" class="toc-item" onclick="navigateToSection('chapter-12')">12. 아니 땐 굴뚝에 연기 나랴</a>
-        <div style="text-align: center; color: #999; padding: 10px; font-size: 0.85em;">(제13~99장 생략)</div>
-      </div>
+        <!-- Part 2 -->
+        <li style="margin-top: 15px; font-weight: bold; color: #666; font-size: 0.9em;">PART II. The Laws of Cause and Nature</li>
+        <li><a href="#chapter-12" onclick="navigateToSection('chapter-12')">12. No smoke without fire</a></li>
+        <li><a href="#chapter-13" onclick="navigateToSection('chapter-13')">13. You reap what you sow</a></li>
+        <li><a href="#chapter-14" onclick="navigateToSection('chapter-14')">14. Stagnant water rots</a></li>
+        <li><a href="#chapter-15" onclick="navigateToSection('chapter-15')">15. Every uphill has its downhill</a></li>
+        <li><a href="#chapter-16" onclick="navigateToSection('chapter-16')">16. Empty vessels make the most noise</a></li>
+        <li><a href="#chapter-17" onclick="navigateToSection('chapter-17')">17. Clean water above means clean water below</a></li>
+        <li><a href="#chapter-18" onclick="navigateToSection('chapter-18')">18. Constant dripping wears away the stone</a></li>
+        <li><a href="#chapter-19" onclick="navigateToSection('chapter-19')">19. All things return to dust</a></li>
+        <li><a href="#chapter-20" onclick="navigateToSection('chapter-20')">20. The sun always rises in the east</a></li>
+        <li><a href="#chapter-21" onclick="navigateToSection('chapter-21')">21. No wind, no waves</a></li>
+        <li><a href="#chapter-22" onclick="navigateToSection('chapter-22')">22. Blood is thicker than water</a></li>
 
-      <div class="toc-section">
-        <a href="#chapter-100" class="toc-item" onclick="navigateToSection('chapter-100')">100. 당신만의 지혜</a>
-        <a href="#closing" class="toc-item" onclick="navigateToSection('closing')">맺음 말</a>
-      </div>
+        <!-- Part 3 -->
+        <li style="margin-top: 15px; font-weight: bold; color: #666; font-size: 0.9em;">PART III. The Laws of Time and Change</li>
+        <li><a href="#chapter-23" onclick="navigateToSection('chapter-23')">23. This too shall pass</a></li>
+        <li><a href="#chapter-24" onclick="navigateToSection('chapter-24')">24. Rome wasn't built in a day</a></li>
+        <li><a href="#chapter-25" onclick="navigateToSection('chapter-25')">25. History repeats itself</a></li>
+        <li><a href="#chapter-26" onclick="navigateToSection('chapter-26')">26. Time waits for no one</a></li>
+        <li><a href="#chapter-27" onclick="navigateToSection('chapter-27')">27. When you think it's too late, that's the earliest time</a></li>
+        <li><a href="#chapter-28" onclick="navigateToSection('chapter-28')">28. Tomorrow is another day</a></li>
+        <li><a href="#chapter-29" onclick="navigateToSection('chapter-29')">29. Ten years can change a landscape</a></li>
+        <li><a href="#chapter-30" onclick="navigateToSection('chapter-30')">30. Opportunity favors the prepared mind</a></li>
+        <li><a href="#chapter-31" onclick="navigateToSection('chapter-31')">31. Strike while the iron is hot</a></li>
+        <li><a href="#chapter-32" onclick="navigateToSection('chapter-32')">32. A nation that forgets its past has no future</a></li>
+        <li><a href="#chapter-33" onclick="navigateToSection('chapter-33')">33. Nothing lasts forever</a></li>
+
+        <!-- Part 4 -->
+        <li style="margin-top: 15px; font-weight: bold; color: #666; font-size: 0.9em;">PART IV. The Laws of Human Nature and Psychology</li>
+        <li><a href="#chapter-34" onclick="navigateToSection('chapter-34')">34. You can know ten fathoms of water...</a></li>
+        <li><a href="#chapter-35" onclick="navigateToSection('chapter-35')">35. Arms bend inward</a></li>
+        <li><a href="#chapter-36" onclick="navigateToSection('chapter-36')">36. The grass is always greener on the other side</a></li>
+        <li><a href="#chapter-37" onclick="navigateToSection('chapter-37')">37. Darkness dwells beneath the lamp</a></li>
+        <li><a href="#chapter-38" onclick="navigateToSection('chapter-38')">38. Beauty is in the eye of the beholder</a></li>
+        <li><a href="#chapter-39" onclick="navigateToSection('chapter-39')">39. The axe you trust cuts your foot</a></li>
+        <li><a href="#chapter-40" onclick="navigateToSection('chapter-40')">40. The frog forgets it was once a tadpole</a></li>
+        <li><a href="#chapter-41" onclick="navigateToSection('chapter-41')">41. As the twig is bent, so grows the tree</a></li>
+        <li><a href="#chapter-42" onclick="navigateToSection('chapter-42')">42. Speak of the devil and he shall appear</a></li>
+        <li><a href="#chapter-43" onclick="navigateToSection('chapter-43')">43. The pot calls the kettle black</a></li>
+        <li><a href="#chapter-44" onclick="navigateToSection('chapter-44')">44. Swaying with the wind</a></li>
+
+        <!-- Part 5 -->
+        <li style="margin-top: 15px; font-weight: bold; color: #666; font-size: 0.9em;">PART V. The Laws of Relationships and Conduct</li>
+        <li><a href="#chapter-45" onclick="navigateToSection('chapter-45')">45. Fair words bring fair answers</a></li>
+        <li><a href="#chapter-46" onclick="navigateToSection('chapter-46')">46. There are no secrets in this world</a></li>
+        <li><a href="#chapter-47" onclick="navigateToSection('chapter-47')">47. Walls have ears</a></li>
+        <li><a href="#chapter-48" onclick="navigateToSection('chapter-48')">48. Words without legs travel a thousand miles</a></li>
+        <li><a href="#chapter-49" onclick="navigateToSection('chapter-49')">49. Too many cooks spoil the broth</a></li>
+        <li><a href="#chapter-50" onclick="navigateToSection('chapter-50')">50. Birds of a feather flock together</a></li>
+        <li><a href="#chapter-51" onclick="navigateToSection('chapter-51')">51. A barber cannot cut his own hair</a></li>
+        <li><a href="#chapter-52" onclick="navigateToSection('chapter-52')">52. Ignorance is bliss</a></li>
+        <li><a href="#chapter-53" onclick="navigateToSection('chapter-53')">53. Silence is golden</a></li>
+        <li><a href="#chapter-54" onclick="navigateToSection('chapter-54')">54. You can't spit on a smiling face</a></li>
+        <li><a href="#chapter-55" onclick="navigateToSection('chapter-55')">55. Follow your friend to Gangnam</a></li>
+
+        <!-- Part 6 -->
+        <li style="margin-top: 15px; font-weight: bold; color: #666; font-size: 0.9em;">PART VI. The Laws of Action and Effort</li>
+        <li><a href="#chapter-56" onclick="navigateToSection('chapter-56')">56. A journey of a thousand miles begins with a single step</a></li>
+        <li><a href="#chapter-57" onclick="navigateToSection('chapter-57')">57. Little strokes fell great oaks</a></li>
+        <li><a href="#chapter-58" onclick="navigateToSection('chapter-58')">58. Pearls are worthless until strung</a></li>
+        <li><a href="#chapter-59" onclick="navigateToSection('chapter-59')">59. Failure is the mother of success</a></li>
+        <li><a href="#chapter-60" onclick="navigateToSection('chapter-60')">60. Knock and it shall be opened</a></li>
+        <li><a href="#chapter-61" onclick="navigateToSection('chapter-61')">61. Even a worm will turn</a></li>
+        <li><a href="#chapter-62" onclick="navigateToSection('chapter-62')">62. The more haste, the less speed</a></li>
+        <li><a href="#chapter-63" onclick="navigateToSection('chapter-63')">63. Dig one well deep, not many shallow</a></li>
+        <li><a href="#chapter-64" onclick="navigateToSection('chapter-64')">64. Look before you leap</a></li>
+        <li><a href="#chapter-65" onclick="navigateToSection('chapter-65')">65. Many hands make light work</a></li>
+        <li><a href="#chapter-66" onclick="navigateToSection('chapter-66')">66. No pain, no gain</a></li>
+
+        <!-- Part 7 -->
+        <li style="margin-top: 15px; font-weight: bold; color: #666; font-size: 0.9em;">PART VII. The Laws of Crisis and Survival</li>
+        <li><a href="#chapter-67" onclick="navigateToSection('chapter-67')">67. Nothing ventured, nothing gained</a></li>
+        <li><a href="#chapter-68" onclick="navigateToSection('chapter-68')">68. There's always someone better</a></li>
+        <li><a href="#chapter-69" onclick="navigateToSection('chapter-69')">69. Closing the barn door after the horse is stolen</a></li>
+        <li><a href="#chapter-70" onclick="navigateToSection('chapter-70')">70. Every dog has its day</a></li>
+        <li><a href="#chapter-71" onclick="navigateToSection('chapter-71')">71. When the sky falls, there's still a hole to escape through</a></li>
+        <li><a href="#chapter-72" onclick="navigateToSection('chapter-72')">72. Survival of the fittest</a></li>
+        <li><a href="#chapter-73" onclick="navigateToSection('chapter-73')">73. United we stand, divided we fall</a></li>
+        <li><a href="#chapter-74" onclick="navigateToSection('chapter-74')">74. The enemy of my enemy is my friend</a></li>
+        <li><a href="#chapter-75" onclick="navigateToSection('chapter-75')">75. It's not the strongest that survives...</a></li>
+        <li><a href="#chapter-76" onclick="navigateToSection('chapter-76')">76. Give with one hand, take with the other</a></li>
+        <li><a href="#chapter-77" onclick="navigateToSection('chapter-77')">77. A guilty conscience needs no accuser</a></li>
+
+        <!-- Part 8 -->
+        <li style="margin-top: 15px; font-weight: bold; color: #666; font-size: 0.9em;">PART VIII. The Laws of Wisdom and Insight</li>
+        <li><a href="#chapter-78" onclick="navigateToSection('chapter-78')">78. Knowledge is power</a></li>
+        <li><a href="#chapter-79" onclick="navigateToSection('chapter-79')">79. Fools rush in where angels fear to tread</a></li>
+        <li><a href="#chapter-80" onclick="navigateToSection('chapter-80')">80. The boughs that bear most hang lowest</a></li>
+        <li><a href="#chapter-81" onclick="navigateToSection('chapter-81')">81. Darkness dwells beneath the lamp</a></li>
+        <li><a href="#chapter-82" onclick="navigateToSection('chapter-82')">82. Well begun is half done</a></li>
+        <li><a href="#chapter-83" onclick="navigateToSection('chapter-83')">83. From rags to riches</a></li>
+        <li><a href="#chapter-84" onclick="navigateToSection('chapter-84')">84. See one, know ten</a></li>
+        <li><a href="#chapter-85" onclick="navigateToSection('chapter-85')">85. A rat in a jar</a></li>
+        <li><a href="#chapter-86" onclick="navigateToSection('chapter-86')">86. Can't tell A from B</a></li>
+        <li><a href="#chapter-87" onclick="navigateToSection('chapter-87')">87. Experience is the best teacher</a></li>
+        <li><a href="#chapter-88" onclick="navigateToSection('chapter-88')">88. Fair without, foul within</a></li>
+
+        <!-- Part 9 -->
+        <li style="margin-top: 15px; font-weight: bold; color: #666; font-size: 0.9em;">PART IX. The Laws of Destiny and Acceptance</li>
+        <li><a href="#chapter-89" onclick="navigateToSection('chapter-89')">89. What will be, will be</a></li>
+        <li><a href="#chapter-90" onclick="navigateToSection('chapter-90')">90. Man proposes, God disposes</a></li>
+        <li><a href="#chapter-91" onclick="navigateToSection('chapter-91')">91. Dead men tell no tales</a></li>
+        <li><a href="#chapter-92" onclick="navigateToSection('chapter-92')">92. The bigger the tree, the more wind it catches</a></li>
+        <li><a href="#chapter-93" onclick="navigateToSection('chapter-93')">93. Give the hated one an extra rice cake</a></li>
+        <li><a href="#chapter-94" onclick="navigateToSection('chapter-94')">94. The thirsty dig the well</a></li>
+        <li><a href="#chapter-95" onclick="navigateToSection('chapter-95')">95. A living mouth won't be webbed shut</a></li>
+        <li><a href="#chapter-96" onclick="navigateToSection('chapter-96')">96. Better to get beaten first</a></li>
+        <li><a href="#chapter-97" onclick="navigateToSection('chapter-97')">97. No news is good news</a></li>
+        <li><a href="#chapter-98" onclick="navigateToSection('chapter-98')">98. Empty-handed we come, empty-handed we go</a></li>
+        <li><a href="#chapter-99" onclick="navigateToSection('chapter-99')">99. Truth is simple</a></li>
+        <li><a href="#chapter-100" onclick="navigateToSection('chapter-100')">100. Your Own Unique Life Experience</a></li>
+
+        <!-- Closing -->
+        <li style="margin-top: 15px;"><a href="#closing" onclick="navigateToSection('closing')">Closing Reflections</a></li>
+      </ul>
     </div>
-      </div>
     <!-- TOC Overlay -->
     <div id="toc-overlay" onclick="toggleTOC()"></div>
 
     <!-- Cover Page -->
-    <!-- Cover Page -->
     <div class="cover-page">
       <div class="cover-title" style="line-height: 1.3; margin-bottom: 0.3em;">
-        살아본<br>뒤에야<br>비로소<br>읽히는<br>문장들
+        Lines Life Taught Me
       </div>
-      <div class="cover-subtitle"><span style="font-size: 28px; line-height: 2.7;">Lines Life Taught Me</span></div>
-      <div class="cover-author"><span style="font-size: 16px;">강림선생 지음</span></div>
+      <div class="cover-author"><span style="font-size: 16px;">Author. Forest Kang</span></div>
     </div>
 
-    <!-- Copyright Page -->
-    <div class="copyright-page">
-      <h3>Lines Life Taught Me</h3>
-      <div class="copyright-info">
-        <div class="copyright-row"><span class="copyright-label">발 행</span><span>2026년 01월 29일</span></div>
-        <div class="copyright-row"><span class="copyright-label">저 자</span><span>강림선생 (Forest Kang)</span></div>
-        <div class="copyright-row"><span class="copyright-label">펴낸이</span><span>한건희</span></div>
-        <div class="copyright-row"><span class="copyright-label">펴낸곳</span><span>주식회사 부크크</span></div>
-        <div class="copyright-row"><span class="copyright-label">ISBN</span><span>979-11-12-13569-8</span></div>
-        <br>
-        <p>ⓒ 강림선생 2026</p>
-        <p>본 책은 저작자의 지적 재산으로서 무단 전재와 복제를 금합니다.</p>
+    
+        <p>ⓒ Forest Kang 2026</p>
+        <p>This book is the intellectual property of the author, and unauthorized reproduction or duplication is strictly prohibited.</p>
       </div>
     </div>
 
-    <!-- Dedication Page -->
-    <div class="dedication-page">
-      <div class="dedication-box">
-        <p style="text-align: center; margin-bottom: 2em; font-weight: bold">
-          “선물하고 싶은 사람에게 당신의 이름으로 마음을 전해보세요!”
-        </p>
-        <p>
-          "살아온 날들 속 모든 경험이 당신의 마음에 온전한 지혜의 문장으로 스며들기를. 그리하여 당신의 삶이 세상에서
-          가장 가치있는 이야기로 기억되기를 바라며, ____________________ 님께 사랑을 담아 드립니다."
-        </p>
-        <p style="text-align: right; margin-top: 2em">____________________ 드림.</p>
-      </div>
-    </div>
-
-    <!-- Table of Contents -->
+        <!-- Table of Contents -->
     <div class="toc-page">
       <div class="toc-title">CONTENTS</div>
       <div class="toc-chapter"><a href="#opening">Opening Reflections</a></div>
