@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- 모든 브라우저 호환성 설정 -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#5d4037">
+  <title>살아본 뒤에야 비로소 읽히는 문장들 - 로그인</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --font-main: 'Nanum Myeongjo', serif;
+      --font-sans: 'Noto Sans KR', sans-serif;
+      --color-primary: #5d4037;
+      --color-primary-dark: #4a332c;
+      --color-accent: #8d6e63;
+      --color-bg: #f5f5f5;
+      --color-text: #1a1a1a;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      max-width: 450px;
+      width: 100%;
+    }
+
+    .header {
+      background: var(--color-primary);
+      color: white;
+      padding: 40px 30px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-family: var(--font-main);
+      font-size: 1.8em;
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+
+    .header p {
+      font-size: 0.9em;
+      opacity: 0.9;
+    }
+
+    .form-container {
+      padding: 40px 30px;
+    }
+
+    .tab-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .tab-button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      background: none;
+      font-size: 1em;
+      font-weight: 500;
+      color: #999;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    .tab-button.active {
+      color: var(--color-primary);
+    }
+
+    .tab-button.active::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--color-primary);
+    }
+
+    .form-content {
+      display: none;
+    }
+
+    .form-content.active {
+      display: block;
+      animation: fadeIn 0.3s;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--color-text);
+      font-weight: 500;
+      font-size: 0.9em;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1em;
+      transition: all 0.3s;
+      font-family: var(--font-sans);
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(93, 64, 55, 0.1);
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 15px 0;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+      cursor: pointer;
+    }
+
+    .checkbox-group label {
+      margin: 0;
+      font-weight: normal;
+      cursor: pointer;
+    }
+
+    .submit-button {
+      width: 100%;
+      padding: 14px;
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 10px;
+    }
+
+    .submit-button:hover {
+      background: var(--color-primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(93, 64, 55, 0.3);
+    }
+
+    .submit-button:active {
+      transform: translateY(0);
+    }
+
+    .error-message {
+      background: #ffebee;
+      color: #c62828;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 0.9em;
+      display: none;
+    }
+
+    .error-message.show {
+      display: block;
+      animation: shake 0.3s;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      75% { transform: translateX(10px); }
+    }
+
+    .success-message {
+      background: #e8f5e9;
+      color: #2e7d32;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 0.9em;
+      display: none;
+    }
+
+    .success-message.show {
+      display: block;
+    }
+
+    .language-permissions {
+      margin-top: 15px;
+      padding: 15px;
+      background: #f9f9f9;
+      border-radius: 8px;
+    }
+
+    .language-permissions h4 {
+      font-size: 0.9em;
+      margin-bottom: 10px;
+      color: var(--color-text);
+    }
+
+    .permission-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .permission-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .permission-item input[type="checkbox"] {
+      width: auto;
+    }
+
+    .permission-item label {
+      font-size: 0.85em;
+      margin: 0;
+    }
+
+    .admin-badge {
+      display: inline-block;
+      background: #ff6f00;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75em;
+      margin-left: 8px;
+      font-weight: 600;
+    }
+
+    .footer-links {
+      text-align: center;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .footer-links a {
+      color: var(--color-primary);
+      text-decoration: none;
+      font-size: 0.9em;
+    }
+
+    .footer-links a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>살아본 뒤에야<br>비로소 읽히는 문장들</h1>
+      <p>Lines Life Taught Me</p>
+    </div>
+
+    <div class="form-container">
+      <div class="tab-buttons">
+        <button class="tab-button active" onclick="switchTab('login')">로그인</button>
+        <button class="tab-button" onclick="switchTab('register')">회원가입</button>
+      </div>
+
+      <!-- Login Form -->
+      <div id="login-form" class="form-content active">
+        <div id="login-error" class="error-message"></div>
+        <form onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label for="login-username">사용자 이름</label>
+            <input type="text" id="login-username" required autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label for="login-password">비밀번호</label>
+            <input type="password" id="login-password" required autocomplete="current-password">
+          </div>
+          <div class="checkbox-group">
+            <input type="checkbox" id="remember-me">
+            <label for="remember-me">로그인 상태 유지</label>
+          </div>
+          <button type="submit" class="submit-button">로그인</button>
+        </form>
+        <div class="footer-links">
+          <a href="#" onclick="alert('관리자에게 문의하세요'); return false;">비밀번호를 잊으셨나요?</a>
+        </div>
+      </div>
+
+      <!-- Register Form -->
+      <div id="register-form" class="form-content">
+        <div id="register-error" class="error-message"></div>
+        <div id="register-success" class="success-message"></div>
+        <form onsubmit="handleRegister(event)">
+          <div class="form-group">
+            <label for="register-username">사용자 이름</label>
+            <input type="text" id="register-username" required minlength="3" autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label for="register-email">이메일</label>
+            <input type="email" id="register-email" required autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label for="register-password">비밀번호</label>
+            <input type="password" id="register-password" required minlength="6" autocomplete="new-password">
+          </div>
+          <div class="form-group">
+            <label for="register-password-confirm">비밀번호 확인</label>
+            <input type="password" id="register-password-confirm" required autocomplete="new-password">
+          </div>
+
+
+          <button type="submit" class="submit-button">회원가입</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Initialize default admin account
+    function initializeDefaultAccounts() {
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      
+      // Create admin if doesn't exist
+      if (!users.find(u => u.username === 'admin')) {
+        users.push({
+          username: 'admin',
+          password: 'admin123',
+          name: '관리자',
+          email: 'admin@example.com',
+          role: 'admin',
+          permissions: ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar'],
+          createdAt: new Date().toISOString(),
+          permanent: true  // 영구 저장 플래그
+        });
+        localStorage.setItem('users', JSON.stringify(users));
+        console.log('✅ Default admin account created');
+      }
+    }
+
+    // Switch between login and register tabs
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.form-content').forEach(form => form.classList.remove('active'));
+      
+      if (tab === 'login') {
+        document.querySelector('.tab-button:first-child').classList.add('active');
+        document.getElementById('login-form').classList.add('active');
+      } else {
+        document.querySelector('.tab-button:last-child').classList.add('active');
+        document.getElementById('register-form').classList.add('active');
+      }
+    }
+
+    // Handle login
+    function handleLogin(e) {
+      e.preventDefault();
+      
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+      const rememberMe = document.getElementById('remember-me').checked;
+      
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      const user = users.find(u => u.username === username && u.password === password);
+      
+      if (user) {
+        // Store user session
+        const storage = rememberMe ? localStorage : sessionStorage;
+        storage.setItem('currentUser', JSON.stringify({
+          username: user.username,
+          name: user.name,
+          role: user.role,
+          permissions: user.permissions
+        }));
+        
+        // Redirect to book page
+        // Redirect to admin page if user is admin
+        if (user.role === 'admin') {
+          window.location.href = 'admin.html';
+        } else {
+          window.location.href = 'book.html';
+        }
+      } else {
+        showError('login-error', '사용자 이름 또는 비밀번호가 올바르지 않습니다.');
+      }
+    }
+
+    // Handle registration
+    function handleRegister(e) {
+      e.preventDefault();
+      
+      const username = document.getElementById('register-username').value.trim();
+      const email = document.getElementById('register-email').value.trim();
+      const password = document.getElementById('register-password').value;
+      const passwordConfirm = document.getElementById('register-password-confirm').value;
+      
+      // Validate passwords match
+      if (password !== passwordConfirm) {
+        showError('register-error', '비밀번호가 일치하지 않습니다.');
+        return;
+      }
+      
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      
+      // Check if username exists
+      if (users.find(u => u.username === username)) {
+        showError('register-error', '이미 존재하는 사용자 이름입니다.');
+        return;
+      }
+      
+      // Check if email exists
+      if (users.find(u => u.email === email)) {
+        showError('register-error', '이미 등록된 이메일입니다.');
+        return;
+      }
+      
+      // Create new user with default permissions (only Korean)
+      // Admin will assign additional language permissions
+      users.push({
+        username,
+        name: username, // Use username as name
+        email,
+        password,
+        role: 'user',
+        permissions: ['ko'], // Default: Korean only
+        createdAt: new Date().toISOString(),
+        permanent: true  // 영구 저장 플래그 - 관리자만 삭제 가능
+      });
+      
+      localStorage.setItem('users', JSON.stringify(users));
+      
+      showSuccess('register-success', '회원가입이 완료되었습니다! 로그인해주세요.');
+      
+      // Clear form
+      document.getElementById('register-form').querySelector('form').reset();
+      
+      // Switch to login tab after 2 seconds
+      setTimeout(() => {
+        switchTab('login');
+      }, 2000);
+    }
+
+    // Show error message
+    function showError(elementId, message) {
+      const errorEl = document.getElementById(elementId);
+      errorEl.textContent = message;
+      errorEl.classList.add('show');
+      setTimeout(() => errorEl.classList.remove('show'), 5000);
+    }
+
+    // Show success message
+    function showSuccess(elementId, message) {
+      const successEl = document.getElementById(elementId);
+      successEl.textContent = message;
+      successEl.classList.add('show');
+      setTimeout(() => successEl.classList.remove('show'), 5000);
+    }
+
+    // Initialize on page load
+    initializeDefaultAccounts();
+    
+    // Check if already logged in
+    const currentUserStr = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+    if (currentUserStr) {
+      try {
+        const user = JSON.parse(currentUserStr);
+        // Redirect to admin page if user is admin
+        if (user.role === 'admin') {
+          window.location.href = 'admin.html';
+        } else {
+          window.location.href = 'book.html';
+        }
+      } catch (e) {
+        console.error('Failed to parse currentUser:', e);
+        localStorage.removeItem('currentUser');
+        sessionStorage.removeItem('currentUser');
+      }
+    }
+
+    // 데이터 영구성 보장: 주기적으로 localStorage 확인
+    setInterval(() => {
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      if (users.length > 0) {
+        console.log('✅ User data preserved:', users.length, 'users');
+      }
+    }, 60000); // 1분마다 확인
+  </script>
+</body>
+</html>

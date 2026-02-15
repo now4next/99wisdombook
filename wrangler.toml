@@ -1,3 +1,9 @@
 name = "99wisdombook"
 pages_build_output_dir = "./" 
 compatibility_date = "2024-02-08"
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "wisdom-book-db"
+database_id = "your-database-id-will-be-here"
