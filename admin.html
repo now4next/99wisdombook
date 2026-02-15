@@ -682,17 +682,19 @@
       }
       
       console.log('[ADMIN] ✅ ✅ ✅ Authentication SUCCESSFUL ✅ ✅ ✅');
-      console.log('[ADMIN] Admin:', user.username, '/', user.email);
+      console.log('[ADMIN] Admin:', currentUser.username, '/', currentUser.email);
       console.log('[ADMIN] ========================================');
-      return user;
+      return currentUser;
     }
 
     // Load users and display
     async function loadUsers() {
       console.log('[ADMIN] Loading users from API...');
+      console.log('[ADMIN] API token:', wisdomAPI.token);
       
       try {
         const result = await wisdomAPI.getUsers();
+        console.log('[ADMIN] API response:', result);
         
         if (!result.success) {
           throw new Error(result.error || 'Failed to load users');
@@ -795,6 +797,15 @@
       });
       
       console.log('[ADMIN] ✓ Table loaded with', users.length, 'users');
+      } catch (error) {
+        console.error('[ADMIN] ❌ Failed to load users:', error);
+        console.error('[ADMIN] Error details:', error.message, error.stack);
+        
+        const tbody = document.getElementById('user-table-body');
+        if (tbody) {
+          tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><p style="color: red;">⚠️ 사용자 목록을 불러오는데 실패했습니다.<br>' + error.message + '</p></td></tr>';
+        }
+      }
     }
 
     // Open edit modal
