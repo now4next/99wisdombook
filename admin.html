@@ -647,6 +647,7 @@
 
   <script>
     let currentEditUser = null;
+    // Language code mappings - DB uses full names, UI uses short codes
     const langNames = {
       ko: '한국어',
       en: 'English',
@@ -655,7 +656,39 @@
       es: 'Español',
       fr: 'Français',
       ru: 'Русский',
-      ar: 'عربي'
+      ar: 'عربي',
+      korean: '한국어',
+      english: 'English',
+      chinese: '中文',
+      japanese: '日本語',
+      spanish: 'Español',
+      french: 'Français',
+      russian: 'Русский',
+      arabic: 'عربي'
+    };
+    
+    // Convert DB language codes to UI codes
+    const dbToUiLang = {
+      korean: 'ko',
+      english: 'en',
+      chinese: 'zh',
+      japanese: 'ja',
+      spanish: 'es',
+      french: 'fr',
+      russian: 'ru',
+      arabic: 'ar'
+    };
+    
+    // Convert UI language codes to DB codes
+    const uiToDbLang = {
+      ko: 'korean',
+      en: 'english',
+      zh: 'chinese',
+      ja: 'japanese',
+      es: 'spanish',
+      fr: 'french',
+      ru: 'russian',
+      ar: 'arabic'
     };
 
     // Check admin authentication
@@ -770,8 +803,18 @@
         
         // Created date
         const tdDate = document.createElement('td');
-        const date = new Date(user.createdAt);
-        tdDate.textContent = date.toLocaleDateString('ko-KR');
+        try {
+          // Handle both created_at (DB) and createdAt (old format)
+          const dateStr = user.created_at || user.createdAt;
+          const date = new Date(dateStr);
+          if (isNaN(date.getTime())) {
+            tdDate.textContent = '-';
+          } else {
+            tdDate.textContent = date.toLocaleDateString('ko-KR');
+          }
+        } catch (e) {
+          tdDate.textContent = '-';
+        }
         tr.appendChild(tdDate);
         
         // Actions
@@ -827,10 +870,14 @@
         roleRadio.checked = true;
       }
       
-      // Set current permissions
+      // Set current permissions - handle both DB format (korean) and UI format (ko)
       ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar'].forEach(lang => {
         const checkbox = document.getElementById(`perm-${lang}`);
-        checkbox.checked = user.permissions && user.permissions.includes(lang);
+        const dbLang = uiToDbLang[lang];
+        checkbox.checked = user.permissions && (
+          user.permissions.includes(lang) || 
+          user.permissions.includes(dbLang)
+        );
       });
       
       // Update modal title
@@ -847,10 +894,10 @@
     }
 
     // Save permissions
-    function savePermissions() {
+    async function savePermissions() {
       if (!currentEditUser) return;
       
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      console.log('[ADMIN] Saving permissions for user:', currentEditUser);
       
       // Check if creating new user
       if (currentEditUser._isNew) {
@@ -906,42 +953,43 @@
         alert('새 회원이 생성되었습니다.');
       } else {
         // Update existing user
-        const userIndex = users.findIndex(u => u.username === currentEditUser.username);
-        
-        if (userIndex === -1) return;
-        
         // Get selected role
         const selectedRole = document.querySelector('input[name="user-role"]:checked');
-        if (selectedRole) {
-          users[userIndex].role = selectedRole.value;
-        }
+        const newRole = selectedRole ? selectedRole.value : currentEditUser.role;
         
-        // Get selected permissions
+        // Get selected permissions (convert to DB format)
         const permissions = [];
         ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar'].forEach(lang => {
           const checkbox = document.getElementById(`perm-${lang}`);
           if (checkbox.checked) {
-            permissions.push(lang);
+            permissions.push(uiToDbLang[lang]); // Convert to DB format
           }
         });
         
-        // Update user
-        users[userIndex].permissions = permissions;
+        console.log('[ADMIN] Updating user:', currentEditUser.id);
+        console.log('[ADMIN] New role:', newRole);
+        console.log('[ADMIN] New permissions:', permissions);
         
-        // If user is admin, give all permissions
-        if (users[userIndex].role === 'admin') {
-          users[userIndex].permissions = ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar'];
+        try {
+          // Update via API
+          const result = await wisdomAPI.updateUser(currentEditUser.id, {
+            role: newRole,
+            permissions: permissions
+          });
+          
+          if (!result.success) {
+            throw new Error(result.error || 'Failed to update user');
+          }
+          
+          console.log('[ADMIN] ✓ User updated successfully');
+          alert('회원 정보가 수정되었습니다.');
+          closeModal();
+          await loadUsers(); // Reload user list
+        } catch (error) {
+          console.error('[ADMIN] ❌ Failed to update user:', error);
+          alert('회원 정보 수정에 실패했습니다: ' + error.message);
         }
-        
-        localStorage.setItem('users', JSON.stringify(users));
-        
-        console.log('Updated user:', users[userIndex]);
-        alert('권한이 저장되었습니다.');
       }
-      
-      // Reload table
-      loadUsers();
-      closeModal();
     }
 
     // Open create user modal
@@ -984,7 +1032,7 @@
     }
 
     // Delete user (관리자만 실행 가능)
-    function deleteUser(user) {
+    async function deleteUser(user) {
       if (user.role === 'admin') {
         alert('관리자 계정은 삭제할 수 없습니다.');
         return;
@@ -994,15 +1042,22 @@
         return;
       }
       
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const updatedUsers = users.filter(u => u.username !== user.username);
+      console.log('[ADMIN] Deleting user:', user.id, user.username);
       
-      localStorage.setItem('users', JSON.stringify(updatedUsers));
-      
-      console.log('User deleted:', user.username);
-      alert('회원이 삭제되었습니다.');
-      
-      loadUsers();
+      try {
+        const result = await wisdomAPI.deleteUser(user.id);
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to delete user');
+        }
+        
+        console.log('[ADMIN] ✓ User deleted successfully');
+        alert('회원이 삭제되었습니다.');
+        await loadUsers(); // Reload user list
+      } catch (error) {
+        console.error('[ADMIN] ❌ Failed to delete user:', error);
+        alert('회원 삭제에 실패했습니다: ' + error.message);
+      }
     }
 
     // Logout
