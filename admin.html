@@ -519,6 +519,9 @@
       }
     }
   </style>
+  
+  <!-- API Client -->
+  <script src="/api-client.js"></script>
 </head>
 <body>
   <div class="container">
@@ -741,41 +744,44 @@
     }
 
     // Load users and display
-    function loadUsers() {
-      console.log('[ADMIN] Loading users...');
+    async function loadUsers() {
+      console.log('[ADMIN] Loading users from API...');
       
-      const usersStr = localStorage.getItem('users');
-      console.log('[ADMIN] Users localStorage raw:', usersStr);
-      
-      const users = JSON.parse(usersStr || '[]');
-      console.log('[ADMIN] Parsed users:', users);
-      console.log('[ADMIN] Total users to display:', users.length);
-      
-      const tbody = document.getElementById('user-table-body');
-      
-      if (!tbody) {
-        console.error('[ADMIN] ERROR: table body element not found!');
-        return;
-      }
-      
-      // Update stats
-      document.getElementById('total-users').textContent = users.length;
-      document.getElementById('admin-count').textContent = users.filter(u => u.role === 'admin').length;
-      document.getElementById('user-count').textContent = users.filter(u => u.role === 'user').length;
-      
-      // Clear table
-      tbody.innerHTML = '';
-      
-      if (users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><p>등록된 회원이 없습니다.</p></td></tr>';
-        return;
-      }
-      
-      // Add users to table
-      console.log('[ADMIN] Creating table rows for', users.length, 'users');
-      
-      users.forEach((user, index) => {
-        console.log('[ADMIN] Processing user', index + 1, ':', user.username, user.email);
+      try {
+        const result = await wisdomAPI.getUsers();
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to load users');
+        }
+        
+        const users = result.users || [];
+        console.log('[ADMIN] Loaded', users.length, 'users from API');
+        
+        const tbody = document.getElementById('user-table-body');
+        
+        if (!tbody) {
+          console.error('[ADMIN] ERROR: table body element not found!');
+          return;
+        }
+        
+        // Update stats
+        document.getElementById('total-users').textContent = users.length;
+        document.getElementById('admin-count').textContent = users.filter(u => u.role === 'admin').length;
+        document.getElementById('user-count').textContent = users.filter(u => u.role === 'user').length;
+        
+        // Clear table
+        tbody.innerHTML = '';
+        
+        if (users.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><p>등록된 회원이 없습니다.</p></td></tr>';
+          return;
+        }
+        
+        // Add users to table
+        console.log('[ADMIN] Creating table rows for', users.length, 'users');
+        
+        users.forEach((user, index) => {
+          console.log('[ADMIN] Processing user', index + 1, ':', user.username, user.email);
         
         const tr = document.createElement('tr');
         
