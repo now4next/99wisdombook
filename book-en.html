@@ -29,7 +29,7 @@
     // Check if user has permission for English (en)
     if (user.role !== 'admin' && (!user.permissions || !user.permissions.includes('en'))) {
       console.log('❌ [English Page Load] No permission for English, redirecting to book.html');
-      alert('⚠️ 언어 열람 권한이 없습니다\n\n영어에 대한 접근 권한이 없습니다.\n관리자에게 문의하세요.\n\n한국어 페이지로 이동합니다.');
+      alert('⚠️ 언어 열람 권한이 없습니다\n.\n관리자에게 문의하세요.\n\n한국어 페이지로 이동합니다.');
       window.location.href = 'book.html';
       return;
     }
@@ -172,14 +172,14 @@
       const hasVersion = url.searchParams.get('v');
       
       if (!hasVersion || hasVersion !== currentVersion) {
-        console.log('🔄 최신 버전으로 강제 리다이렉트 중... v=1771137395' + currentVersion);
+        console.log('🔄 최신 버전으로 강제 리다이렉트 중... v=1771138138' + currentVersion);
         url.searchParams.set('v', currentVersion);
         url.searchParams.set('_', Date.now());
         
         // location.replace 대신 location.href 사용 (더 강력한 리로드)
         window.location.href = url.href;
       } else {
-        console.log('✅ 최신 버전 로드됨: v=1771137395' + currentVersion);
+        console.log('✅ 최신 버전 로드됨: v=1771138138' + currentVersion);
       }
     })();
   </script>
@@ -1763,14 +1763,16 @@
     </div>
 <br>
 <br>
+    <div class="cover-copyright"><span style="font-size: 14px;">ⓒ Forest Kang 2026</span></div>
+    <div class="cover-copyright"><span style="font-size: 14px;">This book is the intellectual property of the author, and unauthorized reproduction or duplication is strictly prohibited.</span></div>
 <br>
-    <div class="cover-copyright"><span style="font-size: 10px;">ⓒ Forest Kang 2026</span></div>
-    <div class="cover-copyright"><span style="font-size: 10px;">This book is the intellectual property of the author, and unauthorized reproduction or duplication is strictly prohibited.</span></div>
-
-
+<br>
+<br>
         <!-- Table of Contents -->
     <div class="toc-page">
       <div class="toc-title">CONTENTS</div>
+      <br>
+      <br>
       <div class="toc-chapter"><a href="#opening">Opening Reflections</a></div>
 
       <div class="toc-part">PART I. The Laws of Economics and Exchange: Nothing Is Free</div>
