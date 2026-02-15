@@ -29,8 +29,8 @@
     // Check if user has permission for English (en)
     if (user.role !== 'admin' && (!user.permissions || !user.permissions.includes('en'))) {
       console.log('❌ [English Page Load] No permission for English, redirecting to book.html');
-      alert('⚠️ 언어 열람 권한이 없습니다\n.\n관리자에게 문의하세요.\n\n한국어 페이지로 이동합니다.');
-      window.location.href = 'book.html';
+      // Silently redirect without alert (alert already shown in book.html)
+      window.location.replace('book.html');
       return;
     }
     
@@ -94,7 +94,7 @@
           if (user.role !== 'admin' && (!user.permissions || !user.permissions.includes(lang))) {
             e.preventDefault();
             e.stopPropagation();
-            alert('⚠️ 언어 열람 권한이 없습니다.\n관리자에게 문의하세요.\n\n한국어 페이지로 이동합니다.');
+            // Silently redirect without alert (will be handled by target page or book.html)
             window.location.href = 'book.html';
             return false;
           }
@@ -172,14 +172,14 @@
       const hasVersion = url.searchParams.get('v');
       
       if (!hasVersion || hasVersion !== currentVersion) {
-        console.log('🔄 최신 버전으로 강제 리다이렉트 중... v=1771138138' + currentVersion);
+        console.log('🔄 최신 버전으로 강제 리다이렉트 중... v=1771138432' + currentVersion);
         url.searchParams.set('v', currentVersion);
         url.searchParams.set('_', Date.now());
         
         // location.replace 대신 location.href 사용 (더 강력한 리로드)
         window.location.href = url.href;
       } else {
-        console.log('✅ 최신 버전 로드됨: v=1771138138' + currentVersion);
+        console.log('✅ 최신 버전 로드됨: v=1771138432' + currentVersion);
       }
     })();
   </script>
@@ -187,9 +187,9 @@
     <meta charset="UTF-8">
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
+    <meta http-equiv=1771138432"Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv=1771138432"Pragma" content="no-cache">
+  <meta http-equiv=1771138432"Expires" content="0">
   <meta name="version" content="1770972162">
   <title>Lines Life Taught Me</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
@@ -1762,16 +1762,12 @@
       <div class="cover-author"><center><span style="font-size: 16px;">Author. Forest Kang</span></center></div>
     </div>
 <br>
-<br>
     <div class="cover-copyright"><span style="font-size: 14px;">ⓒ Forest Kang 2026</span></div>
     <div class="cover-copyright"><span style="font-size: 14px;">This book is the intellectual property of the author, and unauthorized reproduction or duplication is strictly prohibited.</span></div>
-<br>
-<br>
 <br>
         <!-- Table of Contents -->
     <div class="toc-page">
       <div class="toc-title">CONTENTS</div>
-      <br>
       <br>
       <div class="toc-chapter"><a href="#opening">Opening Reflections</a></div>
 
