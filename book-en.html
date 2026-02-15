@@ -172,14 +172,14 @@
       const hasVersion = url.searchParams.get('v');
       
       if (!hasVersion || hasVersion !== currentVersion) {
-        console.log('🔄 최신 버전으로 강제 리다이렉트 중... v=1771137177' + currentVersion);
+        console.log('🔄 최신 버전으로 강제 리다이렉트 중... v=1771137395' + currentVersion);
         url.searchParams.set('v', currentVersion);
         url.searchParams.set('_', Date.now());
         
         // location.replace 대신 location.href 사용 (더 강력한 리로드)
         window.location.href = url.href;
       } else {
-        console.log('✅ 최신 버전 로드됨: v=1771137177' + currentVersion);
+        console.log('✅ 최신 버전 로드됨: v=1771137395' + currentVersion);
       }
     })();
   </script>
@@ -187,9 +187,9 @@
     <meta charset="UTF-8">
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv=1771137177"Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv=1771137177"Pragma" content="no-cache">
-  <meta http-equiv=1771137177"Expires" content="0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <meta name="version" content="1770972162">
   <title>Lines Life Taught Me</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
@@ -1761,12 +1761,12 @@
       </div>
       <div class="cover-author"><center><span style="font-size: 16px;">Author. Forest Kang</span></center></div>
     </div>
+<br>
+<br>
+<br>
+    <div class="cover-copyright"><span style="font-size: 10px;">ⓒ Forest Kang 2026</span></div>
+    <div class="cover-copyright"><span style="font-size: 10px;">This book is the intellectual property of the author, and unauthorized reproduction or duplication is strictly prohibited.</span></div>
 
-    <div class="cover-copyright"><span style="font-size: 10px;">
-        <p>ⓒ Forest Kang 2026</p>
-        <p>This book is the intellectual property of the author, and unauthorized reproduction or duplication is strictly prohibited.</p></span>
-      </div>
-    </div>
 
         <!-- Table of Contents -->
     <div class="toc-page">
