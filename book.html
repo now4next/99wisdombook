@@ -34,7 +34,7 @@
       return user.permissions && user.permissions.includes(langCode);
     };
     
-    // Filter language menu based on permissions
+    // Visual indication for languages without permission (but keep them clickable)
     const languageMenu = document.querySelector('.language-menu');
     if (languageMenu && user.role !== 'admin') {
       const links = languageMenu.querySelectorAll('a[data-lang]');
@@ -42,76 +42,83 @@
         const lang = link.getAttribute('data-lang');
         if (!user.permissions.includes(lang)) {
           link.style.opacity = '0.5';
-          link.style.pointerEvents = 'none';
+          // DO NOT set pointerEvents = 'none' - we want click events to show alert
           link.style.textDecoration = 'line-through';
-          link.title = '이 언어에 대한 권한이 없습니다';
+          link.title = '이 언어에 대한 권한이 없습니다 (클릭하면 상세 안내)';
         }
       });
     }
   })();
 
     // Enhanced language menu with permission alert and navigation control
-    document.querySelectorAll('.language-menu a[data-lang]').forEach(link => {
-      link.addEventListener('click', function(e) {
-        const lang = this.getAttribute('data-lang');
-        const currentUserStr = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+    // Wrap in DOMContentLoaded to ensure elements exist
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('🔄 [Language Menu] Setting up event listeners');
+      
+      document.querySelectorAll('.language-menu a[data-lang]').forEach(link => {
+        console.log('🔄 [Language Menu] Adding listener to:', link.getAttribute('data-lang'));
         
-        console.log('🔍 [Language Check] Clicked language:', lang);
-        console.log('🔍 [Language Check] Current user string:', currentUserStr);
-        
-        if (currentUserStr) {
-          const currentUser = JSON.parse(currentUserStr);
+        link.addEventListener('click', function(e) {
+          const lang = this.getAttribute('data-lang');
+          const currentUserStr = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
           
-          // Get fresh user data from users list to check latest permissions
-          const usersStr = localStorage.getItem('users') || '[]';
-          const users = JSON.parse(usersStr);
-          const freshUser = users.find(u => u.username === currentUser.username);
+          console.log('🔍 [Language Check] Clicked language:', lang);
+          console.log('🔍 [Language Check] Current user string:', currentUserStr);
           
-          // Use fresh user data if available, otherwise fall back to currentUser
-          const user = freshUser || currentUser;
-          
-          console.log('🔍 [Language Check] Current user (from session):', currentUser);
-          console.log('🔍 [Language Check] Fresh user (from users list):', freshUser);
-          console.log('🔍 [Language Check] Using user:', user);
-          console.log('🔍 [Language Check] User role:', user.role);
-          console.log('🔍 [Language Check] User permissions:', user.permissions);
-          console.log('🔍 [Language Check] Has permission for ' + lang + ':', user.permissions ? user.permissions.includes(lang) : false);
-          
-          // Check if user has permission for this language
-          if (user.role !== 'admin' && (!user.permissions || !user.permissions.includes(lang))) {
-            // ALWAYS prevent default navigation first
-            e.preventDefault();
-            e.stopPropagation();
+          if (currentUserStr) {
+            const currentUser = JSON.parse(currentUserStr);
             
-            console.log('❌ [Language Check] Permission DENIED for', lang);
+            // Get fresh user data from users list to check latest permissions
+            const usersStr = localStorage.getItem('users') || '[]';
+            const users = JSON.parse(usersStr);
+            const freshUser = users.find(u => u.username === currentUser.username);
             
-            // Show alert
-            alert('⚠️ 언어 열람 권한이 없습니다\n\n해당 언어에 대한 접근 권한이 없습니다.\n관리자에게 문의하세요.\n\n한국어 페이지로 이동합니다.');
+            // Use fresh user data if available, otherwise fall back to currentUser
+            const user = freshUser || currentUser;
             
-            // Only redirect if not already on Korean page
-            if (!window.location.pathname.includes('book.html') || window.location.pathname.includes('book-')) {
-              window.location.href = 'book.html';
+            console.log('🔍 [Language Check] Current user (from session):', currentUser);
+            console.log('🔍 [Language Check] Fresh user (from users list):', freshUser);
+            console.log('🔍 [Language Check] Using user:', user);
+            console.log('🔍 [Language Check] User role:', user.role);
+            console.log('🔍 [Language Check] User permissions:', user.permissions);
+            console.log('🔍 [Language Check] Has permission for ' + lang + ':', user.permissions ? user.permissions.includes(lang) : false);
+            
+            // Check if user has permission for this language
+            if (user.role !== 'admin' && (!user.permissions || !user.permissions.includes(lang))) {
+              // ALWAYS prevent default navigation first
+              e.preventDefault();
+              e.stopPropagation();
+              
+              console.log('❌ [Language Check] Permission DENIED for', lang);
+              
+              // Show alert
+              alert('⚠️ 언어 열람 권한이 없습니다\n\n해당 언어에 대한 접근 권한이 없습니다.\n관리자에게 문의하세요.\n\n한국어 페이지로 이동합니다.');
+              
+              // Only redirect if not already on Korean page
+              if (!window.location.pathname.includes('book.html') || window.location.pathname.includes('book-')) {
+                window.location.href = 'book.html';
+              }
+              return false;
             }
-            return false;
-          }
-          
-          // If Korean is selected and user already on Korean page
-          if (lang === 'ko' && window.location.pathname.includes('book.html') && !window.location.pathname.includes('book-')) {
+            
+            // If Korean is selected and user already on Korean page
+            if (lang === 'ko' && window.location.pathname.includes('book.html') && !window.location.pathname.includes('book-')) {
+              e.preventDefault();
+              console.log('Already on Korean page');
+              return false;
+            }
+            
+            // For other languages with permission, allow normal navigation
+            console.log('✅ [Language Check] Permission granted for language:', lang);
+            // Allow default href action to proceed (navigation to book-en.html, etc.)
+            return true;
+          } else {
+            // No user logged in, redirect to login
+            console.log('❌ [Language Check] No user logged in');
             e.preventDefault();
-            console.log('Already on Korean page');
-            return false;
+            window.location.href = 'index.html';
           }
-          
-          // For other languages with permission, allow normal navigation
-          console.log('✅ [Language Check] Permission granted for language:', lang);
-          // Allow default href action to proceed (navigation to book-en.html, etc.)
-          return true;
-        } else {
-          // No user logged in, redirect to login
-          console.log('❌ [Language Check] No user logged in');
-          e.preventDefault();
-          window.location.href = 'index.html';
-        }
+        });
       });
     });
     
@@ -175,14 +182,14 @@
       const hasVersion = url.searchParams.get('v');
       
       if (!hasVersion || hasVersion !== currentVersion) {
-        console.log('🔄 최신 버전으로 강제 리다이렉트 중... v=1771138612' + currentVersion);
+        console.log('🔄 최신 버전으로 강제 리다이렉트 중... v=1771138844' + currentVersion);
         url.searchParams.set('v', currentVersion);
         url.searchParams.set('_', Date.now());
         
         // location.replace 대신 location.href 사용 (더 강력한 리로드)
         window.location.href = url.href;
       } else {
-        console.log('✅ 최신 버전 로드됨: v=1771138612' + currentVersion);
+        console.log('✅ 최신 버전 로드됨: v=1771138844' + currentVersion);
       }
     })();
   </script>
@@ -190,9 +197,9 @@
     <meta charset="UTF-8">
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv=1771138612"Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv=1771138612"Pragma" content="no-cache">
-  <meta http-equiv=1771138612"Expires" content="0">
+    <meta http-equiv=1771138844"Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv=1771138844"Pragma" content="no-cache">
+  <meta http-equiv=1771138844"Expires" content="0">
   <meta name="version" content="1770972162">
   <title>살아본 뒤에야 비로소 읽히는 문장들</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
