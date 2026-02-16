@@ -1,7 +1,8 @@
 # 📱 모바일 UI 업데이트 - 양쪽 여백 제거
 
 **업데이트 시간**: 2026-02-16  
-**커밋**: `cc27f57`  
+**최신 커밋**: `0b80119` (최종 수정)  
+**이전 커밋**: `8b75b95` → `e901d21` → `19c0366` → `26b5fef` → `cc27f57`  
 **배포 URL**: https://99wisdombook.pages.dev
 
 ---
@@ -13,10 +14,42 @@
 - 화면 공간 낭비
 - 좁은 콘텐츠 영역
 
-### 해결
-- 모바일 화면(max-width: 768px)에서 **좌우 여백 0px** 적용
+### 해결 (최종)
+- 모바일 화면(max-width: 768px)에서 **좌우 여백 완전 제거**
+- `body { margin: 0 auto; }` → `margin: 0 !important; margin-left: 0; margin-right: 0;`
+- `max-width: var(--page-width)` → `max-width: 100%; width: 100%;`
+- `box-sizing: border-box` 추가로 패딩 포함 너비 계산
 - 상하 여백은 유지 (헤더 공간 확보 및 하단 여백)
 - 전체 화면 너비 활용
+
+### 핵심 문제 원인
+**기본 CSS**에서 `body`가 다음과 같이 설정되어 있었습니다:
+```css
+body {
+  max-width: var(--page-width);  /* 880px */
+  margin: 0 auto;                /* ← 이것이 가운데 정렬을 만들어 양쪽 여백 발생! */
+  padding: 80px 60px 40px;
+}
+```
+
+`margin: 0 auto`는 요소를 수평으로 가운데 정렬하므로, 880px 넓이의 body가 중앙에 배치되고 양쪽에 자동으로 여백이 생깁니다.
+
+모바일 미디어 쿼리에서 `margin: 0 !important`만 설정했지만, 이것은 **모든 방향의 margin을 0으로 설정하려 했으나 `auto` 값이 남아있어** 여전히 가운데 정렬이 발생했습니다.
+
+### 최종 해결책
+```css
+@media screen and (max-width: 768px) {
+  body {
+    max-width: 100% !important;        /* 880px 제한 제거 */
+    width: 100% !important;            /* 전체 너비 강제 */
+    margin: 0 !important;              /* 모든 margin 0 */
+    margin-left: 0 !important;         /* 좌측 margin 명시적 0 */
+    margin-right: 0 !important;        /* 우측 margin 명시적 0 */
+    padding: 60px 0px 16px 0px !important;
+    box-sizing: border-box !important; /* 패딩 포함 너비 */
+  }
+}
+```
 
 ---
 
@@ -43,15 +76,24 @@ body {
 
 ### 2. **book.html** (한국어 메인 콘텐츠)
 ```css
-/* Before */
+/* Before (기본 CSS) */
 body {
-  padding: 16px 12px;
-  padding-top: 60px;
+  max-width: var(--page-width);  /* 880px */
+  margin: 0 auto;                /* 가운데 정렬 → 양쪽 여백 발생! */
+  padding: 80px 60px 40px;
 }
 
-/* After */
-body {
-  padding: 60px 0px 16px 0px;
+/* After (모바일 미디어 쿼리) */
+@media screen and (max-width: 768px) {
+  body {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    margin-left: 0 !important;   /* 명시적으로 좌측 여백 제거 */
+    margin-right: 0 !important;  /* 명시적으로 우측 여백 제거 */
+    padding: 60px 0px 16px 0px !important;
+    box-sizing: border-box !important;
+  }
 }
 ```
 
@@ -64,15 +106,24 @@ body {
 
 ### 3. **book-en.html** (English 콘텐츠)
 ```css
-/* Before */
+/* Before (기본 CSS) */
 body {
-  padding: 20px 1px;
-  padding-top: 60px;
+  max-width: var(--page-width);  /* 880px */
+  margin: 0 auto;                /* 가운데 정렬 → 양쪽 여백 발생! */
+  padding: 80px 60px 40px;
 }
 
-/* After */
-body {
-  padding: 60px 0px 20px 0px;
+/* After (모바일 미디어 쿼리) */
+@media screen and (max-width: 768px) {
+  body {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    margin-left: 0 !important;   /* 명시적으로 좌측 여백 제거 */
+    margin-right: 0 !important;  /* 명시적으로 우측 여백 제거 */
+    padding: 60px 0px 20px 0px !important;
+    box-sizing: border-box !important;
+  }
 }
 ```
 
@@ -165,7 +216,7 @@ https://99wisdombook.pages.dev
 ## 🔄 배포 상태
 
 ### Cloudflare Pages
-- ✅ **GitHub Push**: 완료
+- ✅ **GitHub Push**: 완료 (커밋 `0b80119`)
 - ✅ **자동 배포**: 시작됨
 - ⏱️ **배포 시간**: 1-2분
 
@@ -173,7 +224,15 @@ https://99wisdombook.pages.dev
 1. https://dash.cloudflare.com 접속
 2. **Workers & Pages** → **99wisdombook**
 3. **Deployments** 탭 확인
-4. 커밋 `cc27f57` 배포 완료 확인
+4. 커밋 `0b80119` 배포 완료 확인
+
+### 커밋 히스토리
+- `0b80119` - **[최종]** margin-left/right 명시적 0, width: 100%, box-sizing 추가
+- `8b75b95` - 인라인 스타일 override 추가
+- `e901d21` - !important 플래그 추가
+- `19c0366` - body max-width 100% 강제
+- `26b5fef` - 최소 padding (12px) 적용
+- `cc27f57` - 최초 padding 0px 적용
 
 ---
 
@@ -295,10 +354,31 @@ body {
 
 **GitHub Repository**: https://github.com/now4next/99wisdombook  
 **Live Site**: https://99wisdombook.pages.dev  
-**Latest Commit**: `cc27f57`
+**Latest Commit**: `0b80119`
+
+---
+
+## 🐛 디버깅 과정
+
+### 시도 1-5: 실패
+- `cc27f57`: padding 0px 설정 → **실패** (margin: auto가 남음)
+- `26b5fef`: 12px 콘텐츠 padding 추가 → **실패** (여전히 margin: auto)
+- `19c0366`: max-width: 100% !important → **실패** (margin: 0 !important만으로 auto 제거 안됨)
+- `e901d21`: !important 플래그 추가 → **실패** (margin: 0은 상하좌우를 0으로 하지만 auto가 우선)
+- `8b75b95`: 인라인 스타일 override → **실패** (body의 margin: auto는 여전히 작동)
+
+### 시도 6: 성공 ✅
+- `0b80119`: **margin-left: 0 !important; margin-right: 0 !important;** 명시적 설정
+- **원인**: `margin: 0 auto`의 `auto` 값이 좌우 margin을 자동 계산하여 가운데 정렬
+- **해결**: `margin-left`와 `margin-right`를 명시적으로 `0`으로 설정하여 `auto` 값 완전 제거
+
+### 교훈
+- CSS에서 `margin: 0`은 `margin: 0 auto`의 `auto`를 완전히 override하지 못할 수 있음
+- 특정 방향(left/right)의 margin을 명시적으로 설정해야 함
+- `!important`만으로는 부족하며, 구체적인 속성 지정이 필요
 
 ---
 
 **작성자**: Claude AI  
 **마지막 업데이트**: 2026-02-16  
-**버전**: 1.0
+**버전**: 2.0 (최종)
