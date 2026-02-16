@@ -107,6 +107,52 @@
       // Scroll to top smoothly
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+    
+    // Toggle language menu dropdown
+    window.toggleLanguageMenu = function(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      
+      const menu = document.getElementById('languageMenu');
+      const btn = document.getElementById('languageBtn');
+      
+      if (!menu) {
+        console.error('❌ languageMenu element not found');
+        return;
+      }
+      
+      // Toggle show class
+      const isShowing = menu.classList.contains('show');
+      
+      if (isShowing) {
+        menu.classList.remove('show');
+        if (btn) btn.classList.remove('active');
+      } else {
+        menu.classList.add('show');
+        if (btn) btn.classList.add('active');
+        
+        // Close menu when clicking outside
+        setTimeout(() => {
+          document.addEventListener('click', closeLanguageMenu);
+        }, 100);
+      }
+    };
+    
+    function closeLanguageMenu(e) {
+      const menu = document.getElementById('languageMenu');
+      const btn = document.getElementById('languageBtn');
+      
+      if (!menu || !btn) return;
+      
+      if (!menu.contains(e.target) && !btn.contains(e.target)) {
+        menu.classList.remove('show');
+        btn.classList.remove('active');
+        document.removeEventListener('click', closeLanguageMenu);
+      }
+    }
+    
     (function() {
       const currentVersion = '1770987181';
       
