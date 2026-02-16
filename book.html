@@ -418,9 +418,6 @@
        =============================== */
     
     body {
-      max-width: var(--page-width);
-      margin: 0 auto;
-      padding: 80px 60px 40px;
       background-color: #ffffff;
       font-family: var(--font-main);
       font-size: 17px;
@@ -428,6 +425,15 @@
       color: var(--color-text);
       text-align: justify;
       position: relative;
+    }
+    
+    /* Desktop body layout (769px and above) */
+    @media screen and (min-width: 769px) {
+      body {
+        max-width: var(--page-width);
+        margin: 0 auto;
+        padding: 80px 60px 40px;
+      }
     }
     
     h1, h2, h3, h4, h5, h6 {
