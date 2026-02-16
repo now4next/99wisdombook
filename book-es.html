@@ -108,6 +108,34 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     
+    // Global logout function
+    window.logout = function() {
+      if (confirm('¿Desea cerrar sesión?')) {
+        localStorage.removeItem('currentUser');
+        sessionStorage.removeItem('currentUser');
+        window.location.href = 'index.html';
+      }
+    };
+
+    // Global TOC toggle functions
+    window.toggleTOC = function() {
+      const panel = document.getElementById('floating-toc-panel');
+      const overlay = document.getElementById('toc-overlay');
+      if (panel && overlay) {
+        panel.classList.toggle('active');
+        overlay.classList.toggle('active');
+      }
+    };
+
+    window.closeTOC = function() {
+      const panel = document.getElementById('floating-toc-panel');
+      const overlay = document.getElementById('toc-overlay');
+      if (panel && overlay) {
+        panel.classList.remove('active');
+        overlay.classList.remove('active');
+      }
+    };
+    
     // Toggle language menu dropdown
     window.toggleLanguageMenu = function(event) {
       if (event) {
