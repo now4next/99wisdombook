@@ -883,7 +883,7 @@
       }
       
       // Set current permissions - handle both DB format (korean) and UI format (ko)
-      ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar'].forEach(lang => {
+      ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar', 'hi'].forEach(lang => {
         const checkbox = document.getElementById(`perm-${lang}`);
         const dbLang = uiToDbLang[lang];
         checkbox.checked = user.permissions && (
@@ -939,10 +939,10 @@
         
         // Get selected permissions
         const permissions = [];
-        ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar'].forEach(lang => {
+        ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar', 'hi'].forEach(lang => {
           const checkbox = document.getElementById(`perm-${lang}`);
           if (checkbox.checked) {
-            permissions.push(lang);
+            permissions.push(uiToDbLang[lang]); // Convert to DB format
           }
         });
         
@@ -953,7 +953,7 @@
           email,
           password,
           role,
-          permissions: role === 'admin' ? ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar'] : permissions,
+          permissions: role === 'admin' ? ['korean', 'english', 'chinese', 'japanese', 'spanish', 'french', 'russian', 'arabic', 'hindi'] : permissions,
           createdAt: new Date().toISOString(),
           permanent: true
         };
@@ -971,7 +971,7 @@
         
         // Get selected permissions (convert to DB format)
         const permissions = [];
-        ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar'].forEach(lang => {
+        ['ko', 'en', 'zh', 'ja', 'es', 'fr', 'ru', 'ar', 'hi'].forEach(lang => {
           const checkbox = document.getElementById(`perm-${lang}`);
           if (checkbox.checked) {
             permissions.push(uiToDbLang[lang]); // Convert to DB format
