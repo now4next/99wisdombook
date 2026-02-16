@@ -108,6 +108,37 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     
+    // 🔥 Принудительно применить 12px отступы для мобильных (обход приоритета CSS)
+    (function() {
+      function applyMobilePadding() {
+        if (window.innerWidth <= 768) {
+          document.body.style.paddingLeft = '12px';
+          document.body.style.paddingRight = '12px';
+          document.body.style.paddingTop = '60px';
+          document.body.style.paddingBottom = '20px';
+          document.documentElement.style.width = '100vw';
+          document.documentElement.style.maxWidth = '100vw';
+          document.documentElement.style.overflowX = 'hidden';
+          document.body.style.width = '100vw';
+          document.body.style.maxWidth = '100vw';
+          document.body.style.margin = '0';
+          document.body.style.boxSizing = 'border-box';
+          document.body.style.overflowX = 'hidden';
+          console.log('✅ Мобильные отступы 12px применены');
+        }
+      }
+      
+      // Применить при загрузке страницы
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', applyMobilePadding);
+      } else {
+        applyMobilePadding();
+      }
+      
+      // Применить при изменении размера окна
+      window.addEventListener('resize', applyMobilePadding);
+    })();
+    
     // Global logout function
     window.logout = function() {
       if (confirm('Вы хотите выйти?')) {

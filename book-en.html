@@ -169,6 +169,38 @@
       // Scroll to top smoothly
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+    
+    // 🔥 Force 12px mobile padding (CSS priority workaround)
+    (function() {
+      function applyMobilePadding() {
+        if (window.innerWidth <= 768) {
+          document.body.style.paddingLeft = '12px';
+          document.body.style.paddingRight = '12px';
+          document.body.style.paddingTop = '60px';
+          document.body.style.paddingBottom = '20px';
+          document.documentElement.style.width = '100vw';
+          document.documentElement.style.maxWidth = '100vw';
+          document.documentElement.style.overflowX = 'hidden';
+          document.body.style.width = '100vw';
+          document.body.style.maxWidth = '100vw';
+          document.body.style.margin = '0';
+          document.body.style.boxSizing = 'border-box';
+          document.body.style.overflowX = 'hidden';
+          console.log('✅ Mobile 12px padding applied');
+        }
+      }
+      
+      // Apply on page load
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', applyMobilePadding);
+      } else {
+        applyMobilePadding();
+      }
+      
+      // Apply on window resize
+      window.addEventListener('resize', applyMobilePadding);
+    })();
+    
     (function() {
       const currentVersion = '1770988330';
       
