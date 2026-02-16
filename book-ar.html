@@ -20542,60 +20542,6 @@
         }
       }
       
-      // 로그아웃 함수 (전역)
-      window.logout = function() {
-        if (confirm('로그아웃하시겠습니까?')) {
-          localStorage.removeItem('currentUser');
-          sessionStorage.removeItem('currentUser');
-          window.location.href = 'index.html';
-        }
-      };
-      
-      // 목차 토글 함수 (전역)
-      window.toggleTOC = function() {
-        const panel = document.getElementById('floating-toc-panel');
-        const overlay = document.getElementById('toc-overlay');
-        
-        if (panel && overlay) {
-          const isActive = panel.classList.contains('active');
-          
-          if (isActive) {
-            // 닫기
-            panel.classList.remove('active');
-            overlay.classList.remove('active');
-          } else {
-            // 열기
-            panel.classList.add('active');
-            overlay.classList.add('active');
-          }
-        }
-      };
-      
-      // 목차 닫기 함수 (전역)
-      window.closeTOC = function() {
-        const panel = document.getElementById('floating-toc-panel');
-        const overlay = document.getElementById('toc-overlay');
-        
-        if (panel && overlay) {
-          panel.classList.remove('active');
-          overlay.classList.remove('active');
-        }
-      };
-      
-      // 목차 아이템 클릭 시 스크롤 및 닫기
-      window.scrollToSection = function(sectionId) {
-        const section = document.getElementById(sectionId);
-        if (section) {
-          // 목차 닫기
-          closeTOC();
-          
-          // 스크롤 (부드럽게)
-          setTimeout(function() {
-            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }, 300);
-        }
-      };
-      
       // 페이지 로드 시 사용자 정보 표시
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
