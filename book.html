@@ -3,6 +3,30 @@
   <!-- 🔴 초강력 캐시 무효화 -->
   <script>
 
+  // Language code mapping: short code <-> full name
+  const LANG_MAP = {
+    'ko': 'korean',
+    'en': 'english',
+    'zh': 'chinese',
+    'ja': 'japanese',
+    'es': 'spanish',
+    'fr': 'french',
+    'ru': 'russian',
+    'ar': 'arabic'
+  };
+  
+  // Convert short code to full name or vice versa
+  function normalizePermission(perm) {
+    return LANG_MAP[perm] || perm;
+  }
+  
+  // Check if user has permission (supports both short and full format)
+  function hasPermission(permissions, lang) {
+    if (!permissions || !Array.isArray(permissions)) return false;
+    const normalized = normalizePermission(lang);
+    return permissions.includes(lang) || permissions.includes(normalized);
+  }
+
   // Authentication and permission check
   (function() {
     const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
@@ -28,10 +52,10 @@
       }
     }
     
-    // Check language permissions
+    // Check language permissions (supports both short and full format)
     window.checkLanguagePermission = function(langCode) {
       if (user.role === 'admin') return true;
-      return user.permissions && user.permissions.includes(langCode);
+      return hasPermission(user.permissions, langCode);
     };
     
     // Visual indication for languages without permission (but keep them clickable)
@@ -40,7 +64,7 @@
       const links = languageMenu.querySelectorAll('a[data-lang]');
       links.forEach(link => {
         const lang = link.getAttribute('data-lang');
-        if (!user.permissions.includes(lang)) {
+        if (!hasPermission(user.permissions, lang)) {
           link.style.opacity = '0.5';
           // DO NOT set pointerEvents = 'none' - we want click events to show alert
           link.style.textDecoration = 'line-through';
@@ -81,10 +105,10 @@
             console.log('🔍 [Language Check] Using user:', user);
             console.log('🔍 [Language Check] User role:', user.role);
             console.log('🔍 [Language Check] User permissions:', user.permissions);
-            console.log('🔍 [Language Check] Has permission for ' + lang + ':', user.permissions ? user.permissions.includes(lang) : false);
+            console.log('🔍 [Language Check] Has permission for ' + lang + ':', hasPermission(user.permissions, lang));
             
-            // Check if user has permission for this language
-            if (user.role !== 'admin' && (!user.permissions || !user.permissions.includes(lang))) {
+            // Check if user has permission for this language (supports both short and full format)
+            if (user.role !== 'admin' && !hasPermission(user.permissions, lang)) {
               // ALWAYS prevent default navigation first
               e.preventDefault();
               e.stopPropagation();

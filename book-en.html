@@ -3,6 +3,30 @@
   <!-- 🔴 초강력 캐시 무효화 -->
   <script>
 
+  // Language code mapping: short code <-> full name
+  const LANG_MAP = {
+    'ko': 'korean',
+    'en': 'english',
+    'zh': 'chinese',
+    'ja': 'japanese',
+    'es': 'spanish',
+    'fr': 'french',
+    'ru': 'russian',
+    'ar': 'arabic'
+  };
+  
+  // Convert short code to full name or vice versa
+  function normalizePermission(perm) {
+    return LANG_MAP[perm] || perm;
+  }
+  
+  // Check if user has permission (supports both short and full format)
+  function hasPermission(permissions, lang) {
+    if (!permissions || !Array.isArray(permissions)) return false;
+    const normalized = normalizePermission(lang);
+    return permissions.includes(lang) || permissions.includes(normalized);
+  }
+
   // Authentication and permission check
   (function() {
     const currentUserStr = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
@@ -26,8 +50,8 @@
     console.log('🔍 [English Page Load] User role:', user.role);
     console.log('🔍 [English Page Load] User permissions:', user.permissions);
     
-    // Check if user has permission for English (en)
-    if (user.role !== 'admin' && (!user.permissions || !user.permissions.includes('en'))) {
+    // Check if user has permission for English (supports both 'en' and 'english')
+    if (user.role !== 'admin' && !hasPermission(user.permissions, 'en')) {
       console.log('❌ [English Page Load] No permission for English, redirecting to book.html');
       // Silently redirect without alert (alert already shown in book.html)
       window.location.replace('book.html');
@@ -51,10 +75,10 @@
       }
     }
     
-    // Check language permissions
+    // Check language permissions (supports both short and full format)
     window.checkLanguagePermission = function(langCode) {
       if (user.role === 'admin') return true;
-      return user.permissions && user.permissions.includes(langCode);
+      return hasPermission(user.permissions, langCode);
     };
     
     // Filter language menu based on permissions
@@ -63,7 +87,7 @@
       const links = languageMenu.querySelectorAll('a[data-lang]');
       links.forEach(link => {
         const lang = link.getAttribute('data-lang');
-        if (!user.permissions.includes(lang)) {
+        if (!hasPermission(user.permissions, lang)) {
           link.style.opacity = '0.5';
           link.style.pointerEvents = 'none';
           link.style.textDecoration = 'line-through';
@@ -90,8 +114,8 @@
           // Use fresh user data if available, otherwise fall back to currentUser
           const user = freshUser || currentUser;
           
-          // Check if user has permission
-          if (user.role !== 'admin' && (!user.permissions || !user.permissions.includes(lang))) {
+          // Check if user has permission (supports both short and full format)
+          if (user.role !== 'admin' && !hasPermission(user.permissions, lang)) {
             e.preventDefault();
             e.stopPropagation();
             // Silently redirect without alert (will be handled by target page or book.html)
