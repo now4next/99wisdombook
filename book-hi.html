@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" data-theme="light" style="height: 100%;"><head>
+<html lang="hi" data-theme="light" style="height: 100%;"><head>
   <!-- 🔴 초강력 캐시 무효화 -->
   <script>
 
@@ -47,19 +47,30 @@
     // Use fresh user data if available, otherwise fall back to currentUser
     const user = freshUser || currentUser;
     
-    console.log('🔍 [Arabic Page Load] Current user:', user);
-    console.log('🔍 [Arabic Page Load] User role:', user.role);
-    console.log('🔍 [Arabic Page Load] User permissions:', user.permissions);
+    console.log('🔍 [Hindi Page Load] Current user:', user);
+    console.log('🔍 [Hindi Page Load] User role:', user.role);
+    console.log('🔍 [Hindi Page Load] User permissions:', user.permissions);
     
-    // Check if user has permission for Arabic (supports both 'ar' and 'arabic')
-    if (user.role !== 'admin' && !hasPermission(user.permissions, 'ar')) {
-      console.log('❌ [Arabic Page Load] No permission for Arabic, redirecting to book.html');
+    // Check permission for Hindi page (supports both 'hi' and 'hindi')
+    if (user.role !== 'admin' && !hasPermission(user.permissions, 'hi')) {
+      console.log('❌ User does not have Hindi permission, redirecting to Korean page');
+      alert('Hindi page access is restricted. Please contact the administrator.');
+      window.location.href = 'book.html';
+      return;
+    }
+    
+    console.log('✅ Hindi permission granted');
+    console.log('🔍 [Hindi Page Load] User permissions:', user.permissions);
+    
+    // Check if user has permission for Hindi (supports both 'hi' and 'hindi')
+    if (user.role !== 'admin' && !hasPermission(user.permissions, 'hi')) {
+      console.log('❌ [Hindi Page Load] No permission for Hindi, redirecting to book.html');
       // Silently redirect without alert (alert already shown in book.html)
       window.location.replace('book.html');
       return;
     }
     
-    console.log('✅ [Arabic Page Load] Permission granted for Arabic');
+    console.log('✅ [Hindi Page Load] Permission granted for Hindi');
     
     // Update userName display
     const userNameElement = document.getElementById('userName');
@@ -216,7 +227,7 @@
   <meta http-equiv=1771138432"Pragma" content="no-cache">
   <meta http-equiv=1771138432"Expires" content="0">
   <meta name="version" content="1770972162">
-  <title>خطوط علمتني إياها الحياة - Lines Life Taught Me</title>
+  <title>जीवन ने सिखाई पंक्तियाँ - Lines Life Taught Me</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
@@ -1660,8 +1671,8 @@
             <a href="book-es.html" data-lang="es">🇪🇸 Español</a>
             <a href="book-fr.html" data-lang="fr">🇫🇷 Français</a>
             <a href="book-ru.html" data-lang="ru">🇷🇺 Русский</a>
-            <a href="book-ar.html" data-lang="ar" class="active">🇸🇦 عربي</a>
-            <a href="book-hi.html" data-lang="hi">🇮🇳 हिन्दी</a>
+            <a href="book-ar.html" data-lang="ar">🇸🇦 عربي</a>
+            <a href="book-hi.html" data-lang="hi" class="active">🇮🇳 हिन्दी</a>
           </div>
         </div>
         
@@ -1823,33 +1834,33 @@
     <!-- Cover Page -->
     <div class="cover-page">
       <div class="cover-title" style="line-height: 1.3; margin-bottom: 0.3em;">
-        <center>خطوط علمتني إياها الحياة</center>
+        <center>जीवन ने सिखाई पंक्तियाँ</center>
       </div>
       <div class="cover-subtitle"><center><span style="font-size: 28px; line-height: 2.7;">Lines Life Taught Me</span></center></div>
-      <div class="cover-author"><center><span style="font-size: 16px;">المؤلف. كانغ ريم سيونغ</span></center></div>
+      <div class="cover-author"><center><span style="font-size: 16px;">लेखक. कांग रिम सुंग</span></center></div>
     </div>
 <br>
-    <div class="cover-copyright"><span style="font-size: 14px;">ⓒ كانغ ريم سيونغ 2026</span></div>
-    <div class="cover-copyright"><span style="font-size: 14px;">هذا الكتاب ملكية فكرية للمؤلف، ويحظر الاستنساخ أو التكرار غير المصرح به.</span></div>
+    <div class="cover-copyright"><span style="font-size: 14px;">ⓒ कांग रिम सुंग 2026</span></div>
+    <div class="cover-copyright"><span style="font-size: 14px;">यह पुस्तक लेखक की बौद्धिक संपदा है, और अनधिकृत प्रजनन या दोहराव सख्त वर्जित है।</span></div>
 <br>
         <!-- Table of Contents -->
     <div class="toc-page">
-      <div class="toc-title">المحتويات</div>
+      <div class="toc-title">विषय सूची</div>
       <br>
-      <div class="toc-chapter"><a href="#opening">تأملات افتتاحية</a></div>
+      <div class="toc-chapter"><a href="#opening">प्रारंभिक विचार</a></div>
 <br>
-      <div class="toc-part">الجزء الأول. قوانين الاقتصاد والتبادل: لا شيء مجاني</div>
-      <div class="toc-subtitle">(الاقتصاد، الأعمال، نظرية الألعاب، الرغبة البشرية)</div>
-      <div class="toc-chapter"><a href="#chapter-1">1. لا يوجد غداء مجاني في هذا العالم</a></div>
-      <div class="toc-chapter"><a href="#chapter-2">2. مخاطر عالية، عوائد عالية</a></div>
-      <div class="toc-chapter"><a href="#chapter-3">3. لا تضع كل بيضك في سلة واحدة</a></div>
-      <div class="toc-chapter"><a href="#chapter-4">4. حيث يوجد طلب، يوجد عرض</a></div>
-      <div class="toc-chapter"><a href="#chapter-5">5. تحصل على ما تدفع مقابله</a></div>
-      <div class="toc-chapter"><a href="#chapter-6">6. المال لا يكذب</a></div>
-      <div class="toc-chapter"><a href="#chapter-7">7. النقود الرديئة تطرد الجيدة</a></div>
-      <div class="toc-chapter"><a href="#chapter-8">8. اللص المتأخر يعمل طوال الليل</a></div>
-      <div class="toc-chapter"><a href="#chapter-9">9. كسب المال للآخرين هو الأصعب</a></div>
-      <div class="toc-chapter"><a href="#chapter-10">10. الدب يقوم بالحيل، لكن مدير السيرك يأخذ المال</a></div>
+      <div class="toc-part">भाग I. अर्थशास्त्र और विनिमय के नियम: कुछ भी मुफ्त नहीं</div>
+      <div class="toc-subtitle">(अर्थशास्त्र, व्यापार, खेल सिद्धांत, मानव इच्छा)</div>
+      <div class="toc-chapter"><a href="#chapter-1">1. इस दुनिया में कोई मुफ्त दोपहर का भोजन नहीं है</a></div>
+      <div class="toc-chapter"><a href="#chapter-2">2. उच्च जोखिम, उच्च रिटर्न</a></div>
+      <div class="toc-chapter"><a href="#chapter-3">3. सभी अंडे एक टोकरी में न रखें</a></div>
+      <div class="toc-chapter"><a href="#chapter-4">4. जहाँ मांग है, वहाँ आपूर्ति है</a></div>
+      <div class="toc-chapter"><a href="#chapter-5">5. आप जो भुगतान करते हैं वही पाते हैं</a></div>
+      <div class="toc-chapter"><a href="#chapter-6">6. पैसा झूठ नहीं बोलता</a></div>
+      <div class="toc-chapter"><a href="#chapter-7">7. बुरा पैसा अच्छे को बाहर निकालता है</a></div>
+      <div class="toc-chapter"><a href="#chapter-8">8. देर से आया चोर रात भर काम करता है</a></div>
+      <div class="toc-chapter"><a href="#chapter-9">9. दूसरों के लिए पैसा कमाना सबसे कठिन है</a></div>
+      <div class="toc-chapter"><a href="#chapter-10">10. भालू करतब दिखाता है, लेकिन रिंगमास्टर पैसा लेता है</a></div>
       <div class="toc-chapter"><a href="#chapter-11">11. Pouring water into a bottomless jar.</a></div>
 <br>
       <div class="toc-part">PART II. The Laws of Cause and Nature: No Smoke Without Fire</div>

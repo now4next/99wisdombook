@@ -250,7 +250,7 @@ async function handleUpdateUser(userId, request, env) {
   }
   if (permissions && Array.isArray(permissions)) {
     // Validate permissions
-    const validPermissions = ['korean', 'english', 'chinese', 'japanese', 'spanish', 'french', 'arabic', 'russian'];
+    const validPermissions = ['korean', 'english', 'chinese', 'japanese', 'spanish', 'french', 'arabic', 'russian', 'hindi'];
     const invalidPerms = permissions.filter(p => !validPermissions.includes(p));
     
     if (invalidPerms.length > 0) {
@@ -329,7 +329,7 @@ async function handleUpdatePermissions(userId, request, env) {
     return jsonResponse({ error: 'Permissions must be an array' }, 400);
   }
 
-  const validPermissions = ['korean', 'english', 'chinese', 'japanese', 'spanish', 'french', 'arabic', 'russian'];
+  const validPermissions = ['korean', 'english', 'chinese', 'japanese', 'spanish', 'french', 'arabic', 'russian', 'hindi'];
   const invalidPerms = permissions.filter(p => !validPermissions.includes(p));
   
   if (invalidPerms.length > 0) {
