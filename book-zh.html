@@ -147,6 +147,7 @@
     
     // Global logout function
     window.logout = function() {
+      console.log('✅ logout function called');
       if (confirm('确定要退出登录吗？')) {
         localStorage.removeItem('currentUser');
         sessionStorage.removeItem('currentUser');
@@ -156,11 +157,15 @@
 
     // Global TOC toggle functions
     window.toggleTOC = function() {
+      console.log('✅ toggleTOC function called');
       const panel = document.getElementById('floating-toc-panel');
       const overlay = document.getElementById('toc-overlay');
       if (panel && overlay) {
         panel.classList.toggle('active');
         overlay.classList.toggle('active');
+        console.log('✅ TOC toggled, active:', panel.classList.contains('active'));
+      } else {
+        console.error('❌ TOC elements not found:', { panel, overlay });
       }
     };
 
@@ -175,6 +180,7 @@
 
     // Toggle language menu dropdown
     window.toggleLanguageMenu = function(event) {
+      console.log('✅ toggleLanguageMenu function called');
       if (event) {
         event.preventDefault();
         event.stopPropagation();
@@ -188,15 +194,19 @@
         return;
       }
       
+      console.log('✅ languageMenu found:', menu);
+      
       // Toggle show class
       const isShowing = menu.classList.contains('show');
       
       if (isShowing) {
         menu.classList.remove('show');
         if (btn) btn.classList.remove('active');
+        console.log('✅ Menu closed');
       } else {
         menu.classList.add('show');
         if (btn) btn.classList.add('active');
+        console.log('✅ Menu opened');
         
         // Close menu when clicking outside
         setTimeout(() => {
@@ -287,6 +297,12 @@
         console.log('✅ 최신 버전 로드됨: v=' + currentVersion);
       }
     })();
+    
+    // Debug: Check if functions are defined
+    console.log('🔍 Checking global functions...');
+    console.log('window.logout:', typeof window.logout);
+    console.log('window.toggleTOC:', typeof window.toggleTOC);
+    console.log('window.toggleLanguageMenu:', typeof window.toggleLanguageMenu);
   </script>
 
     <meta charset="UTF-8">
