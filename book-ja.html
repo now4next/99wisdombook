@@ -3,13 +3,19 @@
   <!-- 🔴 초강력 캐시 무효화 -->
   <script>
 
-  // Authentication and permission check
+  // Authentication check (must run immediately)
   (function() {
     const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
     if (!currentUser) {
       window.location.href = 'index.html';
       return;
     }
+  })();
+
+  // DOM-dependent code (runs after DOM is loaded)
+  document.addEventListener('DOMContentLoaded', function() {
+    const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+    if (!currentUser) return;
     
     const user = JSON.parse(currentUser);
     
@@ -48,8 +54,7 @@
         }
       });
     }
-  })();
-
+  
     // Enhanced language menu with permission alert and content switching
     document.querySelectorAll('.language-menu a[data-lang]').forEach(link => {
       link.addEventListener('click', function(e) {
@@ -74,6 +79,7 @@
         switchLanguageContent(lang);
       });
     });
+  });
     
     // Language content switching function
     function switchLanguageContent(lang) {
