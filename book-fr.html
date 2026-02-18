@@ -34,10 +34,35 @@
       }
     }
     
+    // Language code mapping: short code <-> full name
+    const LANG_MAP = {
+      'ko': 'korean',
+      'en': 'english',
+      'zh': 'chinese',
+      'ja': 'japanese',
+      'es': 'spanish',
+      'fr': 'french',
+      'ru': 'russian',
+      'ar': 'arabic',
+      'hi': 'hindi'
+    };
+    
+    // Convert short code to full name or vice versa
+    function normalizePermission(perm) {
+      return LANG_MAP[perm] || perm;
+    }
+    
+    // Check if user has permission (supports both short and full format)
+    function hasPermission(permissions, lang) {
+      if (!permissions || !Array.isArray(permissions)) return false;
+      const normalized = normalizePermission(lang);
+      return permissions.includes(lang) || permissions.includes(normalized);
+    }
+    
     // Check language permissions
     window.checkLanguagePermission = function(langCode) {
       if (user.role === 'admin') return true;
-      return user.permissions && user.permissions.includes(langCode);
+      return hasPermission(user.permissions, langCode);
     };
     
     // Filter language menu based on permissions
@@ -46,7 +71,7 @@
       const links = languageMenu.querySelectorAll('a[data-lang]');
       links.forEach(link => {
         const lang = link.getAttribute('data-lang');
-        if (!user.permissions.includes(lang)) {
+        if (!hasPermission(user.permissions, lang)) {
           link.style.opacity = '0.5';
           link.style.pointerEvents = 'none';
           link.style.textDecoration = 'line-through';
@@ -65,7 +90,7 @@
           const user = JSON.parse(currentUser);
           
           // Check if user has permission
-          if (user.role !== 'admin' && !user.permissions.includes(lang)) {
+          if (user.role !== 'admin' && !hasPermission(user.permissions, lang)) {
             e.preventDefault();
             alert('⚠️ 언어 열람 권한이 없습니다
 
