@@ -1667,7 +1667,7 @@
     <div id="language-selector" class="top-nav">
       <div id="user-info">
         <span class="user-name" id="userName"></span>
-        <button class="logout-btn" onclick="logout()">로그아웃</button>
+        <button class="logout-btn" onclick="logout()">Log out</button>
       </div>
       
       <!-- 언어 선택 드롭다운 -->
@@ -20457,7 +20457,7 @@
 
 
   <script>
-    // 사용자 정보 표시 및 로그아웃
+    // Display user info and logout
     (function() {
       // 사용자 정보 표시
       
@@ -20573,9 +20573,9 @@
         }
       }
       
-      // 로그아웃 함수 (전역)
+      // Logout function (global)
       window.logout = function() {
-        if (confirm('로그아웃하시겠습니까?')) {
+        if (confirm('Log out?')) {
           localStorage.removeItem('currentUser');
           sessionStorage.removeItem('currentUser');
           window.location.href = 'index.html';
