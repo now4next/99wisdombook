@@ -169,111 +169,8 @@
       // ウィンドウサイズ変更時にも適用
       window.addEventListener('resize', applyMobilePadding);
     })();
-    
-    // Global logout function
-    window.logout = function() {
-      if (confirm('ログアウトしますか？')) {
-        localStorage.removeItem('currentUser');
-        sessionStorage.removeItem('currentUser');
-        window.location.href = 'index.html';
-      }
-    };
-
-    // Global TOC toggle functions
-    window.toggleTOC = function() {
-      const panel = document.getElementById('floating-toc-panel');
-      const overlay = document.getElementById('toc-overlay');
-      if (panel && overlay) {
-        panel.classList.toggle('active');
-        overlay.classList.toggle('active');
-      }
-    };
-
-    window.closeTOC = function() {
-      const panel = document.getElementById('floating-toc-panel');
-      const overlay = document.getElementById('toc-overlay');
-      if (panel && overlay) {
-        panel.classList.remove('active');
-        overlay.classList.remove('active');
-      }
-    };
-    
-    // Toggle language menu dropdown
-    window.toggleLanguageMenu = function(event) {
-      if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-      
-      const menu = document.getElementById("languageMenu");
-      const btn = document.getElementById("languageBtn");
-      
-      if (!menu) {
-        console.error("❌ languageMenu element not found");
-        return;
-      }
-      
-      // Toggle show class
-      const isShowing = menu.classList.contains("show");
-      
-      if (isShowing) {
-        menu.classList.remove("show");
-        if (btn) btn.classList.remove("active");
-      } else {
-        menu.classList.add("show");
-        if (btn) btn.classList.add("active");
-        
-        // Close menu when clicking outside
-        setTimeout(() => {
-          document.addEventListener("click", closeLanguageMenu);
-        }, 100);
-      }
-    };
-    
-    function closeLanguageMenu(e) {
-      const menu = document.getElementById("languageMenu");
-      const btn = document.getElementById("languageBtn");
-      
-      if (!menu || !btn) return;
-      
-      if (!menu.contains(e.target) && !btn.contains(e.target)) {
-        menu.classList.remove("show");
-        btn.classList.remove("active");
-        document.removeEventListener("click", closeLanguageMenu);
-      }
-    }
-    
-    // Navigate to section function
-    window.navigateToSection = function(sectionId) {
-      window.closeTOC();
-      const element = document.getElementById(sectionId);
-      if (element) {
-        setTimeout(() => {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 300);
-      }
-    };
-
-    // Assign to global scope for onclick handlers
-    logout = window.logout;
-    toggleTOC = window.toggleTOC;
-    closeTOC = window.closeTOC;
-    toggleLanguageMenu = window.toggleLanguageMenu;
-    navigateToSection = window.navigateToSection;
 
     // Close language menu when clicking outside
-    document.addEventListener('click', function(event) {
-      const languageBtn = document.getElementById('languageBtn');
-      const languageMenu = document.getElementById('languageMenu');
-      
-      if (languageMenu && languageBtn) {
-        if (!languageBtn.contains(event.target) && !languageMenu.contains(event.target)) {
-          languageMenu.classList.remove('show');
-        }
-      }
-    });
-
-    // Close TOC when clicking overlay
     document.addEventListener('DOMContentLoaded', function() {
       const overlay = document.getElementById('toc-overlay');
       if (overlay) {
@@ -1593,6 +1490,70 @@
       }
 
       </style>
+
+    <script>
+    // ⚡ Global UI Functions (must be in global scope for onclick handlers)
+    window.logout = function() {
+      if (confirm('ログアウトしますか？')) {
+        localStorage.removeItem('currentUser');
+        sessionStorage.removeItem('currentUser');
+        window.location.href = 'index.html';
+      }
+    };
+
+    window.toggleTOC = function() {
+      const panel = document.getElementById('floating-toc-panel');
+      const overlay = document.getElementById('toc-overlay');
+      if (panel && overlay) {
+        panel.classList.toggle('active');
+        overlay.classList.toggle('active');
+      }
+    };
+
+    window.closeTOC = function() {
+      const panel = document.getElementById('floating-toc-panel');
+      const overlay = document.getElementById('toc-overlay');
+      if (panel && overlay) {
+        panel.classList.remove('active');
+        overlay.classList.remove('active');
+      }
+    };
+    
+    window.toggleLanguageMenu = function(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      
+      const menu = document.getElementById("languageMenu");
+      const btn = document.getElementById("languageBtn");
+      
+      if (!menu) {
+        console.error("❌ languageMenu element not found");
+        return;
+      }
+      
+      const isShowing = menu.classList.contains("show");
+      
+      if (isShowing) {
+        menu.classList.remove("show");
+        if (btn) btn.classList.remove("active");
+      } else {
+        menu.classList.add("show");
+        if (btn) btn.classList.add("active");
+      }
+    };
+
+    window.navigateToSection = function(sectionId) {
+      window.closeTOC();
+      const element = document.getElementById(sectionId);
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 300);
+      }
+    };
+    </script>
 
 </head>
   <body>
