@@ -254,6 +254,13 @@
       }
     };
 
+    // Assign to global scope for onclick handlers
+    logout = window.logout;
+    toggleTOC = window.toggleTOC;
+    closeTOC = window.closeTOC;
+    toggleLanguageMenu = window.toggleLanguageMenu;
+    navigateToSection = window.navigateToSection;
+
     // Close language menu when clicking outside
     document.addEventListener('click', function(event) {
       const languageBtn = document.getElementById('languageBtn');
