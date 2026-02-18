@@ -1612,38 +1612,34 @@
     <!-- Floating TOC Panel -->
     <div id="floating-toc-panel">
       <button class="toc-close" onclick="toggleTOC()">×</button>
-      <h3>CONTENTS</h3>
-      <div class="toc-content"><div class="toc-section">
-        <a href="#opening" class="toc-item" onclick="navigateToSection('opening')">여는 말</a>
-      </div>
+      <h3 style="margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px;">СОДЕРЖАНИЕ</h3>
+      <ul style="list-style: none; padding: 0;">
+        <li><a href="#opening" onclick="navigateToSection('opening')">Предисловие</a></li>
 
-      <div class="toc-section">
-        <div class="toc-section-title">제1부. 경제와 거래의 법칙</div>
-        <a href="#chapter-1" class="toc-item" onclick="navigateToSection('chapter-1')">1. 세상에 공짜는 없다</a>
-        <a href="#chapter-2" class="toc-item" onclick="navigateToSection('chapter-2')">2. 하이 리스크, 하이 리턴</a>
-        <a href="#chapter-3" class="toc-item" onclick="navigateToSection('chapter-3')">3. 계란을 한 바구니에 담지 마라</a>
-        <a href="#chapter-4" class="toc-item" onclick="navigateToSection('chapter-4')">4. 수요가 있으면 공급이 있다</a>
-        <a href="#chapter-5" class="toc-item" onclick="navigateToSection('chapter-5')">5. 싼 게 비지떡이다</a>
-        <a href="#chapter-6" class="toc-item" onclick="navigateToSection('chapter-6')">6. 돈은 거짓말을 하지 않는다</a>
-        <a href="#chapter-7" class="toc-item" onclick="navigateToSection('chapter-7')">7. 악화가 양화를 구축한다</a>
-        <a href="#chapter-8" class="toc-item" onclick="navigateToSection('chapter-8')">8. 늦게 배운 도둑질이 날 새는 줄 모른다</a>
-        <a href="#chapter-9" class="toc-item" onclick="navigateToSection('chapter-9')">9. 남의 돈 벌기가 제일 어렵다</a>
-        <a href="#chapter-10" class="toc-item" onclick="navigateToSection('chapter-10')">10. 재주는 곰이 부리고 돈은 왕서방이 받는다</a>
-        <a href="#chapter-11" class="toc-item" onclick="navigateToSection('chapter-11')">11. 밑 빠진 독에 물 붓기</a>
-      </div>
+        <!-- Part 1 -->
+        <li style="margin-top: 15px; font-weight: bold; color: #666; font-size: 0.9em;">Часть 1: Законы Экономики и Обмена</li>
+        <li><a href="#chapter-1" onclick="navigateToSection('chapter-1')">1. Бесплатный сыр только в мышеловке</a></li>
+        <li><a href="#chapter-2" onclick="navigateToSection('chapter-2')">2. Высокий риск, высокая прибыль</a></li>
+        <li><a href="#chapter-3" onclick="navigateToSection('chapter-3')">3. Не клади все яйца в одну корзину</a></li>
+        <li><a href="#chapter-4" onclick="navigateToSection('chapter-4')">4. Где есть спрос, есть и предложение</a></li>
+        <li><a href="#chapter-5" onclick="navigateToSection('chapter-5')">5. Скупой платит дважды</a></li>
+        <li><a href="#chapter-6" onclick="navigateToSection('chapter-6')">6. Деньги не лгут</a></li>
+        <li><a href="#chapter-7" onclick="navigateToSection('chapter-7')">7. Плохие деньги вытесняют хорошие</a></li>
+        <li><a href="#chapter-8" onclick="navigateToSection('chapter-8')">8. Старый вор не видит рассвета</a></li>
+        <li><a href="#chapter-9" onclick="navigateToSection('chapter-9')">9. Чужие деньги зарабатывать труднее всего</a></li>
+        <li><a href="#chapter-10" onclick="navigateToSection('chapter-10')">10. Медведь танцует, а деньги хозяину</a></li>
+        <li><a href="#chapter-11" onclick="navigateToSection('chapter-11')">11. Лить воду в бездонную бочку</a></li>
 
-      <div class="toc-section">
-        <div class="toc-section-title">제2부 ~ 제9부</div>
-        <a href="#chapter-12" class="toc-item" onclick="navigateToSection('chapter-12')">12. 아니 땐 굴뚝에 연기 나랴</a>
-        <div style="text-align: center; color: #999; padding: 10px; font-size: 0.85em;">(제13~99장 생략)</div>
-      </div>
-
-      <div class="toc-section">
-        <a href="#chapter-100" class="toc-item" onclick="navigateToSection('chapter-100')">100. 당신만의 지혜</a>
-        <a href="#closing" class="toc-item" onclick="navigateToSection('closing')">맺음 말</a>
-      </div>
+        <!-- Part 2 (partial) -->
+        <li style="margin-top: 15px; font-weight: bold; color: #666; font-size: 0.9em;">Часть 2: Законы Причины и Природы</li>
+        <li><a href="#chapter-12" onclick="navigateToSection('chapter-12')">12. Нет дыма без огня</a></li>
+        
+        <li style="margin-top: 15px; font-style: italic; color: #999; font-size: 0.85em; text-align: center;">(Главы 13-99: В подготовке)</li>
+        
+        <li style="margin-top: 15px;"><a href="#chapter-100" onclick="navigateToSection('chapter-100')">100. Ваша собственная мудрость</a></li>
+        <li><a href="#closing" onclick="navigateToSection('closing')">Эпилог</a></li>
+      </ul>
     </div>
-      </div>
     <!-- TOC Overlay -->
     <div id="toc-overlay" onclick="toggleTOC()"></div>
 
