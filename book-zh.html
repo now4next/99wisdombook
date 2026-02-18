@@ -1496,6 +1496,22 @@
 
 
     <script>
+    // Display user info function
+    function displayUserInfo() {
+      const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+      if (currentUser) {
+        try {
+          const user = JSON.parse(currentUser);
+          const userNameElement = document.getElementById('userName');
+          if (userNameElement) {
+            userNameElement.textContent = user.name || '사용자';
+          }
+        } catch (e) {
+          console.error('Error parsing user info:', e);
+        }
+      }
+    }
+    
     // Global UI functions
     window.logout = function() {
       if (confirm('确定要退出登录吗？')) {
@@ -1555,6 +1571,10 @@
 
     // Close TOC when clicking overlay
     document.addEventListener('DOMContentLoaded', function() {
+      // Display user info
+      displayUserInfo();
+      console.log('✅ User info displayed');
+      
       const overlay = document.getElementById('toc-overlay');
       if (overlay) {
         overlay.addEventListener('click', window.closeTOC);

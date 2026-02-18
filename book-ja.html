@@ -172,6 +172,10 @@
 
     // Close language menu when clicking outside
     document.addEventListener('DOMContentLoaded', function() {
+      // Display user info
+      displayUserInfo();
+      console.log('✅ User info displayed');
+      
       const overlay = document.getElementById('toc-overlay');
       if (overlay) {
         overlay.addEventListener('click', window.closeTOC);
@@ -1503,6 +1507,22 @@
       </style>
 
     <script>
+    // Display user info function
+    function displayUserInfo() {
+      const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
+      if (currentUser) {
+        try {
+          const user = JSON.parse(currentUser);
+          const userNameElement = document.getElementById('userName');
+          if (userNameElement) {
+            userNameElement.textContent = user.name || '사용자';
+          }
+        } catch (e) {
+          console.error('Error parsing user info:', e);
+        }
+      }
+    }
+    
     // ⚡ Global UI Functions (must be in global scope for onclick handlers)
     window.logout = function() {
       if (confirm('ログアウトしますか？')) {
