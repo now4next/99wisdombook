@@ -399,13 +399,10 @@
       align-self: center;
       box-sizing: border-box;
     }
-    .icon-only-btn::after {
-      content: attr(data-tooltip);
-      position: absolute;
-      top: calc(100% + 6px);
-      bottom: auto;
-      left: 50%;
-      transform: translateX(-50%);
+
+    /* JS 툴팁 스타일 */
+    .icon-tooltip {
+      position: fixed;
       background: rgba(50,50,50,0.88);
       color: #fff;
       font-size: 10px;
@@ -413,12 +410,13 @@
       padding: 3px 8px;
       border-radius: 4px;
       white-space: nowrap;
-      opacity: 0;
       pointer-events: none;
+      z-index: 999999;
+      transform: translateX(-50%);
       transition: opacity 0.15s;
-      z-index: 99999;
+      opacity: 0;
     }
-    .icon-only-btn:hover::after { opacity: 1; }
+    .icon-tooltip.visible { opacity: 1; }
     
     .text-btn:hover {
       background: #e8e8e8;
@@ -1805,11 +1803,29 @@
       // Display user info
       displayUserInfo();
       console.log('✅ User info displayed');
-      
+
       const overlay = document.getElementById('toc-overlay');
       if (overlay) {
         overlay.addEventListener('click', window.closeTOC);
       }
+
+      // 아이콘 버튼 툴팁 (JS 방식 - fixed 헤더 이중렌더링 방지)
+      const tooltip = document.createElement('div');
+      tooltip.className = 'icon-tooltip';
+      document.body.appendChild(tooltip);
+
+      document.querySelectorAll('.icon-only-btn[data-tooltip]').forEach(btn => {
+        btn.addEventListener('mouseenter', () => {
+          const rect = btn.getBoundingClientRect();
+          tooltip.textContent = btn.dataset.tooltip;
+          tooltip.style.top = (rect.bottom + 6) + 'px';
+          tooltip.style.left = (rect.left + rect.width / 2) + 'px';
+          tooltip.classList.add('visible');
+        });
+        btn.addEventListener('mouseleave', () => {
+          tooltip.classList.remove('visible');
+        });
+      });
     });
     </script>
 
