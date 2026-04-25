@@ -1,8 +1,10 @@
 -- Migration: Phase 2 (보관함) + Phase 3 (스트릭)
--- Cloudflare D1 대시보드 > 해당 DB > Console 에서 실행
+-- Cloudflare D1 대시보드 > wisdom-book-db > Console 탭에서 아래 SQL을 한 줄씩 실행
+-- (이미 실행된 줄은 오류가 나도 무시해도 됩니다)
 
 ALTER TABLE users ADD COLUMN streak_count INTEGER DEFAULT 0;
 ALTER TABLE users ADD COLUMN last_wisdom_date TEXT DEFAULT NULL;
+ALTER TABLE users ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 
 CREATE TABLE IF NOT EXISTS saved_wisdom (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

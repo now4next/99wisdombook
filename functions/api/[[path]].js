@@ -237,19 +237,40 @@ async function handleStreak(request, env) {
 // ── Users (기존) ─────────────────────────────────────────────
 async function handleGetUsers(request, env) {
   if (!verifyAdmin(request)) return jsonResponse({ error: 'Unauthorized' }, 401);
-  const result = await env.DB.prepare(
-    'SELECT id, username, name, email, role, permissions, streak_count, created_at, last_login FROM users ORDER BY created_at DESC'
-  ).all();
-  const users = result.results.map(u => ({ ...u, permissions: JSON.parse(u.permissions || '[]') }));
+
+  // streak_count 컬럼이 없는 구버전 DB에도 동작하도록 fallback 처리
+  let result;
+  try {
+    result = await env.DB.prepare(
+      'SELECT id, username, name, email, role, permissions, streak_count, created_at, last_login FROM users ORDER BY created_at DESC'
+    ).all();
+  } catch (_) {
+    result = await env.DB.prepare(
+      'SELECT id, username, name, email, role, permissions, created_at, last_login FROM users ORDER BY created_at DESC'
+    ).all();
+  }
+
+  const users = result.results.map(u => ({
+    ...u,
+    streak_count: u.streak_count ?? 0,
+    permissions: JSON.parse(u.permissions || '[]'),
+  }));
   return jsonResponse({ success: true, users, count: users.length });
 }
 
 async function handleGetUser(userId, env) {
-  const row = await env.DB.prepare(
-    'SELECT id, username, name, email, role, permissions, streak_count, created_at, last_login FROM users WHERE id = ?'
-  ).bind(userId).first();
+  let row;
+  try {
+    row = await env.DB.prepare(
+      'SELECT id, username, name, email, role, permissions, streak_count, created_at, last_login FROM users WHERE id = ?'
+    ).bind(userId).first();
+  } catch (_) {
+    row = await env.DB.prepare(
+      'SELECT id, username, name, email, role, permissions, created_at, last_login FROM users WHERE id = ?'
+    ).bind(userId).first();
+  }
   if (!row) return jsonResponse({ error: 'User not found' }, 404);
-  return jsonResponse({ success: true, user: { ...row, permissions: JSON.parse(row.permissions || '[]') } });
+  return jsonResponse({ success: true, user: { ...row, streak_count: row.streak_count ?? 0, permissions: JSON.parse(row.permissions || '[]') } });
 }
 
 async function handleUpdateUser(userId, request, env) {
@@ -261,10 +282,11 @@ async function handleUpdateUser(userId, request, env) {
   if (role === 'user' || role === 'admin') { updates.push('role = ?'); bindings.push(role); }
   if (Array.isArray(permissions)) { updates.push('permissions = ?'); bindings.push(JSON.stringify(permissions)); }
   if (!updates.length) return jsonResponse({ error: 'No fields to update' }, 400);
-  updates.push('updated_at = CURRENT_TIMESTAMP');
+  // updated_at 컬럼이 없는 구버전 DB 호환
+  try { updates.push('updated_at = CURRENT_TIMESTAMP'); } catch (_) {}
   bindings.push(userId);
   await env.DB.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).bind(...bindings).run();
-  const row = await env.DB.prepare('SELECT id, username, name, email, role, permissions, updated_at FROM users WHERE id = ?').bind(userId).first();
+  const row = await env.DB.prepare('SELECT id, username, name, email, role, permissions FROM users WHERE id = ?').bind(userId).first();
   return jsonResponse({ success: true, user: { ...row, permissions: JSON.parse(row.permissions || '[]') }, message: 'User updated' });
 }
 
@@ -281,8 +303,14 @@ async function handleUpdatePermissions(userId, request, env) {
   if (!verifyAdmin(request)) return jsonResponse({ error: 'Unauthorized' }, 401);
   const { permissions } = await request.json();
   if (!Array.isArray(permissions)) return jsonResponse({ error: 'Permissions must be an array' }, 400);
-  await env.DB.prepare('UPDATE users SET permissions = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-    .bind(JSON.stringify(permissions), userId).run();
-  const row = await env.DB.prepare('SELECT id, username, name, role, permissions, updated_at FROM users WHERE id = ?').bind(userId).first();
+  // updated_at 컬럼이 없는 구버전 DB 호환
+  try {
+    await env.DB.prepare('UPDATE users SET permissions = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+      .bind(JSON.stringify(permissions), userId).run();
+  } catch (_) {
+    await env.DB.prepare('UPDATE users SET permissions = ? WHERE id = ?')
+      .bind(JSON.stringify(permissions), userId).run();
+  }
+  const row = await env.DB.prepare('SELECT id, username, name, role, permissions FROM users WHERE id = ?').bind(userId).first();
   return jsonResponse({ success: true, user: { ...row, permissions: JSON.parse(row.permissions || '[]') }, message: 'Permissions updated' });
 }
