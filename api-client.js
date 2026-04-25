@@ -51,10 +51,15 @@ class WisdomBookAPI {
         headers,
       });
 
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error(`서버 연결에 실패했습니다. (${response.status})`);
+      }
+
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || `HTTP ${response.status}: ${response.statusText}`);
+        throw new Error(data.error || `오류가 발생했습니다. (${response.status})`);
       }
 
       return data;

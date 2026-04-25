@@ -101,14 +101,23 @@ async function handleLogin(request, env) {
 
   const hashed = await hashPassword(password);
   const row = await env.DB.prepare(
-    'SELECT id, username, name, email, role, permissions, streak_count, last_wisdom_date, last_login FROM users WHERE username = ? AND password = ?'
+    'SELECT id, username, name, email, role, permissions, last_login FROM users WHERE username = ? AND password = ?'
   ).bind(username, hashed).first();
 
   if (!row) return jsonResponse({ error: 'Invalid credentials' }, 401);
 
   await env.DB.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?').bind(row.id).run();
 
-  const user = { ...row, permissions: JSON.parse(row.permissions || '[]') };
+  // streak 컬럼은 마이그레이션 후에만 존재 — 없어도 로그인 정상 동작
+  let streak_count = 0, last_wisdom_date = null;
+  try {
+    const s = await env.DB.prepare(
+      'SELECT streak_count, last_wisdom_date FROM users WHERE id = ?'
+    ).bind(row.id).first();
+    if (s) { streak_count = s.streak_count || 0; last_wisdom_date = s.last_wisdom_date; }
+  } catch (_) {}
+
+  const user = { ...row, streak_count, last_wisdom_date, permissions: JSON.parse(row.permissions || '[]') };
   const token = btoa(`${user.id}:${Date.now()}`);
   return jsonResponse({ success: true, user, token });
 }
