@@ -139,10 +139,24 @@ async function handleRegister(request, env) {
 }
 
 // ── Saved Wisdom (보관함) ────────────────────────────────────
+async function ensureSavedWisdomTable(env) {
+  await env.DB.prepare(`
+    CREATE TABLE IF NOT EXISTS saved_wisdom (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      chapter_id INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_id, chapter_id)
+    )
+  `).run();
+}
+
 async function handleGetSaved(request, env) {
   const userId = getUserIdFromToken(request);
   if (!userId) return jsonResponse({ error: 'Unauthorized' }, 401);
 
+  await ensureSavedWisdomTable(env);
   const result = await env.DB.prepare(
     'SELECT chapter_id, title, saved_at FROM saved_wisdom WHERE user_id = ? ORDER BY saved_at DESC'
   ).bind(userId).all();
@@ -157,10 +171,11 @@ async function handleSaveWisdom(request, env) {
   const { chapter_id, title } = await request.json();
   if (!chapter_id || !title) return jsonResponse({ error: 'chapter_id and title required' }, 400);
 
+  await ensureSavedWisdomTable(env);
   try {
     await env.DB.prepare(
       'INSERT INTO saved_wisdom (user_id, chapter_id, title) VALUES (?, ?, ?)'
-    ).bind(userId, chapter_id, title).run();
+    ).bind(userId, parseInt(chapter_id, 10), title).run();
     return jsonResponse({ success: true, message: 'Saved' });
   } catch (err) {
     if (err.message?.includes('UNIQUE')) return jsonResponse({ success: true, message: 'Already saved' });
@@ -172,6 +187,7 @@ async function handleUnsaveWisdom(chapterId, request, env) {
   const userId = getUserIdFromToken(request);
   if (!userId) return jsonResponse({ error: 'Unauthorized' }, 401);
 
+  await ensureSavedWisdomTable(env);
   await env.DB.prepare(
     'DELETE FROM saved_wisdom WHERE user_id = ? AND chapter_id = ?'
   ).bind(userId, parseInt(chapterId, 10)).run();
