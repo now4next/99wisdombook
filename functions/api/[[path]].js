@@ -135,7 +135,65 @@ async function handleRegister(request, env) {
   ).bind(username, hashed, name, email || null, 'user', '["korean"]').first();
 
   if (!row) return jsonResponse({ error: 'Failed to create user' }, 500);
+
+  // 관리자 알림 메일 (실패해도 가입은 정상 처리)
+  sendNewUserNotification(env, { username, name, email }).catch(() => {});
+
   return jsonResponse({ success: true, user: { ...row, permissions: JSON.parse(row.permissions || '[]') }, message: 'User registered successfully' }, 201);
+}
+
+async function sendNewUserNotification(env, { username, name, email }) {
+  if (!env.RESEND_API_KEY) return;
+
+  const now = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+
+  await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: '99wisdombook <noreply@99wisdombook.org>',
+      to:   ['nowfornext@naver.com'],
+      subject: `[99wisdombook] 새 회원 가입: ${name}`,
+      html: `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;background:#fff;">
+          <h2 style="color:#3e2820;border-bottom:2px solid #8d6e63;padding-bottom:10px;margin-top:0;">
+            📚 새 회원이 가입했습니다
+          </h2>
+          <table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:15px;">
+            <tr>
+              <td style="padding:10px 8px;color:#888;width:90px;">이름</td>
+              <td style="padding:10px 8px;font-weight:600;color:#1a1a1a;">${name}</td>
+            </tr>
+            <tr style="background:#f9f6f2;">
+              <td style="padding:10px 8px;color:#888;">아이디</td>
+              <td style="padding:10px 8px;color:#1a1a1a;">${username}</td>
+            </tr>
+            <tr>
+              <td style="padding:10px 8px;color:#888;">이메일</td>
+              <td style="padding:10px 8px;color:#1a1a1a;">${email || '미입력'}</td>
+            </tr>
+            <tr style="background:#f9f6f2;">
+              <td style="padding:10px 8px;color:#888;">가입일시</td>
+              <td style="padding:10px 8px;color:#1a1a1a;">${now}</td>
+            </tr>
+          </table>
+          <div style="margin-top:28px;text-align:center;">
+            <a href="https://99wisdombook.org/admin.html"
+               style="background:#3e2820;color:#f5e9d8;padding:12px 28px;border-radius:6px;
+                      text-decoration:none;font-size:14px;font-weight:600;display:inline-block;">
+              관리자 대시보드 바로가기 →
+            </a>
+          </div>
+          <p style="margin-top:28px;font-size:12px;color:#bbb;text-align:center;">
+            99wisdombook.org 자동 발송 메일 · 수신 거부 불가
+          </p>
+        </div>
+      `,
+    }),
+  });
 }
 
 // ── Saved Wisdom (보관함) ────────────────────────────────────
