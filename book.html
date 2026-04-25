@@ -339,18 +339,20 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      align-self: center;
+      margin: 0;
     }
 
     .logout-btn:hover {
       background: #4a332c;
     }
-    
+
     .header-icons {
       display: flex;
       align-items: center;
       gap: 10px;
     }
-    
+
     .language-dropdown {
       position: relative;
     }
@@ -1587,8 +1589,14 @@
         stroke: #666 !important;
       }
 
-      
-    
+      /* 헤더 수직 중앙 정렬 강제 적용 */
+      #language-selector > *,
+      #user-info > *,
+      .header-icons > * {
+        align-self: center !important;
+      }
+
+
     /* Main TOC Page Styles - Enhanced */
     .toc-page {
       max-width: 900px;
