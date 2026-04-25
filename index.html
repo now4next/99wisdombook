@@ -636,7 +636,10 @@
           오늘의 지혜가 담긴 Wisdom Book 읽기
         </button>
         <div class="secondary-actions">
-          <button class="btn-save" id="btn-save" type="button" hidden>💾 보관하기</button>
+          <button class="btn-save" id="btn-save" type="button" hidden>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+            보관하기
+          </button>
           <button class="btn-share" id="btn-share" type="button">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/>
@@ -655,7 +658,10 @@
     <div class="logged-in-bar" id="logged-in-bar">
       <span class="logged-in-name" id="logged-in-name"></span>
       <div style="display:flex;gap:8px;align-items:center;">
-        <a class="btn-goto-book" href="my-wisdom.html" style="background:transparent;border:1px solid #d7c3a9;color:var(--text-muted);font-size:0.82em;padding:7px 13px;">📚 보관함</a>
+        <a class="btn-goto-book" href="my-wisdom.html" style="background:transparent;border:1px solid #d7c3a9;color:var(--text-muted);font-size:0.82em;padding:7px 13px;display:inline-flex;align-items:center;gap:5px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+          보관함
+        </a>
         <a class="btn-goto-book" id="btn-goto-book" href="book.html">도서 읽기 →</a>
       </div>
     </div>
@@ -832,15 +838,16 @@
       document.getElementById('milestone-overlay').hidden = true;
     }
 
-    // ── 공유 ──
-    let shareToastTimer = null;
-    function showShareToast(msg) {
+    // ── 토스트 (공유·보관 공통) ──
+    let toastTimer = null;
+    function showToast(msg) {
       const el = document.getElementById('share-toast');
       el.textContent = msg;
       el.classList.add('show');
-      clearTimeout(shareToastTimer);
-      shareToastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
     }
+    const showShareToast = showToast; // 하위 호환
 
     async function shareWisdom(item) {
       const siteUrl = window.location.origin;
@@ -904,6 +911,9 @@
       } catch(_) { return false; }
     }
 
+    const IC_BOOKMARK = (filled) =>
+      `<svg width="13" height="13" viewBox="0 0 24 24" fill="${filled ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>`;
+
     async function toggleSave() {
       const btn = document.getElementById('btn-save');
       const token = getToken();
@@ -915,10 +925,14 @@
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` },
           });
-          if ((await res.json()).success) {
+          const data = await res.json();
+          if (data.success) {
             isSaved = false;
-            btn.textContent = '💾 보관하기';
+            btn.innerHTML = `${IC_BOOKMARK(false)} 보관하기`;
             btn.classList.remove('saved');
+            showToast('보관함에서 삭제했습니다.');
+          } else {
+            showToast('삭제에 실패했습니다.');
           }
         } else {
           const item = window._wisdomItem;
@@ -927,13 +941,19 @@
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({ chapter_id: currentChapterId, title: item?.title || '' }),
           });
-          if ((await res.json()).success) {
+          const data = await res.json();
+          if (data.success) {
             isSaved = true;
-            btn.textContent = '✓ 보관됨';
+            btn.innerHTML = `${IC_BOOKMARK(true)} 보관됨`;
             btn.classList.add('saved');
+            showToast('보관함에 저장했습니다.');
+          } else {
+            showToast(data.error || '저장에 실패했습니다.');
           }
         }
-      } catch(_) {}
+      } catch(_) {
+        showToast('서버 연결을 확인해주세요.');
+      }
       btn.disabled = false;
     }
 
@@ -945,7 +965,7 @@
       const btn = document.getElementById('btn-save');
       btn.hidden = false;
       isSaved = await checkIfSaved(item.id);
-      btn.textContent = isSaved ? '✓ 보관됨' : '💾 보관하기';
+      btn.innerHTML = isSaved ? `${IC_BOOKMARK(true)} 보관됨` : `${IC_BOOKMARK(false)} 보관하기`;
       if (isSaved) btn.classList.add('saved');
       else btn.classList.remove('saved');
       btn.onclick = toggleSave;
