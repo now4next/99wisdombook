@@ -402,16 +402,16 @@
     .icon-only-btn::after {
       content: attr(data-tooltip);
       position: absolute;
-      top: 100%;
-      margin-top: 8px;
+      top: calc(100% + 6px);
+      bottom: auto;
       left: 50%;
       transform: translateX(-50%);
-      background: #444;
+      background: rgba(50,50,50,0.88);
       color: #fff;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 400;
-      padding: 4px 9px;
-      border-radius: 5px;
+      padding: 3px 8px;
+      border-radius: 4px;
       white-space: nowrap;
       opacity: 0;
       pointer-events: none;
