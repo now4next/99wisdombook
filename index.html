@@ -898,6 +898,12 @@
       return localStorage.getItem('authToken') || sessionStorage.getItem('authToken') || '';
     }
 
+    async function safeJson(res) {
+      const ct = res.headers.get('content-type') || '';
+      if (!ct.includes('application/json')) throw new Error(`서버 오류 (${res.status})`);
+      return res.json();
+    }
+
     async function checkIfSaved(chapterId) {
       try {
         const token = getToken();
@@ -906,8 +912,8 @@
           headers: { 'Authorization': `Bearer ${token}` },
         });
         if (!res.ok) return false;
-        const data = await res.json();
-        return (data.saved || []).some(s => s.chapter_id === chapterId);
+        const data = await safeJson(res);
+        return (data.saved || []).some(s => Number(s.chapter_id) === Number(chapterId));
       } catch(_) { return false; }
     }
 
@@ -925,23 +931,23 @@
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` },
           });
-          const data = await res.json();
+          const data = await safeJson(res);
           if (data.success) {
             isSaved = false;
             btn.innerHTML = `${IC_BOOKMARK(false)} 보관하기`;
             btn.classList.remove('saved');
             showToast('보관함에서 삭제했습니다.');
           } else {
-            showToast('삭제에 실패했습니다.');
+            showToast(data.error || '삭제에 실패했습니다.');
           }
         } else {
           const item = window._wisdomItem;
           const res = await fetch('/api/wisdom/save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ chapter_id: currentChapterId, title: item?.title || '' }),
+            body: JSON.stringify({ chapter_id: Number(currentChapterId), title: item?.title || '' }),
           });
-          const data = await res.json();
+          const data = await safeJson(res);
           if (data.success) {
             isSaved = true;
             btn.innerHTML = `${IC_BOOKMARK(true)} 보관됨`;
@@ -951,8 +957,8 @@
             showToast(data.error || '저장에 실패했습니다.');
           }
         }
-      } catch(_) {
-        showToast('서버 연결을 확인해주세요.');
+      } catch(err) {
+        showToast(err.message || '서버 연결을 확인해주세요.');
       }
       btn.disabled = false;
     }

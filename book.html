@@ -368,7 +368,33 @@
       line-height: 1;
       box-sizing: border-box;
       transition: all 0.2s ease;
+      text-decoration: none;
     }
+
+    /* 아이콘 전용 버튼 (오늘의 지혜 · 보관함) */
+    .icon-only-btn {
+      padding: 6px 8px;
+      position: relative;
+    }
+    .icon-only-btn::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      top: calc(100% + 7px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 400;
+      padding: 4px 9px;
+      border-radius: 5px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s;
+      z-index: 10000;
+    }
+    .icon-only-btn:hover::after { opacity: 1; }
     
     .text-btn:hover {
       background: #e8e8e8;
@@ -1775,19 +1801,17 @@
       <div class="header-icons">
 
         <!-- 오늘의 지혜 -->
-        <a href="index.html" class="text-btn" title="오늘의 한 문장" aria-label="오늘의 한 문장">
+        <a href="index.html" class="text-btn icon-only-btn" data-tooltip="오늘의 지혜" aria-label="오늘의 지혜">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
           </svg>
-          <span class="btn-text">오늘의 지혜</span>
         </a>
 
         <!-- 보관함 -->
-        <a href="my-wisdom.html" class="text-btn" title="내 보관함" aria-label="내 보관함">
+        <a href="my-wisdom.html" class="text-btn icon-only-btn" data-tooltip="내 보관함" aria-label="내 보관함">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
             <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>
           </svg>
-          <span class="btn-text">보관함</span>
         </a>
 
         <div class="language-dropdown">
