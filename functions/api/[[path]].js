@@ -67,7 +67,7 @@ export async function onRequest(context) {
   try {
     // Auth
     if (path === '/api/auth/login'    && method === 'POST') return handleLogin(request, env);
-    if (path === '/api/auth/register' && method === 'POST') return handleRegister(request, env);
+    if (path === '/api/auth/register' && method === 'POST') return handleRegister(request, env, context);
 
     // Wisdom – saved (보관함)
     if (path === '/api/wisdom/saved' && method === 'GET')  return handleGetSaved(request, env);
@@ -122,7 +122,7 @@ async function handleLogin(request, env) {
   return jsonResponse({ success: true, user, token });
 }
 
-async function handleRegister(request, env) {
+async function handleRegister(request, env, context) {
   const { username, password, name, email } = await request.json();
   if (!username || !password || !name) return jsonResponse({ error: 'Username, password, and name required' }, 400);
 
@@ -137,7 +137,11 @@ async function handleRegister(request, env) {
   if (!row) return jsonResponse({ error: 'Failed to create user' }, 500);
 
   // 관리자 알림 메일 (실패해도 가입은 정상 처리)
-  sendNewUserNotification(env, { username, name, email }).catch(() => {});
+  if (context?.waitUntil) {
+    context.waitUntil(sendNewUserNotification(env, { username, name, email }).catch(() => {}));
+  } else {
+    sendNewUserNotification(env, { username, name, email }).catch(() => {});
+  }
 
   return jsonResponse({ success: true, user: { ...row, permissions: JSON.parse(row.permissions || '[]') }, message: 'User registered successfully' }, 201);
 }
