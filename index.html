@@ -13,6 +13,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    [hidden] { display: none !important; }
 
     :root {
       --brown-dark:   #3e2820;
@@ -247,6 +248,100 @@
       padding-top: 4px;
     }
 
+    /* 스트릭 배지 */
+    .streak-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #fff3e0;
+      color: #e65100;
+      font-size: 0.8em;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 999px;
+      border: 1px solid #ffe0b2;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    /* 보관 버튼 */
+    .btn-save {
+      background: none;
+      border: 1px solid #d7c3a9;
+      color: var(--text-muted);
+      font-family: var(--font-sans);
+      font-size: 0.88em;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+    }
+    .btn-save:hover:not(:disabled) {
+      border-color: var(--brown-light);
+      color: var(--brown);
+    }
+    .btn-save.saved {
+      background: #f5ede0;
+      border-color: var(--brown-light);
+      color: var(--brown);
+    }
+    .btn-save:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* 마일스톤 오버레이 */
+    .milestone-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(30,18,12,0.72);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 24px;
+    }
+    .milestone-box {
+      background: var(--cream);
+      border-radius: 20px;
+      padding: 44px 36px 36px;
+      text-align: center;
+      max-width: 320px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(62,40,32,0.3);
+      animation: popIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.7); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    .milestone-icon { font-size: 3.2em; margin-bottom: 12px; }
+    .milestone-days {
+      font-family: var(--font-serif);
+      font-size: 2.4em;
+      color: var(--brown-dark);
+      line-height: 1.2;
+      margin-bottom: 8px;
+    }
+    .milestone-msg {
+      font-size: 0.9em;
+      color: var(--text-muted);
+      line-height: 1.65;
+      margin-bottom: 28px;
+    }
+    .btn-milestone-close {
+      background: var(--brown-dark);
+      color: #f5e9d8;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 32px;
+      font-family: var(--font-sans);
+      font-size: 0.95em;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-milestone-close:hover { background: var(--brown); }
+
     /* 로그인된 사용자 바 */
     .logged-in-bar {
       display: none;
@@ -474,7 +569,10 @@
     <div class="card-page" id="card-page" hidden>
       <div class="page-header">
         <span class="page-chapter" id="page-chapter">제 — 장</span>
-        <span class="page-date" id="page-date-inline"></span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="streak-badge" id="streak-badge" hidden>🔥 <span id="streak-count">1</span>일</span>
+          <span class="page-date" id="page-date-inline"></span>
+        </div>
       </div>
 
       <div class="key-sentence">
@@ -489,6 +587,7 @@
         <button class="btn-read" id="btn-read" type="button">
           오늘의 지혜가 담긴 Wisdom Book 읽기
         </button>
+        <button class="btn-save" id="btn-save" type="button" hidden>💾 보관하기</button>
         <button class="btn-reroll" id="btn-reroll" type="button">다른 문장 뽑기</button>
         <p class="reroll-hint" id="reroll-hint"></p>
       </div>
@@ -497,7 +596,10 @@
     <!-- 로그인 사용자 바 -->
     <div class="logged-in-bar" id="logged-in-bar">
       <span class="logged-in-name" id="logged-in-name"></span>
-      <a class="btn-goto-book" id="btn-goto-book" href="book.html">도서 읽기 →</a>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <a class="btn-goto-book" href="my-wisdom.html" style="background:transparent;border:1px solid #d7c3a9;color:var(--text-muted);font-size:0.82em;padding:7px 13px;">📚 보관함</a>
+        <a class="btn-goto-book" id="btn-goto-book" href="book.html">도서 읽기 →</a>
+      </div>
     </div>
 
   </article>
@@ -559,6 +661,16 @@
           <button class="btn-submit" type="submit" id="register-submit">회원가입</button>
         </form>
       </div>
+    </div>
+  </div>
+
+  <!-- 마일스톤 오버레이 -->
+  <div class="milestone-overlay" id="milestone-overlay" hidden>
+    <div class="milestone-box">
+      <div class="milestone-icon">🔥</div>
+      <div class="milestone-days" id="milestone-days">7일 연속!</div>
+      <p class="milestone-msg" id="milestone-msg">꾸준함이 지혜를 만듭니다.<br>오늘도 좋은 문장을 만났네요.</p>
+      <button class="btn-milestone-close" onclick="closeMilestone()">감사합니다</button>
     </div>
   </div>
 
@@ -642,6 +754,113 @@
       }
     }
 
+    // ── 마일스톤 ──
+    const MILESTONE_MSGS = {
+      7:  { days: '7일 연속!', msg: '일주일을 꾸준히 읽었습니다.\n작은 습관이 큰 지혜가 됩니다.' },
+      30: { days: '30일 연속!', msg: '한 달을 꾸준히 이어왔습니다.\n당신의 지혜가 쌓이고 있어요.' },
+      99: { days: '99일 연속!', msg: '마침내 99일!\n지혜의 완성을 축하드립니다.' },
+    };
+    function showMilestone(streak) {
+      const m = MILESTONE_MSGS[streak];
+      if (!m) return;
+      document.getElementById('milestone-days').textContent = m.days;
+      document.getElementById('milestone-msg').textContent = m.msg;
+      document.getElementById('milestone-overlay').hidden = false;
+    }
+    function closeMilestone() {
+      document.getElementById('milestone-overlay').hidden = true;
+    }
+
+    // ── 스트릭 API ──
+    async function callStreak() {
+      try {
+        const token = getToken();
+        if (!token) return;
+        const date = todayKey();
+        const res = await fetch('/api/wisdom/streak', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ date }),
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.success) {
+          const badge = document.getElementById('streak-badge');
+          document.getElementById('streak-count').textContent = data.streak_count;
+          badge.hidden = false;
+          if (data.is_milestone && !data.already_counted) showMilestone(data.streak_count);
+        }
+      } catch(_) {}
+    }
+
+    // ── 보관함 API ──
+    let currentChapterId = null;
+    let isSaved = false;
+
+    function getToken() {
+      return localStorage.getItem('authToken') || sessionStorage.getItem('authToken') || '';
+    }
+
+    async function checkIfSaved(chapterId) {
+      try {
+        const token = getToken();
+        if (!token) return false;
+        const res = await fetch('/api/wisdom/saved', {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (!res.ok) return false;
+        const data = await res.json();
+        return (data.saved || []).some(s => s.chapter_id === chapterId);
+      } catch(_) { return false; }
+    }
+
+    async function toggleSave() {
+      const btn = document.getElementById('btn-save');
+      const token = getToken();
+      if (!token || currentChapterId === null) return;
+      btn.disabled = true;
+      try {
+        if (isSaved) {
+          const res = await fetch(`/api/wisdom/save/${currentChapterId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` },
+          });
+          if ((await res.json()).success) {
+            isSaved = false;
+            btn.textContent = '💾 보관하기';
+            btn.classList.remove('saved');
+          }
+        } else {
+          const item = window._wisdomItem;
+          const res = await fetch('/api/wisdom/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ chapter_id: currentChapterId, title: item?.title || '' }),
+          });
+          if ((await res.json()).success) {
+            isSaved = true;
+            btn.textContent = '✓ 보관됨';
+            btn.classList.add('saved');
+          }
+        }
+      } catch(_) {}
+      btn.disabled = false;
+    }
+
+    async function initSaveButton(item) {
+      currentChapterId = item.id;
+      window._wisdomItem = item;
+      const token = getToken();
+      if (!token) return;
+      const btn = document.getElementById('btn-save');
+      btn.hidden = false;
+      isSaved = await checkIfSaved(item.id);
+      btn.textContent = isSaved ? '✓ 보관됨' : '💾 보관하기';
+      if (isSaved) btn.classList.add('saved');
+      else btn.classList.remove('saved');
+      btn.onclick = toggleSave;
+    }
+
     // ── Daily Wisdom ──
     function guestId() {
       const K = 'wisdom_guest_id';
@@ -715,9 +934,19 @@
       // 표지 → 내용 전환
       const cover = document.getElementById('card-cover');
       const page  = document.getElementById('card-page');
+      let opened = false;
       const open  = () => {
         cover.classList.add('hiding');
         page.hidden = false;
+        if (!opened) {
+          opened = true;
+          try {
+            if (wisdomAPI.isLoggedIn()) {
+              callStreak();
+              initSaveButton(items[rerolled ? rerollIdx : baseIdx]);
+            }
+          } catch(_) {}
+        }
       };
       cover.addEventListener('click', open);
       cover.addEventListener('keydown', e => {
@@ -750,6 +979,9 @@
         localStorage.setItem(REROLL_KEY, '1');
         renderWisdom(items[rerollIdx]);
         updateReroll();
+        try {
+          if (wisdomAPI.isLoggedIn() && opened) initSaveButton(items[rerollIdx]);
+        } catch(_) {}
       });
     }
 
