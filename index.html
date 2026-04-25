@@ -263,20 +263,27 @@
       animation: fadeUp 0.4s ease both;
     }
 
-    /* 보관 버튼 */
-    .btn-save {
+    /* 보관 + 공유 버튼 행 */
+    .secondary-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-save,
+    .btn-share {
+      flex: 1;
       background: none;
       border: 1px solid #d7c3a9;
       color: var(--text-muted);
       font-family: var(--font-sans);
       font-size: 0.88em;
-      padding: 10px;
+      padding: 10px 8px;
       border-radius: 8px;
       cursor: pointer;
       transition: all 0.2s;
-      width: 100%;
+      white-space: nowrap;
     }
-    .btn-save:hover:not(:disabled) {
+    .btn-save:hover:not(:disabled),
+    .btn-share:hover {
       border-color: var(--brown-light);
       color: var(--brown);
     }
@@ -288,6 +295,28 @@
     .btn-save:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+    }
+
+    /* 공유 토스트 */
+    .share-toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--brown-dark);
+      color: #f5e9d8;
+      font-size: 0.87em;
+      padding: 10px 20px;
+      border-radius: 8px;
+      z-index: 300;
+      opacity: 0;
+      transition: opacity 0.25s, transform 0.25s;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .share-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
     }
 
     /* 마일스톤 오버레이 */
@@ -587,7 +616,10 @@
         <button class="btn-read" id="btn-read" type="button">
           오늘의 지혜가 담긴 Wisdom Book 읽기
         </button>
-        <button class="btn-save" id="btn-save" type="button" hidden>💾 보관하기</button>
+        <div class="secondary-actions">
+          <button class="btn-save" id="btn-save" type="button" hidden>💾 보관하기</button>
+          <button class="btn-share" id="btn-share" type="button">📤 공유하기</button>
+        </div>
         <button class="btn-reroll" id="btn-reroll" type="button">다른 문장 뽑기</button>
         <p class="reroll-hint" id="reroll-hint"></p>
       </div>
@@ -663,6 +695,9 @@
       </div>
     </div>
   </div>
+
+  <!-- 공유 토스트 -->
+  <div class="share-toast" id="share-toast"></div>
 
   <!-- 마일스톤 오버레이 -->
   <div class="milestone-overlay" id="milestone-overlay" hidden>
@@ -769,6 +804,35 @@
     }
     function closeMilestone() {
       document.getElementById('milestone-overlay').hidden = true;
+    }
+
+    // ── 공유 ──
+    let shareToastTimer = null;
+    function showShareToast(msg) {
+      const el = document.getElementById('share-toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(shareToastTimer);
+      shareToastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+    }
+
+    async function shareWisdom(item) {
+      const siteUrl = window.location.origin;
+      const shareText = `오늘의 지혜 📖\n"${item.title}"\n\n${item.subtitle || ''}\n\n99 Wisdom Book에서 오늘의 한 문장을 만나보세요 →`;
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: item.title, text: shareText, url: siteUrl });
+          return;
+        } catch(e) {
+          if (e.name === 'AbortError') return;
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(`${shareText}\n${siteUrl}`);
+        showShareToast('클립보드에 복사되었습니다 ✓');
+      } catch(_) {
+        showShareToast('공유 링크: ' + siteUrl);
+      }
     }
 
     // ── 스트릭 API ──
@@ -961,6 +1025,12 @@
           }
         } catch(_) {}
         openModal();
+      });
+
+      // 공유 버튼
+      document.getElementById('btn-share').addEventListener('click', () => {
+        const currentItem = items[localStorage.getItem(`wisdom_reroll_${todayKey()}_${actorId()}`) === '1' ? rerollIdx : baseIdx];
+        shareWisdom(currentItem);
       });
 
       // 다시 뽑기
