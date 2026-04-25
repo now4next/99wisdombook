@@ -3,696 +3,660 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <!-- 모든 브라우저 호환성 설정 -->
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#5d4037">
-  <title>살아본 뒤에야 비로소 읽히는 문장들 - 로그인</title>
+  <meta name="theme-color" content="#4a332c">
+  <title>살아본 뒤에야 비로소 읽히는 문장들</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
-      --font-main: 'Nanum Myeongjo', serif;
-      --font-sans: 'Noto Sans KR', sans-serif;
-      --color-primary: #5d4037;
-      --color-primary-dark: #4a332c;
-      --color-accent: #8d6e63;
-      --color-bg: #f5f5f5;
-      --color-text: #1a1a1a;
+      --brown-dark:   #3e2820;
+      --brown:        #5d4037;
+      --brown-mid:    #7a5b4e;
+      --brown-light:  #8d6e63;
+      --cream:        #fffaf2;
+      --cream-warm:   #f5ede0;
+      --text:         #2c2118;
+      --text-muted:   #6b5246;
+      --font-serif:   'Nanum Myeongjo', Georgia, serif;
+      --font-sans:    'Noto Sans KR', sans-serif;
+    }
+
+    html, body {
+      height: 100%;
     }
 
     body {
       font-family: var(--font-sans);
-      background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
-      min-height: 100vh;
+      background: #f0ebe4;
+      min-height: 100dvh;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
-      padding: 32px 20px;
-      gap: 28px;
-    }
-
-    .container {
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-      overflow: hidden;
-      max-width: 450px;
-      width: 100%;
-    }
-
-    /* ===== Daily Wisdom Card ===== */
-    .wisdom-section {
-      width: 100%;
-      max-width: 560px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .wisdom-eyebrow {
-      font-family: var(--font-main);
-      color: var(--color-primary);
-      letter-spacing: 0.18em;
-      font-size: 0.78em;
-      margin-bottom: 6px;
-      text-transform: uppercase;
-    }
-    .wisdom-date {
-      font-size: 0.85em;
-      color: #777;
-      margin-bottom: 16px;
-    }
-    .book-stage {
-      perspective: 1600px;
-      width: 100%;
-      max-width: 520px;
-      aspect-ratio: 3 / 2;
-      position: relative;
-      cursor: pointer;
-    }
-    .book {
-      position: absolute;
-      inset: 0;
-      transform-style: preserve-3d;
-      transition: transform 0.9s cubic-bezier(0.6, 0.02, 0.2, 1);
-    }
-    .book.opened {
-      transform: rotateY(0deg);
-    }
-    .book-cover, .book-page {
-      position: absolute;
-      inset: 0;
-      backface-visibility: hidden;
-      border-radius: 8px 14px 14px 8px;
-      box-shadow: 0 14px 30px rgba(0,0,0,0.18), inset 4px 0 0 rgba(0,0,0,0.06);
-      padding: 28px 32px;
-      display: flex;
-      flex-direction: column;
       justify-content: center;
+      padding: 24px 16px;
     }
-    .book-cover {
-      background:
-        linear-gradient(135deg, #6d4c41 0%, #4a332c 100%);
+
+    /* ─────────────────────────────────────
+       WISDOM CARD (메인 카드)
+    ───────────────────────────────────── */
+    .wisdom-card {
+      width: 100%;
+      max-width: 480px;
+      border-radius: 18px;
+      box-shadow:
+        0 2px 4px rgba(0,0,0,0.06),
+        0 12px 40px rgba(62,40,32,0.14);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* 표지 상태 */
+    .card-cover {
+      background: linear-gradient(160deg, #6d4c41 0%, #3e2820 100%);
       color: #f5e9d8;
-      transform-origin: left center;
-      transform: translateZ(2px);
-      transition: transform 0.9s cubic-bezier(0.6, 0.02, 0.2, 1);
+      padding: 52px 36px 44px;
+      display: flex;
+      flex-direction: column;
       align-items: center;
       text-align: center;
-      border-left: 6px solid #3e2820;
-      z-index: 2;
-    }
-    .book.opened .book-cover {
-      transform: translateZ(2px) rotateY(-170deg);
-    }
-    .book-cover-title {
-      font-family: var(--font-main);
-      font-size: 1.6em;
-      letter-spacing: 0.05em;
-      margin-bottom: 14px;
-    }
-    .book-cover-sub {
-      font-size: 0.92em;
-      opacity: 0.85;
-      margin-bottom: 22px;
-      line-height: 1.6;
-    }
-    .open-hint {
-      font-size: 0.8em;
-      opacity: 0.7;
-      border: 1px solid rgba(245,233,216,0.4);
-      padding: 6px 14px;
-      border-radius: 999px;
-    }
-    .book-page {
-      background: #fffaf2;
-      color: var(--color-text);
-      border-left: 6px solid #d7c3a9;
-      transform: translateZ(0);
-      z-index: 1;
-    }
-    .page-meta {
-      font-size: 0.78em;
-      color: #8d6e63;
-      letter-spacing: 0.08em;
-      margin-bottom: 8px;
-    }
-    .page-title {
-      font-family: var(--font-main);
-      font-size: 1.55em;
-      line-height: 1.35;
-      color: #3e2820;
-      margin-bottom: 6px;
-    }
-    .page-subtitle {
-      font-size: 0.88em;
-      color: #7a5b4e;
-      margin-bottom: 14px;
-      font-style: italic;
-    }
-    .page-summary {
-      font-size: 0.97em;
-      line-height: 1.75;
-      color: #2c2118;
-    }
-    .page-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 18px;
-      flex-wrap: wrap;
-    }
-    .page-btn {
-      font-family: var(--font-sans);
-      padding: 9px 16px;
-      border-radius: 999px;
-      border: 1px solid var(--color-primary);
-      background: white;
-      color: var(--color-primary);
       cursor: pointer;
+      user-select: none;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      border-left: 5px solid rgba(0,0,0,0.2);
+    }
+    .card-cover.hiding {
+      display: none;
+    }
+    .cover-label {
+      font-family: var(--font-serif);
+      font-size: 0.72em;
+      letter-spacing: 0.26em;
+      opacity: 0.65;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .cover-date {
       font-size: 0.88em;
-      text-decoration: none;
+      opacity: 0.75;
+      margin-bottom: 36px;
+    }
+    .cover-ornament {
+      font-size: 2.2em;
+      margin-bottom: 20px;
+      opacity: 0.5;
+    }
+    .cover-title {
+      font-family: var(--font-serif);
+      font-size: 1.9em;
+      line-height: 1.4;
+      letter-spacing: 0.04em;
+      margin-bottom: 16px;
+    }
+    .cover-desc {
+      font-size: 0.9em;
+      opacity: 0.75;
+      line-height: 1.7;
+      margin-bottom: 36px;
+    }
+    .cover-btn {
+      background: transparent;
+      border: 1px solid rgba(245,233,216,0.45);
+      color: #f5e9d8;
+      font-family: var(--font-sans);
+      font-size: 0.85em;
+      padding: 10px 26px;
+      border-radius: 999px;
+      cursor: pointer;
+      letter-spacing: 0.06em;
       transition: all 0.2s;
     }
-    .page-btn.primary {
-      background: var(--color-primary);
-      color: white;
+    .cover-btn:hover {
+      background: rgba(245,233,216,0.12);
     }
-    .page-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 10px rgba(93,64,55,0.18);
+
+    /* 내용 상태 */
+    .card-page {
+      background: var(--cream);
+      border-left: 5px solid #d7c3a9;
+      padding: 36px 36px 32px;
+      animation: pageIn 0.5s ease both;
     }
-    .reroll-note {
-      font-size: 0.75em;
-      color: #999;
-      margin-top: 10px;
+    @keyframes pageIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
-    .session-greeting {
-      width: 100%;
-      max-width: 520px;
-      background: rgba(255,255,255,0.7);
-      border: 1px solid #e0d6c8;
-      border-radius: 12px;
-      padding: 12px 18px;
+
+    .page-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
-      font-size: 0.92em;
-      color: #4a332c;
+      margin-bottom: 28px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #e8ddd0;
     }
-    .session-greeting a {
-      color: white;
-      background: var(--color-primary);
-      padding: 8px 14px;
-      border-radius: 6px;
-      text-decoration: none;
+    .page-chapter {
+      font-size: 0.78em;
+      color: var(--brown-light);
+      letter-spacing: 0.1em;
+    }
+    .page-date {
+      font-size: 0.78em;
+      color: #aaa;
+    }
+
+    /* 핵심 문장 강조 박스 */
+    .key-sentence {
+      background: var(--cream-warm);
+      border-left: 4px solid var(--brown);
+      border-radius: 0 8px 8px 0;
+      padding: 28px 24px;
+      margin: 0 0 24px;
+    }
+    .key-label {
+      font-size: 0.72em;
+      color: var(--brown-light);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .key-title {
+      font-family: var(--font-serif);
+      font-size: 1.75em;
+      line-height: 1.45;
+      color: var(--brown-dark);
+      letter-spacing: 0.02em;
+      word-break: keep-all;
+    }
+
+    /* 부제 */
+    .page-subtitle {
       font-size: 0.88em;
-    }
-    @media (max-width: 520px) {
-      .book-stage { aspect-ratio: 4 / 3; }
-      .book-cover-title { font-size: 1.3em; }
-      .page-title { font-size: 1.25em; }
-    }
-
-    .header {
-      background: var(--color-primary);
-      color: white;
-      padding: 40px 30px;
-      text-align: center;
+      color: var(--brown-mid);
+      font-style: italic;
+      line-height: 1.65;
+      margin-bottom: 18px;
+      padding-left: 2px;
     }
 
-    .header h1 {
-      font-family: var(--font-main);
-      font-size: 1.8em;
-      margin-bottom: 10px;
-      line-height: 1.4;
+    /* 요약 */
+    .page-summary {
+      font-size: 0.95em;
+      line-height: 1.85;
+      color: var(--text);
+      margin-bottom: 28px;
     }
 
-    .header p {
-      font-size: 0.9em;
-      opacity: 0.9;
-    }
-
-    .form-container {
-      padding: 40px 30px;
-    }
-
-    .tab-buttons {
+    /* 액션 영역 */
+    .page-actions {
       display: flex;
+      flex-direction: column;
       gap: 10px;
-      margin-bottom: 30px;
-      border-bottom: 2px solid #e0e0e0;
     }
-
-    .tab-button {
-      flex: 1;
-      padding: 12px;
-      border: none;
-      background: none;
-      font-size: 1em;
-      font-weight: 500;
-      color: #999;
-      cursor: pointer;
-      transition: all 0.3s;
-      position: relative;
-    }
-
-    .tab-button.active {
-      color: var(--color-primary);
-    }
-
-    .tab-button.active::after {
-      content: '';
-      position: absolute;
-      bottom: -2px;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: var(--color-primary);
-    }
-
-    .form-content {
-      display: none;
-    }
-
-    .form-content.active {
+    .btn-read {
       display: block;
-      animation: fadeIn 0.3s;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .form-group {
-      margin-bottom: 20px;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 8px;
-      color: var(--color-text);
-      font-weight: 500;
-      font-size: 0.9em;
-    }
-
-    .form-group input,
-    .form-group select {
       width: 100%;
-      padding: 12px 15px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      font-size: 1em;
-      transition: all 0.3s;
+      padding: 14px 20px;
+      background: var(--brown-dark);
+      color: #f5e9d8;
+      border: none;
+      border-radius: 10px;
       font-family: var(--font-sans);
-    }
-
-    .form-group input:focus,
-    .form-group select:focus {
-      outline: none;
-      border-color: var(--color-primary);
-      box-shadow: 0 0 0 3px rgba(93, 64, 55, 0.1);
-    }
-
-    .checkbox-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin: 15px 0;
-    }
-
-    .checkbox-group input[type="checkbox"] {
-      width: auto;
+      font-size: 0.92em;
+      font-weight: 500;
+      letter-spacing: 0.03em;
       cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      word-break: keep-all;
+      line-height: 1.5;
     }
-
-    .checkbox-group label {
-      margin: 0;
-      font-weight: normal;
-      cursor: pointer;
+    .btn-read:hover {
+      background: var(--brown);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(62,40,32,0.22);
     }
-
-    .submit-button {
-      width: 100%;
-      padding: 14px;
-      background: var(--color-primary);
-      color: white;
-      border: none;
+    .btn-reroll {
+      background: none;
+      border: 1px solid #d7c3a9;
+      color: var(--text-muted);
+      font-family: var(--font-sans);
+      font-size: 0.83em;
+      padding: 9px;
       border-radius: 8px;
-      font-size: 1em;
-      font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s;
-      margin-top: 10px;
+      transition: all 0.2s;
+      width: 100%;
+    }
+    .btn-reroll:hover:not(:disabled) {
+      border-color: var(--brown-light);
+      color: var(--brown);
+    }
+    .btn-reroll:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .reroll-hint {
+      font-size: 0.76em;
+      color: #b0a090;
+      text-align: center;
+      padding-top: 4px;
     }
 
-    .submit-button:hover {
-      background: var(--color-primary-dark);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(93, 64, 55, 0.3);
+    /* 로그인된 사용자 바 */
+    .logged-in-bar {
+      display: none;
+      background: var(--cream);
+      border-top: 1px solid #e8ddd0;
+      padding: 14px 36px;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
     }
+    .logged-in-bar.visible { display: flex; }
+    .logged-in-name {
+      font-size: 0.87em;
+      color: var(--text-muted);
+    }
+    .btn-goto-book {
+      background: var(--brown-dark);
+      color: #f5e9d8;
+      border: none;
+      border-radius: 7px;
+      padding: 8px 16px;
+      font-size: 0.85em;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .btn-goto-book:hover { background: var(--brown); }
 
-    .submit-button:active {
+    /* ─────────────────────────────────────
+       LOGIN MODAL
+    ───────────────────────────────────── */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(30,18,12,0.55);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 100;
+      padding: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .modal-backdrop.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .modal-sheet {
+      background: white;
+      border-radius: 20px 20px 0 0;
+      width: 100%;
+      max-width: 480px;
+      padding: 28px 32px 40px;
+      transform: translateY(40px);
+      transition: transform 0.35s cubic-bezier(0.32,0.72,0,1);
+      max-height: 92dvh;
+      overflow-y: auto;
+    }
+    .modal-backdrop.visible .modal-sheet {
       transform: translateY(0);
     }
-
-    .error-message {
-      background: #ffebee;
-      color: #c62828;
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      font-size: 0.9em;
-      display: none;
+    .modal-handle {
+      width: 36px;
+      height: 4px;
+      background: #ddd;
+      border-radius: 2px;
+      margin: 0 auto 24px;
+    }
+    .modal-title {
+      font-family: var(--font-serif);
+      font-size: 1.25em;
+      color: var(--brown-dark);
+      margin-bottom: 6px;
+    }
+    .modal-subtitle {
+      font-size: 0.85em;
+      color: #888;
+      margin-bottom: 28px;
     }
 
-    .error-message.show {
+    /* 탭 */
+    .tab-row {
+      display: flex;
+      border-bottom: 1.5px solid #eee;
+      margin-bottom: 24px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      background: none;
+      border: none;
+      font-size: 0.92em;
+      color: #999;
+      cursor: pointer;
+      position: relative;
+      font-family: var(--font-sans);
+    }
+    .tab-btn.active {
+      color: var(--brown-dark);
+      font-weight: 500;
+    }
+    .tab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1.5px;
+      left: 0; right: 0;
+      height: 2px;
+      background: var(--brown-dark);
+      border-radius: 1px;
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active {
       display: block;
-      animation: shake 0.3s;
+      animation: fadeUp 0.25s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-10px); }
-      75% { transform: translateX(10px); }
-    }
-
-    .success-message {
-      background: #e8f5e9;
-      color: #2e7d32;
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      font-size: 0.9em;
-      display: none;
-    }
-
-    .success-message.show {
+    /* 입력 필드 */
+    .field { margin-bottom: 16px; }
+    .field label {
       display: block;
+      font-size: 0.82em;
+      color: #666;
+      margin-bottom: 6px;
     }
-
-    .language-permissions {
-      margin-top: 15px;
-      padding: 15px;
-      background: #f9f9f9;
+    .field input {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1px solid #ddd;
       border-radius: 8px;
+      font-size: 0.97em;
+      font-family: var(--font-sans);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+      color: var(--text);
     }
-
-    .language-permissions h4 {
-      font-size: 0.9em;
-      margin-bottom: 10px;
-      color: var(--color-text);
+    .field input:focus {
+      border-color: var(--brown);
+      box-shadow: 0 0 0 3px rgba(93,64,55,0.1);
     }
-
-    .permission-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
-    }
-
-    .permission-item {
+    .remember-row {
       display: flex;
       align-items: center;
-      gap: 6px;
-    }
-
-    .permission-item input[type="checkbox"] {
-      width: auto;
-    }
-
-    .permission-item label {
+      gap: 7px;
+      margin: 12px 0 20px;
       font-size: 0.85em;
-      margin: 0;
+      color: #666;
+      cursor: pointer;
     }
-
-    .admin-badge {
-      display: inline-block;
-      background: #ff6f00;
-      color: white;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 0.75em;
-      margin-left: 8px;
-      font-weight: 600;
+    .btn-submit {
+      width: 100%;
+      padding: 13px;
+      background: var(--brown-dark);
+      color: #f5e9d8;
+      border: none;
+      border-radius: 9px;
+      font-size: 0.97em;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      transition: background 0.2s, transform 0.15s;
     }
-
-    .footer-links {
+    .btn-submit:hover { background: var(--brown); transform: translateY(-1px); }
+    .btn-submit:disabled { opacity: 0.6; pointer-events: none; }
+    .forgot-link {
       text-align: center;
-      margin-top: 20px;
-      padding-top: 20px;
-      border-top: 1px solid #e0e0e0;
+      margin-top: 16px;
+      font-size: 0.82em;
+      color: #aaa;
+      cursor: pointer;
     }
+    .forgot-link:hover { color: var(--brown-mid); }
 
-    .footer-links a {
-      color: var(--color-primary);
-      text-decoration: none;
-      font-size: 0.9em;
+    .alert {
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.85em;
+      margin-bottom: 16px;
+      display: none;
     }
+    .alert.show { display: block; }
+    .alert-error { background: #fff0f0; color: #c62828; }
+    .alert-success { background: #edf7ed; color: #2e7d32; }
 
-    .footer-links a:hover {
-      text-decoration: underline;
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25%      { transform: translateX(-8px); }
+      75%      { transform: translateX(8px); }
     }
+    .alert-error.show { animation: shake 0.3s; }
 
+    @media (min-width: 520px) {
+      .modal-backdrop { align-items: center; padding: 20px; }
+      .modal-sheet { border-radius: 20px; max-height: 86dvh; }
+    }
+    @media (max-width: 400px) {
+      .card-cover { padding: 40px 24px 36px; }
+      .cover-title { font-size: 1.6em; }
+      .card-page { padding: 28px 22px 26px; }
+      .key-title { font-size: 1.45em; }
+      .modal-sheet { padding: 24px 22px 36px; }
+    }
   </style>
 </head>
 <body>
-  <!-- Daily Wisdom Card (모든 방문자에게 노출) -->
-  <section class="wisdom-section" id="wisdom-section" aria-label="오늘의 지혜">
-    <div class="wisdom-eyebrow">Daily Wisdom</div>
-    <div class="wisdom-date" id="wisdom-date"></div>
-    <div class="book-stage" id="book-stage" role="button" tabindex="0" aria-label="오늘의 한 문장 펼치기">
-      <div class="book" id="book">
-        <div class="book-cover">
-          <div class="book-cover-title">오늘의 한 문장</div>
-          <div class="book-cover-sub">99개의 지혜 중 오늘 당신을 위해<br>한 문장이 선택되었습니다.</div>
-          <div class="open-hint">탭하여 펼치기</div>
-        </div>
-        <div class="book-page" aria-live="polite">
-          <div class="page-meta" id="page-meta">제 — 장</div>
-          <h2 class="page-title" id="page-title">불러오는 중…</h2>
-          <div class="page-subtitle" id="page-subtitle"></div>
-          <p class="page-summary" id="page-summary"></p>
-          <div class="page-actions">
-            <a id="page-link" class="page-btn primary" href="book.html">전체 챕터 읽기 →</a>
-            <button class="page-btn" id="reroll-btn" type="button">다시 뽑기</button>
-          </div>
-          <div class="reroll-note" id="reroll-note"></div>
-        </div>
-      </div>
-    </div>
-  </section>
 
-  <!-- 이미 로그인된 사용자용 안내 (JS로 노출) -->
-  <div class="session-greeting" id="session-greeting" style="display:none;">
-    <span id="session-greeting-text"></span>
-    <a id="session-greeting-link" href="book.html">도서 읽기 →</a>
-  </div>
+  <!-- ── 메인 카드 ── -->
+  <article class="wisdom-card" id="wisdom-card">
 
-  <div class="container">
-    <div class="header">
-      <h1>살아본 뒤에야<br>비로소 읽히는 문장들</h1>
-      <p>Lines Life Taught Me</p>
+    <!-- 표지 -->
+    <div class="card-cover" id="card-cover" role="button" tabindex="0" aria-label="오늘의 한 문장 펼치기">
+      <span class="cover-label">Daily Wisdom</span>
+      <span class="cover-date" id="cover-date"></span>
+      <div class="cover-ornament">𝕎</div>
+      <h1 class="cover-title">오늘의 한 문장</h1>
+      <p class="cover-desc">99개의 지혜 중 오늘 당신을 위해<br>한 문장이 선택되었습니다.</p>
+      <button class="cover-btn" type="button">펼치기</button>
     </div>
 
-    <div class="form-container">
-      <div class="tab-buttons">
-        <button class="tab-button active" onclick="switchTab('login')">로그인</button>
-        <button class="tab-button" onclick="switchTab('register')">회원가입</button>
+    <!-- 내용 (hidden until opened) -->
+    <div class="card-page" id="card-page" hidden>
+      <div class="page-header">
+        <span class="page-chapter" id="page-chapter">제 — 장</span>
+        <span class="page-date" id="page-date-inline"></span>
       </div>
 
-      <!-- Login Form -->
-      <div id="login-form" class="form-content active">
-        <div id="login-error" class="error-message"></div>
+      <div class="key-sentence">
+        <div class="key-label">오늘의 한 문장</div>
+        <h2 class="key-title" id="key-title">—</h2>
+      </div>
+
+      <p class="page-subtitle" id="page-subtitle"></p>
+      <p class="page-summary" id="page-summary"></p>
+
+      <div class="page-actions">
+        <button class="btn-read" id="btn-read" type="button">
+          오늘의 지혜가 담긴 Wisdom Book 읽기
+        </button>
+        <button class="btn-reroll" id="btn-reroll" type="button">다른 문장 뽑기</button>
+        <p class="reroll-hint" id="reroll-hint"></p>
+      </div>
+    </div>
+
+    <!-- 로그인 사용자 바 -->
+    <div class="logged-in-bar" id="logged-in-bar">
+      <span class="logged-in-name" id="logged-in-name"></span>
+      <a class="btn-goto-book" id="btn-goto-book" href="book.html">도서 읽기 →</a>
+    </div>
+
+  </article>
+
+  <!-- ── 로그인 모달 ── -->
+  <div class="modal-backdrop" id="modal" role="dialog" aria-modal="true" aria-label="로그인">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <h2 class="modal-title">Wisdom Book</h2>
+      <p class="modal-subtitle">로그인 후 오늘의 지혜가 담긴 챕터 전체를 읽어보세요.</p>
+
+      <div class="tab-row">
+        <button class="tab-btn active" type="button" onclick="switchTab('login')">로그인</button>
+        <button class="tab-btn" type="button" onclick="switchTab('register')">회원가입</button>
+      </div>
+
+      <!-- 로그인 탭 -->
+      <div class="tab-panel active" id="panel-login">
+        <div class="alert alert-error" id="login-error"></div>
         <form onsubmit="handleLogin(event)">
-          <div class="form-group">
+          <div class="field">
             <label for="login-username">사용자 이름</label>
-            <input type="text" id="login-username" required autocomplete="username">
+            <input id="login-username" type="text" required autocomplete="username">
           </div>
-          <div class="form-group">
+          <div class="field">
             <label for="login-password">비밀번호</label>
-            <input type="password" id="login-password" required autocomplete="current-password">
+            <input id="login-password" type="password" required autocomplete="current-password">
           </div>
-          <div class="checkbox-group">
+          <label class="remember-row">
             <input type="checkbox" id="remember-me">
-            <label for="remember-me">로그인 상태 유지</label>
-          </div>
-          <button type="submit" class="submit-button">로그인</button>
+            로그인 상태 유지
+          </label>
+          <button class="btn-submit" type="submit" id="login-submit">로그인</button>
         </form>
-        <div class="footer-links">
-          <a href="#" onclick="alert('관리자에게 문의하세요'); return false;">비밀번호를 잊으셨나요?</a>
-        </div>
+        <p class="forgot-link" onclick="alert('관리자에게 문의하세요')">비밀번호를 잊으셨나요?</p>
       </div>
 
-      <!-- Register Form -->
-      <div id="register-form" class="form-content">
-        <div id="register-error" class="error-message"></div>
-        <div id="register-success" class="success-message"></div>
+      <!-- 회원가입 탭 -->
+      <div class="tab-panel" id="panel-register">
+        <div class="alert alert-error" id="register-error"></div>
+        <div class="alert alert-success" id="register-success"></div>
         <form onsubmit="handleRegister(event)">
-          <div class="form-group">
-            <label for="register-username">사용자 이름</label>
-            <input type="text" id="register-username" required minlength="3" autocomplete="username">
+          <div class="field">
+            <label for="reg-username">사용자 이름</label>
+            <input id="reg-username" type="text" required minlength="3" autocomplete="username">
           </div>
-          <div class="form-group">
-            <label for="register-email">이메일</label>
-            <input type="email" id="register-email" required autocomplete="email">
+          <div class="field">
+            <label for="reg-email">이메일</label>
+            <input id="reg-email" type="email" required autocomplete="email">
           </div>
-          <div class="form-group">
-            <label for="register-password">비밀번호</label>
-            <input type="password" id="register-password" required minlength="6" autocomplete="new-password">
+          <div class="field">
+            <label for="reg-pw">비밀번호</label>
+            <input id="reg-pw" type="password" required minlength="6" autocomplete="new-password">
           </div>
-          <div class="form-group">
-            <label for="register-password-confirm">비밀번호 확인</label>
-            <input type="password" id="register-password-confirm" required autocomplete="new-password">
+          <div class="field">
+            <label for="reg-pw2">비밀번호 확인</label>
+            <input id="reg-pw2" type="password" required autocomplete="new-password">
           </div>
-
-
-          <button type="submit" class="submit-button">회원가입</button>
+          <button class="btn-submit" type="submit" id="register-submit">회원가입</button>
         </form>
       </div>
     </div>
   </div>
 
-  <!-- API Client -->
   <script src="/api-client.js"></script>
-  
   <script>
-    // API Base URL - Pages 도메인 사용
-    const API_BASE = window.location.origin;
-
-    // Switch between login and register tabs
-    function switchTab(tab) {
-      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.form-content').forEach(form => form.classList.remove('active'));
-      
-      if (tab === 'login') {
-        document.querySelector('.tab-button:first-child').classList.add('active');
-        document.getElementById('login-form').classList.add('active');
-      } else {
-        document.querySelector('.tab-button:last-child').classList.add('active');
-        document.getElementById('register-form').classList.add('active');
-      }
+    // ── 탭 전환 ──
+    function switchTab(name) {
+      document.querySelectorAll('.tab-btn').forEach((b, i) =>
+        b.classList.toggle('active', (i === 0) === (name === 'login'))
+      );
+      document.getElementById('panel-login').classList.toggle('active', name === 'login');
+      document.getElementById('panel-register').classList.toggle('active', name === 'register');
     }
 
-    // Handle login
+    // ── 모달 ──
+    let pendingChapterHref = 'book.html';
+    function openModal() {
+      document.getElementById('modal').classList.add('visible');
+      setTimeout(() => document.getElementById('login-username').focus(), 200);
+    }
+    function closeModal() {
+      document.getElementById('modal').classList.remove('visible');
+    }
+    document.getElementById('modal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeModal();
+    });
+
+    // ── 알림 ──
+    function showAlert(id, msg, type = 'error') {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.className = `alert alert-${type} show`;
+      setTimeout(() => el.classList.remove('show'), 5000);
+    }
+
+    // ── 로그인 ──
     async function handleLogin(e) {
       e.preventDefault();
-      
-      const username = document.getElementById('login-username').value.trim();
-      const password = document.getElementById('login-password').value;
-      const rememberMe = document.getElementById('remember-me').checked;
-      
-      const submitBtn = e.target.querySelector('.submit-button');
-      submitBtn.disabled = true;
-      submitBtn.textContent = '로그인 중...';
-      
+      const btn = document.getElementById('login-submit');
+      btn.disabled = true; btn.textContent = '로그인 중…';
       try {
-        const result = await wisdomAPI.login(username, password, rememberMe);
-        
+        const result = await wisdomAPI.login(
+          document.getElementById('login-username').value.trim(),
+          document.getElementById('login-password').value,
+          document.getElementById('remember-me').checked
+        );
         if (result.success) {
-          // Redirect based on role
-          if (result.user.role === 'admin') {
-            window.location.href = 'admin.html';
-          } else {
-            window.location.href = 'book.html';
-          }
+          window.location.href = result.user.role === 'admin' ? 'admin.html' : pendingChapterHref;
         }
-      } catch (error) {
-        console.error('Login error:', error);
-        showError('login-error', error.message || '로그인에 실패했습니다. 다시 시도해주세요.');
-        submitBtn.disabled = false;
-        submitBtn.textContent = '로그인';
+      } catch (err) {
+        showAlert('login-error', err.message || '로그인에 실패했습니다.');
+        btn.disabled = false; btn.textContent = '로그인';
       }
     }
 
-    // Handle registration
+    // ── 회원가입 ──
     async function handleRegister(e) {
       e.preventDefault();
-      
-      const username = document.getElementById('register-username').value.trim();
-      const email = document.getElementById('register-email').value.trim();
-      const password = document.getElementById('register-password').value;
-      const passwordConfirm = document.getElementById('register-password-confirm').value;
-      
-      // Validate passwords match
-      if (password !== passwordConfirm) {
-        showError('register-error', '비밀번호가 일치하지 않습니다.');
-        return;
+      const pw = document.getElementById('reg-pw').value;
+      if (pw !== document.getElementById('reg-pw2').value) {
+        showAlert('register-error', '비밀번호가 일치하지 않습니다.'); return;
       }
-      
-      const submitBtn = e.target.querySelector('.submit-button');
-      submitBtn.disabled = true;
-      submitBtn.textContent = '가입 중...';
-      
+      const btn = document.getElementById('register-submit');
+      btn.disabled = true; btn.textContent = '가입 중…';
       try {
-        const result = await wisdomAPI.register(username, password, username, email);
-        
+        const result = await wisdomAPI.register(
+          document.getElementById('reg-username').value.trim(),
+          pw,
+          document.getElementById('reg-username').value.trim(),
+          document.getElementById('reg-email').value.trim()
+        );
         if (result.success) {
-          showSuccess('register-success', '회원가입이 완료되었습니다! 로그인해주세요.');
-          
-          // Clear form
+          showAlert('register-success', '가입 완료! 로그인해주세요.', 'success');
           e.target.reset();
-          
-          // Switch to login tab after 2 seconds
-          setTimeout(() => {
-            switchTab('login');
-          }, 2000);
+          setTimeout(() => switchTab('login'), 1800);
         }
-      } catch (error) {
-        console.error('Registration error:', error);
-        showError('register-error', error.message || '회원가입에 실패했습니다. 다시 시도해주세요.');
+      } catch (err) {
+        showAlert('register-error', err.message || '회원가입에 실패했습니다.');
       } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = '회원가입';
+        btn.disabled = false; btn.textContent = '회원가입';
       }
     }
 
-    // Show error message
-    function showError(elementId, message) {
-      const errorEl = document.getElementById(elementId);
-      errorEl.textContent = message;
-      errorEl.classList.add('show');
-      setTimeout(() => errorEl.classList.remove('show'), 5000);
-    }
-
-    // Show success message
-    function showSuccess(elementId, message) {
-      const successEl = document.getElementById(elementId);
-      successEl.textContent = message;
-      successEl.classList.add('show');
-      setTimeout(() => successEl.classList.remove('show'), 5000);
-    }
-
-    // ===== Daily Wisdom =====
-    function getOrCreateGuestId() {
-      const KEY = 'wisdom_guest_id';
-      let id = localStorage.getItem(KEY);
-      if (!id) {
-        id = 'g-' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-        localStorage.setItem(KEY, id);
-      }
-      return id;
+    // ── Daily Wisdom ──
+    function guestId() {
+      const K = 'wisdom_guest_id';
+      return localStorage.getItem(K) || (() => {
+        const id = 'g-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        localStorage.setItem(K, id); return id;
+      })();
     }
 
     function todayKey() {
       const d = new Date();
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     }
 
-    // 32-bit FNV-1a hash → deterministic seed
-    function hashString(s) {
+    function fnv32(s) {
       let h = 2166136261 >>> 0;
       for (let i = 0; i < s.length; i++) {
         h ^= s.charCodeAt(i);
@@ -701,104 +665,111 @@
       return h >>> 0;
     }
 
-    function pickWisdomIndex(items, seedKey) {
-      return hashString(seedKey) % items.length;
+    function formatDateKo(k) {
+      const [y,m,d] = k.split('-');
+      return `${y}년 ${+m}월 ${+d}일`;
     }
 
-    function formatDateKo(key) {
-      const [y, m, d] = key.split('-');
-      return `${y}년 ${parseInt(m,10)}월 ${parseInt(d,10)}일`;
-    }
-
-    function getActorId() {
+    function actorId() {
       try {
-        if (window.wisdomAPI && wisdomAPI.isLoggedIn && wisdomAPI.isLoggedIn()) {
+        if (wisdomAPI.isLoggedIn()) {
           const u = wisdomAPI.getCurrentUser();
-          if (u && u.id) return 'u-' + u.id;
+          if (u?.id) return 'u-' + u.id;
         }
-      } catch (_) {}
-      return getOrCreateGuestId();
+      } catch(_) {}
+      return guestId();
     }
 
     function renderWisdom(item) {
-      document.getElementById('page-meta').textContent = `제 ${item.id} 장 · 99개 중 오늘의 한 문장`;
-      document.getElementById('page-title').textContent = item.title;
+      document.getElementById('page-chapter').textContent = `제 ${item.id} 장 · 오늘의 한 문장`;
+      document.getElementById('page-date-inline').textContent = formatDateKo(todayKey());
+      document.getElementById('key-title').textContent = item.title;
       document.getElementById('page-subtitle').textContent = item.subtitle || '';
       document.getElementById('page-summary').textContent = item.summary || '';
-      document.getElementById('page-link').href = `book.html#chapter-${item.id}`;
+      pendingChapterHref = `book.html#chapter-${item.id}`;
     }
 
-    async function initDailyWisdom() {
-      document.getElementById('wisdom-date').textContent = formatDateKo(todayKey());
+    async function initWisdom() {
+      const dk = todayKey();
+      document.getElementById('cover-date').textContent = formatDateKo(dk);
 
       let data;
       try {
         const res = await fetch('data/wisdom.json', { cache: 'no-cache' });
         data = await res.json();
-      } catch (e) {
-        document.getElementById('page-title').textContent = '데이터를 불러오지 못했습니다';
+      } catch(_) {
+        document.getElementById('key-title').textContent = '데이터를 불러오지 못했습니다.';
         return;
       }
       const items = data.items || [];
       if (!items.length) return;
 
-      const dateKey = todayKey();
-      const actor = getActorId();
-      const REROLL_KEY = `wisdom_reroll_${dateKey}_${actor}`;
+      const actor = actorId();
+      const REROLL_KEY = `wisdom_reroll_${dk}_${actor}`;
       const rerolled = localStorage.getItem(REROLL_KEY) === '1';
+      const baseIdx   = fnv32(`${dk}|${actor}`) % items.length;
+      const rerollIdx = fnv32(`${dk}|${actor}|reroll`) % items.length;
 
-      const baseIdx = pickWisdomIndex(items, `${dateKey}|${actor}`);
-      const rerollIdx = pickWisdomIndex(items, `${dateKey}|${actor}|reroll`);
-      const currentIdx = rerolled ? rerollIdx : baseIdx;
+      renderWisdom(items[rerolled ? rerollIdx : baseIdx]);
 
-      renderWisdom(items[currentIdx]);
-
-      const stage = document.getElementById('book-stage');
-      const book = document.getElementById('book');
-      const open = () => book.classList.add('opened');
-      stage.addEventListener('click', open);
-      stage.addEventListener('keydown', (e) => {
+      // 표지 → 내용 전환
+      const cover = document.getElementById('card-cover');
+      const page  = document.getElementById('card-page');
+      const open  = () => {
+        cover.classList.add('hiding');
+        page.hidden = false;
+      };
+      cover.addEventListener('click', open);
+      cover.addEventListener('keydown', e => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
       });
 
-      const rerollBtn = document.getElementById('reroll-btn');
-      const note = document.getElementById('reroll-note');
-      const updateRerollUi = () => {
+      // "Wisdom Book 읽기" 버튼
+      document.getElementById('btn-read').addEventListener('click', () => {
+        try {
+          if (wisdomAPI.isLoggedIn()) {
+            window.location.href = pendingChapterHref; return;
+          }
+        } catch(_) {}
+        openModal();
+      });
+
+      // 다시 뽑기
+      const rerollBtn  = document.getElementById('btn-reroll');
+      const rerollHint = document.getElementById('reroll-hint');
+      function updateReroll() {
         const used = localStorage.getItem(REROLL_KEY) === '1';
         rerollBtn.disabled = used;
-        rerollBtn.style.opacity = used ? 0.5 : 1;
-        rerollBtn.style.cursor = used ? 'not-allowed' : 'pointer';
-        note.textContent = used ? '오늘은 이미 다시 뽑았습니다. 내일 다시 만나요.' : '하루 1회만 다시 뽑을 수 있습니다.';
-      };
-      updateRerollUi();
-      rerollBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
+        rerollHint.textContent = used
+          ? '오늘은 이미 다시 뽑았습니다. 내일 다시 만나요.'
+          : '하루에 한 번 다시 뽑을 수 있습니다.';
+      }
+      updateReroll();
+      rerollBtn.addEventListener('click', () => {
         if (localStorage.getItem(REROLL_KEY) === '1') return;
         localStorage.setItem(REROLL_KEY, '1');
         renderWisdom(items[rerollIdx]);
-        updateRerollUi();
+        updateReroll();
       });
     }
 
-    // Initialize on page load
+    // ── 초기화 ──
     window.addEventListener('DOMContentLoaded', () => {
-      initDailyWisdom();
+      initWisdom();
 
-      // 이미 로그인된 사용자: 자동 리다이렉트 대신 안내 배너 노출
       try {
         if (wisdomAPI.isLoggedIn()) {
-          const user = wisdomAPI.getCurrentUser();
-          const greeting = document.getElementById('session-greeting');
-          const text = document.getElementById('session-greeting-text');
-          const link = document.getElementById('session-greeting-link');
-          if (user) {
-            text.textContent = `${user.name || user.username}님, 다시 오셨네요.`;
-            link.href = user.role === 'admin' ? 'admin.html' : 'book.html';
-            link.textContent = user.role === 'admin' ? '관리자 대시보드 →' : '도서 읽기 →';
-            greeting.style.display = 'flex';
+          const u = wisdomAPI.getCurrentUser();
+          if (u) {
+            document.getElementById('logged-in-name').textContent =
+              `${u.name || u.username}님, 다시 오셨네요.`;
+            const link = document.getElementById('btn-goto-book');
+            link.href = u.role === 'admin' ? 'admin.html' : 'book.html';
+            link.textContent = u.role === 'admin' ? '관리자 대시보드 →' : '도서 읽기 →';
+            document.getElementById('logged-in-bar').classList.add('visible');
           }
         }
-      } catch (_) {}
+      } catch(_) {}
     });
   </script>
 </body>
