@@ -892,7 +892,13 @@
     const KAKAO_REDIRECT_URI = 'https://99wisdombook.org/kakao-callback.html';
 
     function handleKakaoLogin() {
-      Kakao.Auth.authorize({ redirectUri: KAKAO_REDIRECT_URI });
+      // SDK 우회 — REST API key로 직접 OAuth URL 구성
+      const params = new URLSearchParams({
+        client_id: 'e7ed40fa373e803bf8aadc15961863d7',
+        redirect_uri: KAKAO_REDIRECT_URI,
+        response_type: 'code',
+      });
+      window.location.href = 'https://kauth.kakao.com/oauth/authorize?' + params.toString();
     }
 
     // 카카오 redirect 처리는 /kakao-callback.html 에서 담당
