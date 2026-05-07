@@ -164,7 +164,7 @@ async function handleKakaoLogin(request, env, context) {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       grant_type: 'authorization_code',
-      client_id: env.KAKAO_REST_API_KEY,
+      client_id: env.KAKAO_REST_API_KEY.trim(),
       redirect_uri: redirectUri,
       code,
     }),
