@@ -70,10 +70,10 @@ class WisdomBookAPI {
   }
 
   // Authentication Methods
-  async login(username, password, rememberMe = false) {
+  async login(email, password, rememberMe = false) {
     const data = await this.request('/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ email, password }),
       skipAuth: true,
     });
 
@@ -92,12 +92,32 @@ class WisdomBookAPI {
     return data;
   }
 
-  async register(username, password, name, email) {
+  async register(email, password, name) {
     const data = await this.request('/api/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ username, password, name, email }),
+      body: JSON.stringify({ email, password, name }),
       skipAuth: true,
     });
+
+    return data;
+  }
+
+  async kakaoLogin(access_token, rememberMe = true) {
+    const data = await this.request('/api/auth/kakao', {
+      method: 'POST',
+      body: JSON.stringify({ access_token }),
+      skipAuth: true,
+    });
+
+    if (data.success && data.token) {
+      this.setToken(data.token, rememberMe);
+      const userData = { ...data.user, _fromAPI: true };
+      if (rememberMe) {
+        localStorage.setItem('currentUser', JSON.stringify(userData));
+      } else {
+        sessionStorage.setItem('currentUser', JSON.stringify(userData));
+      }
+    }
 
     return data;
   }

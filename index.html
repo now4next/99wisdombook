@@ -584,6 +584,42 @@
     }
     .forgot-link:hover { color: var(--brown-mid); }
 
+    /* 카카오 로그인 */
+    .btn-kakao {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 13px;
+      background: #FEE500;
+      color: #3C1E1E;
+      border: none;
+      border-radius: 10px;
+      font-size: 1em;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 4px;
+      transition: background 0.15s, transform 0.15s;
+    }
+    .btn-kakao:hover { background: #f5db00; transform: translateY(-1px); }
+    .btn-kakao:disabled { opacity: 0.6; pointer-events: none; }
+
+    .divider-or {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 16px 0 12px;
+      color: #ccc;
+      font-size: 0.82em;
+    }
+    .divider-or::before, .divider-or::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e8e0d6;
+    }
+
     .alert {
       padding: 10px 14px;
       border-radius: 8px;
@@ -697,13 +733,23 @@
         <button class="tab-btn" type="button" onclick="switchTab('register')">회원가입</button>
       </div>
 
+      <!-- 카카오 로그인 버튼 -->
+      <button class="btn-kakao" id="btn-kakao" onclick="handleKakaoLogin()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.7 1.617 5.085 4.08 6.525L5.1 20.1a.45.45 0 0 0 .645.495l4.23-2.775C10.29 17.94 11.13 18 12 18c5.523 0 10-3.477 10-7.8C22 5.677 17.523 3 12 3z" fill="#3C1E1E"/>
+        </svg>
+        카카오로 시작하기
+      </button>
+
+      <div class="divider-or"><span>또는</span></div>
+
       <!-- 로그인 탭 -->
       <div class="tab-panel active" id="panel-login">
         <div class="alert alert-error" id="login-error"></div>
         <form onsubmit="handleLogin(event)">
           <div class="field">
-            <label for="login-username">사용자 이름</label>
-            <input id="login-username" type="text" required autocomplete="username">
+            <label for="login-email">이메일</label>
+            <input id="login-email" type="email" required autocomplete="email">
           </div>
           <div class="field">
             <label for="login-password">비밀번호</label>
@@ -724,8 +770,8 @@
         <div class="alert alert-success" id="register-success"></div>
         <form onsubmit="handleRegister(event)">
           <div class="field">
-            <label for="reg-username">사용자 이름</label>
-            <input id="reg-username" type="text" required minlength="3" autocomplete="username">
+            <label for="reg-name">이름</label>
+            <input id="reg-name" type="text" required autocomplete="name" placeholder="홍길동">
           </div>
           <div class="field">
             <label for="reg-email">이메일</label>
@@ -758,8 +804,13 @@
     </div>
   </div>
 
+  <!-- 카카오 SDK -->
+  <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js" crossorigin="anonymous"></script>
   <script src="/api-client.js"></script>
   <script>
+    // ── 카카오 SDK 초기화 ──
+    Kakao.init('8f717ec6e0665cf2dcaf585f1afa8af7');
+
     // ── 탭 전환 ──
     function switchTab(name) {
       document.querySelectorAll('.tab-btn').forEach((b, i) =>
@@ -773,7 +824,7 @@
     let pendingChapterHref = 'book.html';
     function openModal() {
       document.getElementById('modal').classList.add('visible');
-      setTimeout(() => document.getElementById('login-username').focus(), 200);
+      setTimeout(() => document.getElementById('login-email').focus(), 200);
     }
     function closeModal() {
       document.getElementById('modal').classList.remove('visible');
@@ -797,7 +848,7 @@
       btn.disabled = true; btn.textContent = '로그인 중…';
       try {
         const result = await wisdomAPI.login(
-          document.getElementById('login-username').value.trim(),
+          document.getElementById('login-email').value.trim(),
           document.getElementById('login-password').value,
           document.getElementById('remember-me').checked
         );
@@ -821,10 +872,9 @@
       btn.disabled = true; btn.textContent = '가입 중…';
       try {
         const result = await wisdomAPI.register(
-          document.getElementById('reg-username').value.trim(),
+          document.getElementById('reg-email').value.trim(),
           pw,
-          document.getElementById('reg-username').value.trim(),
-          document.getElementById('reg-email').value.trim()
+          document.getElementById('reg-name').value.trim()
         );
         if (result.success) {
           showAlert('register-success', '가입 완료! 로그인해주세요.', 'success');
@@ -835,6 +885,36 @@
         showAlert('register-error', err.message || '회원가입에 실패했습니다.');
       } finally {
         btn.disabled = false; btn.textContent = '회원가입';
+      }
+    }
+
+    // ── 카카오 로그인 ──
+    async function handleKakaoLogin() {
+      const btn = document.getElementById('btn-kakao');
+      btn.disabled = true; btn.textContent = '카카오 연결 중…';
+      try {
+        await new Promise((resolve, reject) => {
+          Kakao.Auth.login({
+            success: async (authObj) => {
+              try {
+                const result = await wisdomAPI.kakaoLogin(authObj.access_token);
+                if (result.success) {
+                  window.location.href = result.user.role === 'admin' ? 'admin.html' : pendingChapterHref;
+                }
+                resolve();
+              } catch (err) {
+                reject(err);
+              }
+            },
+            fail: (err) => reject(new Error(err.error_description || '카카오 로그인에 실패했습니다.')),
+          });
+        });
+      } catch (err) {
+        showAlert('login-error', err.message || '카카오 로그인에 실패했습니다.');
+        const panel = document.getElementById('panel-login');
+        if (!panel.classList.contains('active')) switchTab('login');
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.7 1.617 5.085 4.08 6.525L5.1 20.1a.45.45 0 0 0 .645.495l4.23-2.775C10.29 17.94 11.13 18 12 18c5.523 0 10-3.477 10-7.8C22 5.677 17.523 3 12 3z" fill="#3C1E1E"/></svg>카카오로 시작하기';
       }
     }
 

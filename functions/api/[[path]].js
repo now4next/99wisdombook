@@ -68,6 +68,7 @@ export async function onRequest(context) {
     // Auth
     if (path === '/api/auth/login'    && method === 'POST') return handleLogin(request, env);
     if (path === '/api/auth/register' && method === 'POST') return handleRegister(request, env, context);
+    if (path === '/api/auth/kakao'    && method === 'POST') return handleKakaoLogin(request, env, context);
 
     // Wisdom – saved (보관함)
     if (path === '/api/wisdom/saved' && method === 'GET')  return handleGetSaved(request, env);
@@ -96,15 +97,21 @@ export async function onRequest(context) {
 
 // ── Auth ────────────────────────────────────────────────────
 async function handleLogin(request, env) {
-  const { username, password } = await request.json();
-  if (!username || !password) return jsonResponse({ error: 'Username and password required' }, 400);
+  const { email, password } = await request.json();
+  if (!email || !password) return jsonResponse({ error: '이메일과 비밀번호를 입력해주세요.' }, 400);
 
   const hashed = await hashPassword(password);
-  const row = await env.DB.prepare(
-    'SELECT id, username, name, email, role, permissions, last_login FROM users WHERE username = ? AND password = ?'
-  ).bind(username, hashed).first();
+  // 이메일로 조회 (신규) → 구버전 username으로 fallback
+  let row = await env.DB.prepare(
+    'SELECT id, username, name, email, role, permissions, last_login FROM users WHERE email = ? AND password = ?'
+  ).bind(email, hashed).first();
+  if (!row) {
+    row = await env.DB.prepare(
+      'SELECT id, username, name, email, role, permissions, last_login FROM users WHERE username = ? AND password = ?'
+    ).bind(email, hashed).first();
+  }
 
-  if (!row) return jsonResponse({ error: 'Invalid credentials' }, 401);
+  if (!row) return jsonResponse({ error: '이메일 또는 비밀번호가 올바르지 않습니다.' }, 401);
 
   await env.DB.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?').bind(row.id).run();
 
@@ -123,27 +130,75 @@ async function handleLogin(request, env) {
 }
 
 async function handleRegister(request, env, context) {
-  const { username, password, name, email } = await request.json();
-  if (!username || !password || !name) return jsonResponse({ error: 'Username, password, and name required' }, 400);
+  const { email, password, name } = await request.json();
+  if (!email || !password || !name) return jsonResponse({ error: '이름, 이메일, 비밀번호를 모두 입력해주세요.' }, 400);
 
-  const existing = await env.DB.prepare('SELECT id FROM users WHERE username = ?').bind(username).first();
-  if (existing) return jsonResponse({ error: 'Username already exists' }, 409);
+  const existing = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(email).first();
+  if (existing) return jsonResponse({ error: '이미 사용 중인 이메일입니다.' }, 409);
 
   const hashed = await hashPassword(password);
   const row = await env.DB.prepare(
-    'INSERT INTO users (username, password, name, email, role, permissions) VALUES (?, ?, ?, ?, ?, ?) RETURNING id, username, name, email, role, permissions, created_at'
-  ).bind(username, hashed, name, email || null, 'user', '["korean"]').first();
+    'INSERT INTO users (username, password, name, email, role, permissions, auth_provider) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id, username, name, email, role, permissions, created_at'
+  ).bind(email, hashed, name, email, 'user', '["korean"]', 'local').first();
 
   if (!row) return jsonResponse({ error: 'Failed to create user' }, 500);
 
   // 관리자 알림 메일 (실패해도 가입은 정상 처리)
   if (context?.waitUntil) {
-    context.waitUntil(sendNewUserNotification(env, { username, name, email }).catch(() => {}));
+    context.waitUntil(sendNewUserNotification(env, { username: email, name, email }).catch(() => {}));
   } else {
-    sendNewUserNotification(env, { username, name, email }).catch(() => {});
+    sendNewUserNotification(env, { username: email, name, email }).catch(() => {});
   }
 
   return jsonResponse({ success: true, user: { ...row, permissions: JSON.parse(row.permissions || '[]') }, message: 'User registered successfully' }, 201);
+}
+
+async function handleKakaoLogin(request, env, context) {
+  const { access_token } = await request.json();
+  if (!access_token) return jsonResponse({ error: 'access_token required' }, 400);
+
+  // 카카오 사용자 정보 조회
+  const kakaoRes = await fetch('https://kapi.kakao.com/v2/user/me', {
+    headers: { 'Authorization': `Bearer ${access_token}`, 'Content-Type': 'application/x-www-form-urlencoded' }
+  });
+  if (!kakaoRes.ok) return jsonResponse({ error: '카카오 인증에 실패했습니다.' }, 401);
+
+  const kakaoUser = await kakaoRes.json();
+  const kakaoId = String(kakaoUser.id);
+  const kakaoName = kakaoUser.kakao_account?.profile?.nickname || kakaoUser.properties?.nickname || '카카오 사용자';
+  const kakaoEmail = kakaoUser.kakao_account?.email || null;
+
+  // 기존 카카오 사용자 조회
+  let row = await env.DB.prepare(
+    'SELECT id, username, name, email, role, permissions FROM users WHERE auth_provider = ? AND provider_id = ?'
+  ).bind('kakao', kakaoId).first();
+
+  if (!row) {
+    // 신규 카카오 사용자 생성
+    const username = `kakao_${kakaoId}`;
+    row = await env.DB.prepare(
+      'INSERT INTO users (username, password, name, email, role, permissions, auth_provider, provider_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id, username, name, email, role, permissions, created_at'
+    ).bind(username, '', kakaoName, kakaoEmail, 'user', '["korean"]', 'kakao', kakaoId).first();
+
+    if (!row) return jsonResponse({ error: '사용자 생성에 실패했습니다.' }, 500);
+
+    // 관리자 알림
+    if (context?.waitUntil) {
+      context.waitUntil(sendNewUserNotification(env, { username: kakaoName, name: kakaoName, email: kakaoEmail }).catch(() => {}));
+    }
+  }
+
+  await env.DB.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?').bind(row.id).run();
+
+  let streak_count = 0, last_wisdom_date = null;
+  try {
+    const s = await env.DB.prepare('SELECT streak_count, last_wisdom_date FROM users WHERE id = ?').bind(row.id).first();
+    if (s) { streak_count = s.streak_count || 0; last_wisdom_date = s.last_wisdom_date; }
+  } catch (_) {}
+
+  const user = { ...row, streak_count, last_wisdom_date, permissions: JSON.parse(row.permissions || '[]') };
+  const token = btoa(`${user.id}:${Date.now()}`);
+  return jsonResponse({ success: true, user, token });
 }
 
 async function sendNewUserNotification(env, { username, name, email }) {
