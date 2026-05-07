@@ -80,6 +80,14 @@ export async function onRequest(context) {
     // Wisdom – streak (스트릭)
     if (path === '/api/wisdom/streak' && method === 'POST') return handleStreak(request, env);
 
+    // Notify (카톡 알림)
+    if (path.match(/^\/api\/users\/\d+\/notify$/) && method === 'GET')
+      return handleGetNotify(path.split('/')[3], request, env);
+    if (path.match(/^\/api\/users\/\d+\/notify$/) && method === 'PUT')
+      return handleUpdateNotify(path.split('/')[3], request, env);
+    if (path === '/api/notify/cron' && method === 'POST')
+      return handleNotifyCron(request, env);
+
     // Users
     if (path === '/api/users' && method === 'GET') return handleGetUsers(request, env);
     if (path.match(/^\/api\/users\/\d+$/) && method === 'GET')    return handleGetUser(path.split('/').pop(), env);
@@ -174,7 +182,9 @@ async function handleKakaoLogin(request, env, context) {
     const err = await tokenRes.json().catch(() => ({}));
     return jsonResponse({ error: err.error_description || '카카오 토큰 발급에 실패했습니다.' }, 401);
   }
-  const { access_token } = await tokenRes.json();
+  const tokenData = await tokenRes.json();
+  const access_token = tokenData.access_token;
+  const refresh_token = tokenData.refresh_token || null;
 
   // 카카오 사용자 정보 조회
   const kakaoRes = await fetch('https://kapi.kakao.com/v2/user/me', {
@@ -189,14 +199,14 @@ async function handleKakaoLogin(request, env, context) {
 
   // 기존 카카오 사용자 조회
   let row = await env.DB.prepare(
-    'SELECT id, username, name, email, role, permissions FROM users WHERE auth_provider = ? AND provider_id = ?'
+    'SELECT id, username, name, email, role, permissions, auth_provider FROM users WHERE auth_provider = ? AND provider_id = ?'
   ).bind('kakao', kakaoId).first();
 
   if (!row) {
     // 신규 카카오 사용자 생성
     const username = `kakao_${kakaoId}`;
     row = await env.DB.prepare(
-      'INSERT INTO users (username, password, name, email, role, permissions, auth_provider, provider_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id, username, name, email, role, permissions, created_at'
+      'INSERT INTO users (username, password, name, email, role, permissions, auth_provider, provider_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id, username, name, email, role, permissions, auth_provider, created_at'
     ).bind(username, '', kakaoName, kakaoEmail, 'user', '["korean"]', 'kakao', kakaoId).first();
 
     if (!row) return jsonResponse({ error: '사용자 생성에 실패했습니다.' }, 500);
@@ -207,7 +217,13 @@ async function handleKakaoLogin(request, env, context) {
     }
   }
 
-  await env.DB.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?').bind(row.id).run();
+  // refresh_token 저장 (있을 때만 업데이트)
+  if (refresh_token) {
+    await env.DB.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP, kakao_refresh_token = ? WHERE id = ?')
+      .bind(refresh_token, row.id).run();
+  } else {
+    await env.DB.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?').bind(row.id).run();
+  }
 
   let streak_count = 0, last_wisdom_date = null;
   try {
@@ -449,4 +465,144 @@ async function handleUpdatePermissions(userId, request, env) {
   }
   const row = await env.DB.prepare('SELECT id, username, name, role, permissions FROM users WHERE id = ?').bind(userId).first();
   return jsonResponse({ success: true, user: { ...row, permissions: JSON.parse(row.permissions || '[]') }, message: 'Permissions updated' });
+}
+
+// ── 카카오 알림 설정 ────────────────────────────────────────
+async function handleGetNotify(userId, request, env) {
+  const tokenUserId = getUserIdFromToken(request);
+  if (!tokenUserId || tokenUserId !== parseInt(userId)) return jsonResponse({ error: 'Unauthorized' }, 401);
+  const row = await env.DB.prepare(
+    'SELECT notify_enabled, notify_days, notify_hour FROM users WHERE id = ?'
+  ).bind(userId).first();
+  if (!row) return jsonResponse({ error: 'User not found' }, 404);
+  return jsonResponse({ success: true, notify_enabled: row.notify_enabled || 0, notify_days: row.notify_days, notify_hour: row.notify_hour });
+}
+
+async function handleUpdateNotify(userId, request, env) {
+  const tokenUserId = getUserIdFromToken(request);
+  if (!tokenUserId || tokenUserId !== parseInt(userId)) return jsonResponse({ error: 'Unauthorized' }, 401);
+  const { notify_enabled, notify_days, notify_hour } = await request.json();
+  await env.DB.prepare(
+    'UPDATE users SET notify_enabled = ?, notify_days = ?, notify_hour = ? WHERE id = ?'
+  ).bind(notify_enabled ? 1 : 0, notify_days || null, notify_hour ?? null, userId).run();
+  return jsonResponse({ success: true, message: '알림 설정이 저장되었습니다.' });
+}
+
+// ── 카카오 토큰 갱신 ────────────────────────────────────────
+async function refreshKakaoAccessToken(refreshToken, env) {
+  const res = await fetch('https://kauth.kakao.com/oauth/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'refresh_token',
+      client_id: env.KAKAO_REST_API_KEY.trim(),
+      client_secret: (env.KAKAO_CLIENT_SECRET || '').trim(),
+      refresh_token: refreshToken,
+    }),
+  });
+  if (!res.ok) throw new Error('카카오 토큰 갱신 실패');
+  const data = await res.json();
+  if (!data.access_token) throw new Error(data.error_description || '토큰 갱신 실패');
+  return { access_token: data.access_token, new_refresh_token: data.refresh_token || null };
+}
+
+// ── 카카오 나에게 보내기 ────────────────────────────────────
+async function sendKakaoNotifyMessage(accessToken, wisdomTitle, chapterId) {
+  const link = { web_url: 'https://99wisdombook.org/?autoopen=1', mobile_web_url: 'https://99wisdombook.org/?autoopen=1' };
+  const template = {
+    object_type: 'feed',
+    content: {
+      title: '📚 오늘의 Daily Wisdom',
+      description: wisdomTitle || '오늘의 한 문장이 기다리고 있어요',
+      image_url: 'https://99wisdombook.org/og-image.png',
+      image_width: 1200, image_height: 630,
+      link,
+    },
+    buttons: [{ title: '오늘의 지혜 읽기', link }],
+  };
+  const res = await fetch('https://kapi.kakao.com/v2/api/talk/memo/default/send', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({ template_object: JSON.stringify(template) }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.msg || '카카오 메시지 발송 실패');
+  }
+  return await res.json();
+}
+
+// ── Cron 엔드포인트 ─────────────────────────────────────────
+async function handleNotifyCron(request, env) {
+  // CRON_SECRET 인증
+  const authHeader = request.headers.get('Authorization') || '';
+  const cronSecret = (env.CRON_SECRET || '').trim();
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
+
+  // 현재 KST 시각 계산
+  const now = new Date();
+  const kstHour = (now.getUTCHours() + 9) % 24;
+  const kstDay  = new Date(now.getTime() + 9 * 3600 * 1000).getUTCDay(); // 0=일,1=월…6=토
+
+  // 이 시각 알림 설정 사용자 조회
+  let users;
+  try {
+    const result = await env.DB.prepare(`
+      SELECT id, name, kakao_refresh_token, notify_days
+      FROM users
+      WHERE notify_enabled = 1
+        AND notify_hour = ?
+        AND kakao_refresh_token IS NOT NULL
+    `).bind(kstHour).all();
+    users = result.results || [];
+  } catch (err) {
+    return jsonResponse({ error: err.message }, 500);
+  }
+
+  // 오늘의 지혜 데이터 조회
+  let wisdomTitle = '오늘의 한 문장이 기다리고 있어요';
+  try {
+    const wRes = await fetch('https://99wisdombook.org/data/wisdom.json');
+    const wData = await wRes.json();
+    const items = wData.items || [];
+    if (items.length) {
+      const dk = now.toISOString().slice(0, 10).replace(/-/g, '');
+      const idx = parseInt(dk, 10) % items.length;
+      wisdomTitle = items[idx]?.title || wisdomTitle;
+    }
+  } catch (_) {}
+
+  const results = { sent: 0, skipped: 0, errors: [] };
+
+  for (const user of users) {
+    try {
+      // 요일 체크 (notify_days: "1,3,5" 형태)
+      if (user.notify_days) {
+        const days = user.notify_days.split(',').map(Number);
+        if (!days.includes(kstDay)) { results.skipped++; continue; }
+      }
+
+      // 액세스 토큰 갱신
+      const { access_token, new_refresh_token } = await refreshKakaoAccessToken(user.kakao_refresh_token, env);
+
+      // 새 refresh_token 저장 (갱신된 경우)
+      if (new_refresh_token) {
+        await env.DB.prepare('UPDATE users SET kakao_refresh_token = ? WHERE id = ?')
+          .bind(new_refresh_token, user.id).run();
+      }
+
+      // 메시지 발송
+      await sendKakaoNotifyMessage(access_token, wisdomTitle);
+      results.sent++;
+    } catch (err) {
+      results.errors.push({ userId: user.id, error: err.message });
+    }
+  }
+
+  return jsonResponse({ success: true, kstHour, kstDay, total: users.length, ...results });
 }
