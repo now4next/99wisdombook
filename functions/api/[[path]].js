@@ -165,6 +165,7 @@ async function handleKakaoLogin(request, env, context) {
     body: new URLSearchParams({
       grant_type: 'authorization_code',
       client_id: env.KAKAO_REST_API_KEY.trim(),
+      client_secret: (env.KAKAO_CLIENT_SECRET || '').trim(),
       redirect_uri: redirectUri,
       code,
     }),
