@@ -42,40 +42,22 @@
       const code  = params.get('code');
       const error = params.get('error');
 
-      // 디버그: URL 전체 표시
-      console.log('[Kakao CB] href:', window.location.href);
-      console.log('[Kakao CB] code:', code);
-
       if (error || !code) {
-        document.querySelector('p').textContent = '로그인이 취소되었습니다. (' + (error || 'code없음') + ')';
-        setTimeout(() => window.location.href = '/', 2000);
+        document.querySelector('p').textContent = '로그인이 취소되었습니다.';
+        setTimeout(() => window.location.href = '/', 1500);
         return;
       }
 
       try {
-        // 직접 fetch로 API 호출 (api-client 우회)
-        const res = await fetch('/api/auth/kakao', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code, redirectUri: REDIRECT_URI }),
-        });
-        const result = await res.json();
-        console.log('[Kakao CB] API result:', result);
-
-        if (!res.ok || !result.success) throw new Error(result.error || '로그인 실패');
-
-        // 토큰 저장
-        wisdomAPI.setToken(result.token, true);
-        const userData = { ...result.user, _fromAPI: true };
-        localStorage.setItem('currentUser', JSON.stringify(userData));
-
+        const result = await wisdomAPI.kakaoLogin(code, REDIRECT_URI);
+        if (!result.success) throw new Error(result.error || '로그인 실패');
         window.location.href = result.user.role === 'admin' ? '/admin.html' : '/book.html';
       } catch (err) {
         document.querySelector('.spinner').style.display = 'none';
         document.querySelector('p').textContent = '';
         const div = document.createElement('div');
         div.className = 'error';
-        div.textContent = (err.message || '카카오 로그인에 실패했습니다.') + '\n(code: ' + (code ? code.slice(0,10)+'...' : 'null') + ')';
+        div.textContent = err.message || '카카오 로그인에 실패했습니다. 다시 시도해주세요.';
         document.body.appendChild(div);
         const btn = document.createElement('button');
         btn.textContent = '돌아가기';
