@@ -888,35 +888,42 @@
       }
     }
 
-    // ── 카카오 로그인 ──
-    async function handleKakaoLogin() {
-      const btn = document.getElementById('btn-kakao');
-      btn.disabled = true; btn.textContent = '카카오 연결 중…';
-      try {
-        await new Promise((resolve, reject) => {
-          Kakao.Auth.login({
-            success: async (authObj) => {
-              try {
-                const result = await wisdomAPI.kakaoLogin(authObj.access_token);
-                if (result.success) {
-                  window.location.href = result.user.role === 'admin' ? 'admin.html' : pendingChapterHref;
-                }
-                resolve();
-              } catch (err) {
-                reject(err);
-              }
-            },
-            fail: (err) => reject(new Error(err.error_description || '카카오 로그인에 실패했습니다.')),
-          });
-        });
-      } catch (err) {
-        showAlert('login-error', err.message || '카카오 로그인에 실패했습니다.');
-        const panel = document.getElementById('panel-login');
-        if (!panel.classList.contains('active')) switchTab('login');
-        btn.disabled = false;
-        btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.7 1.617 5.085 4.08 6.525L5.1 20.1a.45.45 0 0 0 .645.495l4.23-2.775C10.29 17.94 11.13 18 12 18c5.523 0 10-3.477 10-7.8C22 5.677 17.523 3 12 3z" fill="#3C1E1E"/></svg>카카오로 시작하기';
-      }
+    // ── 카카오 로그인 (redirect 방식, SDK v2) ──
+    const KAKAO_REDIRECT_URI = 'https://99wisdombook.org';
+
+    function handleKakaoLogin() {
+      Kakao.Auth.authorize({ redirectUri: KAKAO_REDIRECT_URI });
     }
+
+    // 페이지 로드 시 카카오 redirect code 감지 후 자동 처리
+    (async function handleKakaoRedirect() {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      if (!code) return;
+
+      // URL 정리 (뒤로가기로 재처리 방지)
+      history.replaceState({}, '', window.location.pathname);
+
+      // 로딩 표시
+      const btn = document.getElementById('btn-kakao');
+      if (btn) { btn.disabled = true; btn.textContent = '카카오 로그인 중…'; }
+
+      try {
+        const result = await wisdomAPI.kakaoLogin(code, KAKAO_REDIRECT_URI);
+        if (result.success) {
+          window.location.href = result.user.role === 'admin' ? 'admin.html' : 'book.html';
+        }
+      } catch (err) {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.7 1.617 5.085 4.08 6.525L5.1 20.1a.45.45 0 0 0 .645.495l4.23-2.775C10.29 17.94 11.13 18 12 18c5.523 0 10-3.477 10-7.8C22 5.677 17.523 3 12 3z" fill="#3C1E1E"/></svg>카카오로 시작하기';
+        }
+        setTimeout(() => {
+          openModal();
+          showAlert('login-error', err.message || '카카오 로그인에 실패했습니다.');
+        }, 100);
+      }
+    })();
 
     // ── 마일스톤 ──
     const MILESTONE_MSGS = {

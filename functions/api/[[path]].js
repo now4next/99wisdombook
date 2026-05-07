@@ -154,12 +154,30 @@ async function handleRegister(request, env, context) {
 }
 
 async function handleKakaoLogin(request, env, context) {
-  const { access_token } = await request.json();
-  if (!access_token) return jsonResponse({ error: 'access_token required' }, 400);
+  const { code, redirectUri } = await request.json();
+  if (!code || !redirectUri) return jsonResponse({ error: 'code and redirectUri required' }, 400);
+  if (!env.KAKAO_REST_API_KEY) return jsonResponse({ error: 'Kakao REST API key not configured' }, 500);
+
+  // authorization code → access_token 교환
+  const tokenRes = await fetch('https://kauth.kakao.com/oauth/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'authorization_code',
+      client_id: env.KAKAO_REST_API_KEY,
+      redirect_uri: redirectUri,
+      code,
+    }),
+  });
+  if (!tokenRes.ok) {
+    const err = await tokenRes.json().catch(() => ({}));
+    return jsonResponse({ error: err.error_description || '카카오 토큰 발급에 실패했습니다.' }, 401);
+  }
+  const { access_token } = await tokenRes.json();
 
   // 카카오 사용자 정보 조회
   const kakaoRes = await fetch('https://kapi.kakao.com/v2/user/me', {
-    headers: { 'Authorization': `Bearer ${access_token}`, 'Content-Type': 'application/x-www-form-urlencoded' }
+    headers: { 'Authorization': `Bearer ${access_token}` }
   });
   if (!kakaoRes.ok) return jsonResponse({ error: '카카오 인증에 실패했습니다.' }, 401);
 
