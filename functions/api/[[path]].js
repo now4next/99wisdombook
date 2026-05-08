@@ -472,19 +472,19 @@ async function handleGetNotify(userId, request, env) {
   const tokenUserId = getUserIdFromToken(request);
   if (!tokenUserId || tokenUserId !== parseInt(userId)) return jsonResponse({ error: 'Unauthorized' }, 401);
   const row = await env.DB.prepare(
-    'SELECT notify_enabled, notify_days, notify_hour FROM users WHERE id = ?'
+    'SELECT notify_enabled, notify_days, notify_hour, notify_minute FROM users WHERE id = ?'
   ).bind(userId).first();
   if (!row) return jsonResponse({ error: 'User not found' }, 404);
-  return jsonResponse({ success: true, notify_enabled: row.notify_enabled || 0, notify_days: row.notify_days, notify_hour: row.notify_hour });
+  return jsonResponse({ success: true, notify_enabled: row.notify_enabled || 0, notify_days: row.notify_days, notify_hour: row.notify_hour, notify_minute: row.notify_minute || 0 });
 }
 
 async function handleUpdateNotify(userId, request, env) {
   const tokenUserId = getUserIdFromToken(request);
   if (!tokenUserId || tokenUserId !== parseInt(userId)) return jsonResponse({ error: 'Unauthorized' }, 401);
-  const { notify_enabled, notify_days, notify_hour } = await request.json();
+  const { notify_enabled, notify_days, notify_hour, notify_minute } = await request.json();
   await env.DB.prepare(
-    'UPDATE users SET notify_enabled = ?, notify_days = ?, notify_hour = ? WHERE id = ?'
-  ).bind(notify_enabled ? 1 : 0, notify_days || null, notify_hour ?? null, userId).run();
+    'UPDATE users SET notify_enabled = ?, notify_days = ?, notify_hour = ?, notify_minute = ? WHERE id = ?'
+  ).bind(notify_enabled ? 1 : 0, notify_days || null, notify_hour ?? null, notify_minute ?? 0, userId).run();
   return jsonResponse({ success: true, message: '알림 설정이 저장되었습니다.' });
 }
 
@@ -546,7 +546,11 @@ async function handleNotifyCron(request, env) {
 
   // 현재 KST 시각 계산
   const now = new Date();
-  const kstHour = (now.getUTCHours() + 9) % 24;
+  const kstHour   = (now.getUTCHours() + 9) % 24;
+  const kstMinute = now.getUTCMinutes();
+  // 30분 단위로 반올림 (0~14분 → 0분, 15~44분 → 30분, 45~59분 → 다음 시간 0분)
+  const kstMinuteSlot = kstMinute < 15 ? 0 : kstMinute < 45 ? 30 : 0;
+  const kstHourAdj    = kstMinute >= 45 ? (kstHour + 1) % 24 : kstHour;
   const kstDay  = new Date(now.getTime() + 9 * 3600 * 1000).getUTCDay(); // 0=일,1=월…6=토
 
   // 디버그: notify_enabled 사용자 전체 조회 (시각 무관)
@@ -568,7 +572,8 @@ async function handleNotifyCron(request, env) {
       FROM users
       WHERE notify_enabled = 1
         AND notify_hour = ?
-    `).bind(kstHour).all();
+        AND (notify_minute = ? OR (notify_minute IS NULL AND ? = 0))
+    `).bind(kstHourAdj, kstMinuteSlot, kstMinuteSlot).all();
     users = result.results || [];
   } catch (err) {
     return jsonResponse({ error: err.message, debug: debugUsers }, 500);
@@ -620,5 +625,5 @@ async function handleNotifyCron(request, env) {
     }
   }
 
-  return jsonResponse({ success: true, kstHour, kstDay, total: users.length, ...results, debug_notify_users: debugUsers });
+  return jsonResponse({ success: true, kstHour: kstHourAdj, kstMinute: kstMinuteSlot, kstDay, total: users.length, ...results, debug_notify_users: debugUsers });
 }

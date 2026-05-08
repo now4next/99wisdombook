@@ -790,15 +790,43 @@
       </div>
 
       <p style="font-size:0.82em;font-weight:600;color:#3e2820;margin:0 0 10px;">알림 시각 (한국 시간)</p>
-      <select id="notify-hour" style="width:100%;padding:10px;border:1px solid #e0d0be;border-radius:8px;font-size:0.95em;background:#fff;margin-bottom:20px;">
-        <option value="7">오전 7시</option>
-        <option value="8">오전 8시</option>
-        <option value="9" selected>오전 9시</option>
-        <option value="10">오전 10시</option>
-        <option value="12">오후 12시</option>
-        <option value="14">오후 2시</option>
-        <option value="18">오후 6시</option>
-        <option value="21">오후 9시</option>
+      <select id="notify-time" style="width:100%;padding:10px;border:1px solid #e0d0be;border-radius:8px;font-size:0.95em;background:#fff;margin-bottom:20px;">
+        <option value="5:0">오전 5시 00분</option>
+        <option value="5:30">오전 5시 30분</option>
+        <option value="6:0">오전 6시 00분</option>
+        <option value="6:30">오전 6시 30분</option>
+        <option value="7:0">오전 7시 00분</option>
+        <option value="7:30">오전 7시 30분</option>
+        <option value="8:0" selected>오전 8시 00분</option>
+        <option value="8:30">오전 8시 30분</option>
+        <option value="9:0">오전 9시 00분</option>
+        <option value="9:30">오전 9시 30분</option>
+        <option value="10:0">오전 10시 00분</option>
+        <option value="10:30">오전 10시 30분</option>
+        <option value="11:0">오전 11시 00분</option>
+        <option value="11:30">오전 11시 30분</option>
+        <option value="12:0">낮 12시 00분</option>
+        <option value="12:30">낮 12시 30분</option>
+        <option value="13:0">오후 1시 00분</option>
+        <option value="13:30">오후 1시 30분</option>
+        <option value="14:0">오후 2시 00분</option>
+        <option value="14:30">오후 2시 30분</option>
+        <option value="15:0">오후 3시 00분</option>
+        <option value="15:30">오후 3시 30분</option>
+        <option value="16:0">오후 4시 00분</option>
+        <option value="16:30">오후 4시 30분</option>
+        <option value="17:0">오후 5시 00분</option>
+        <option value="17:30">오후 5시 30분</option>
+        <option value="18:0">오후 6시 00분</option>
+        <option value="18:30">오후 6시 30분</option>
+        <option value="19:0">오후 7시 00분</option>
+        <option value="19:30">오후 7시 30분</option>
+        <option value="20:0">오후 8시 00분</option>
+        <option value="20:30">오후 8시 30분</option>
+        <option value="21:0">오후 9시 00분</option>
+        <option value="21:30">오후 9시 30분</option>
+        <option value="22:0">오후 10시 00분</option>
+        <option value="22:30">오후 10시 30분</option>
       </select>
 
       <div id="notify-toggle-row" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding:12px;background:#f9f6f2;border-radius:8px;">
@@ -1309,8 +1337,13 @@
         document.querySelectorAll('#notify-days input[type=checkbox]').forEach(cb => {
           cb.checked = days.includes(cb.value);
         });
-        const hourSel = document.getElementById('notify-hour');
-        if (hourSel) hourSel.value = String(data.notify_hour ?? 8);
+        const timeSel = document.getElementById('notify-time');
+        if (timeSel) {
+          const h = data.notify_hour ?? 8;
+          const m = data.notify_minute ?? 0;
+          timeSel.value = `${h}:${m}`;
+          if (!timeSel.value) timeSel.value = '8:0';
+        }
         document.getElementById('notify-enabled').checked = !!data.notify_enabled;
       } catch(_) {}
     }
@@ -1324,11 +1357,11 @@
         const u = wisdomAPI.getCurrentUser();
         if (!u) throw new Error('로그인이 필요합니다.');
         const days = [...document.querySelectorAll('#notify-days input:checked')].map(cb => cb.value).join(',');
-        const hour = Number(document.getElementById('notify-hour').value);
+        const [hour, minute] = document.getElementById('notify-time').value.split(':').map(Number);
         const enabled = document.getElementById('notify-enabled').checked;
         const res = await wisdomAPI.request(`/api/users/${u.id}/notify`, {
           method: 'PUT',
-          body: JSON.stringify({ notify_days: days, notify_hour: hour, notify_enabled: enabled ? 1 : 0 }),
+          body: JSON.stringify({ notify_days: days, notify_hour: hour, notify_minute: minute, notify_enabled: enabled ? 1 : 0 }),
         });
         if (res.success) {
           msg.style.color = '#2e7d32';
