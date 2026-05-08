@@ -1368,7 +1368,8 @@
             document.getElementById('logged-in-bar').classList.add('visible');
 
             // 카카오 로그인 사용자에게만 알림 설정 버튼 표시
-            if (u.auth_provider === 'kakao') {
+            const isKakaoUser = u.auth_provider === 'kakao' || (u.username || '').startsWith('kakao_');
+            if (isKakaoUser) {
               const btnNotify = document.getElementById('btn-notify');
               if (btnNotify) {
                 btnNotify.style.display = 'flex';
