@@ -549,7 +549,18 @@ async function handleNotifyCron(request, env) {
   const kstHour = (now.getUTCHours() + 9) % 24;
   const kstDay  = new Date(now.getTime() + 9 * 3600 * 1000).getUTCDay(); // 0=일,1=월…6=토
 
-  // 이 시각 알림 설정 사용자 조회
+  // 디버그: notify_enabled 사용자 전체 조회 (시각 무관)
+  let debugUsers = [];
+  try {
+    const dbg = await env.DB.prepare(`
+      SELECT id, name, notify_enabled, notify_hour, notify_days,
+             CASE WHEN kakao_refresh_token IS NOT NULL THEN 1 ELSE 0 END as has_refresh_token
+      FROM users WHERE notify_enabled = 1
+    `).all();
+    debugUsers = dbg.results || [];
+  } catch (_) {}
+
+  // 이 시각 알림 설정 사용자 조회 (refresh_token 조건 완화)
   let users;
   try {
     const result = await env.DB.prepare(`
@@ -557,11 +568,10 @@ async function handleNotifyCron(request, env) {
       FROM users
       WHERE notify_enabled = 1
         AND notify_hour = ?
-        AND kakao_refresh_token IS NOT NULL
     `).bind(kstHour).all();
     users = result.results || [];
   } catch (err) {
-    return jsonResponse({ error: err.message }, 500);
+    return jsonResponse({ error: err.message, debug: debugUsers }, 500);
   }
 
   // 오늘의 지혜 데이터 조회
@@ -587,6 +597,12 @@ async function handleNotifyCron(request, env) {
         if (!days.includes(kstDay)) { results.skipped++; continue; }
       }
 
+      // refresh_token 없으면 skip
+      if (!user.kakao_refresh_token) {
+        results.errors.push({ userId: user.id, error: 'refresh_token 없음 - 카카오 재로그인 필요' });
+        continue;
+      }
+
       // 액세스 토큰 갱신
       const { access_token, new_refresh_token } = await refreshKakaoAccessToken(user.kakao_refresh_token, env);
 
@@ -604,5 +620,5 @@ async function handleNotifyCron(request, env) {
     }
   }
 
-  return jsonResponse({ success: true, kstHour, kstDay, total: users.length, ...results });
+  return jsonResponse({ success: true, kstHour, kstDay, total: users.length, ...results, debug_notify_users: debugUsers });
 }
