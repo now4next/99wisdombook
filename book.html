@@ -41,7 +41,7 @@
     // Update userName display
     const userNameElement = document.getElementById('userName');
     if (userNameElement) {
-      userNameElement.textContent = user.name || '사용자';
+      userNameElement.textContent = (user.name || user.username || '사용자') + '님';
       
       // Add admin badge if user is admin
       if (user.role === 'admin') {
@@ -1765,7 +1765,7 @@
           const user = JSON.parse(currentUser);
           const userNameElement = document.getElementById('userName');
           if (userNameElement) {
-            userNameElement.textContent = user.name || '사용자';
+            userNameElement.textContent = (user.name || user.username || '사용자') + '님';
           }
         } catch (e) {
           console.error('Error parsing user info:', e);
@@ -1775,9 +1775,11 @@
     
     // Global UI functions
     window.logout = function() {
-      if (confirm('Log out?')) {
+      if (confirm('로그아웃 하시겠습니까?')) {
         localStorage.removeItem('currentUser');
         sessionStorage.removeItem('currentUser');
+        localStorage.removeItem('authToken');
+        sessionStorage.removeItem('authToken');
         window.location.href = 'index.html';
       }
     };
@@ -1872,7 +1874,7 @@
     <div id="language-selector" class="top-nav">
       <div id="user-info">
         <span class="user-name" id="userName"></span>
-        <button class="logout-btn" onclick="logout()">Log out</button>
+        <button class="logout-btn" onclick="logout()">로그아웃</button>
         <!-- 오늘의 지혜 -->
         <a href="index.html" class="text-btn icon-only-btn" data-tooltip="오늘의 지혜">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon" aria-hidden="true">
