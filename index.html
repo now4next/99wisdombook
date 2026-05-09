@@ -1347,6 +1347,7 @@
     async function checkPushStatus() {
       const btn = document.getElementById('btn-push-subscribe');
       const msg = document.getElementById('push-status-msg');
+      const testBtn = document.getElementById('btn-push-test');
       if (!btn) return;
       try {
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -1360,15 +1361,26 @@
           btn.disabled = true; return;
         }
         const sw = await navigator.serviceWorker.ready;
-        const sub = await sw.pushManager.getSubscription();
-        if (sub) {
+        const localSub = await sw.pushManager.getSubscription();
+
+        // 서버 DB 상태도 함께 확인
+        const serverStatus = await wisdomAPI.request('/api/push/status').catch(() => null);
+        const savedInDB = serverStatus?.has_subscription;
+
+        if (localSub && savedInDB) {
+          // 정상: 브라우저 구독 + DB 저장 모두 완료
           btn.textContent = '브라우저 알림 허용됨 ✓';
           btn.style.background = '#e8f5e9'; btn.style.color = '#2e7d32';
           btn.style.border = '1px solid #a5d6a7';
-          msg.style.color = '#2e7d32';
-          msg.textContent = '이미 등록된 브라우저입니다';
-          const testBtn = document.getElementById('btn-push-test');
+          msg.style.color = '#2e7d32'; msg.textContent = '정상 등록됨 — 테스트 버튼으로 확인하세요';
           if (testBtn) testBtn.style.display = 'block';
+        } else if (localSub && !savedInDB) {
+          // 브라우저엔 있는데 DB에 없음 → 재등록 필요
+          msg.style.color = '#e65100';
+          msg.textContent = '⚠️ 서버에 저장되지 않았습니다. 아래 버튼을 다시 눌러주세요.';
+        } else if (!localSub && perm === 'granted') {
+          msg.style.color = '#888';
+          msg.textContent = '브라우저 알림 허용하기를 눌러 등록하세요.';
         }
       } catch (_) {}
     }

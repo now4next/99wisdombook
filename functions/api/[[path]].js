@@ -97,6 +97,8 @@ export async function onRequest(context) {
       return handlePushUnsubscribe(request, env);
     if (path === '/api/push/test' && method === 'POST')
       return handlePushTest(request, env);
+    if (path === '/api/push/status' && method === 'GET')
+      return handlePushStatus(request, env);
 
     // Users
     if (path === '/api/users' && method === 'GET') return handleGetUsers(request, env);
@@ -819,6 +821,25 @@ async function handlePushTest(request, env) {
       (env.VAPID_SUBJECT || 'mailto:info@99wisdombook.org').trim()
     );
     return jsonResponse({ success: true, message: '테스트 알림을 발송했습니다.' });
+  } catch (err) {
+    return jsonResponse({ success: false, error: err.message, endpoint_prefix: row.push_endpoint?.slice(0, 40) }, 500);
+  }
+}
+
+async function handlePushStatus(request, env) {
+  const tokenUserId = getUserIdFromToken(request);
+  if (!tokenUserId) return jsonResponse({ error: 'Unauthorized' }, 401);
+  try {
+    const row = await env.DB.prepare(
+      'SELECT push_endpoint, push_p256dh, push_auth FROM users WHERE id=?'
+    ).bind(tokenUserId).first();
+    const has_subscription = !!(row?.push_endpoint && row?.push_p256dh && row?.push_auth);
+    return jsonResponse({
+      success: true,
+      has_subscription,
+      endpoint_prefix: row?.push_endpoint ? row.push_endpoint.slice(0, 50) + '…' : null,
+      has_vapid: !!(env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY),
+    });
   } catch (err) {
     return jsonResponse({ success: false, error: err.message }, 500);
   }
