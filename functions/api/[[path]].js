@@ -94,6 +94,12 @@ export async function onRequest(context) {
     if (path === '/api/notify/kakao-test' && method === 'POST')
       return handleKakaoTest(request, env);
 
+    // 추천인 시스템
+    if (path === '/api/referral/code' && method === 'GET')
+      return handleGetReferralCode(request, env);
+    if (path === '/api/referral/stats' && method === 'GET')
+      return handleGetReferralStats(request, env);
+
     // 카카오 알림용 동적 이미지 (문장 합성)
     if (path === '/api/wisdom/card' && method === 'GET')
       return handleWisdomCard(request);
@@ -160,18 +166,34 @@ async function handleLogin(request, env) {
 }
 
 async function handleRegister(request, env, context) {
-  const { email, password, name } = await request.json();
+  const { email, password, name, ref } = await request.json();
   if (!email || !password || !name) return jsonResponse({ error: '이름, 이메일, 비밀번호를 모두 입력해주세요.' }, 400);
 
   const existing = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(email).first();
   if (existing) return jsonResponse({ error: '이미 사용 중인 이메일입니다.' }, 409);
 
+  // 추천인 코드 검증
+  let referrerId = null;
+  if (ref) {
+    try {
+      const referrer = await env.DB.prepare('SELECT id FROM users WHERE referral_code = ?').bind(ref.toUpperCase()).first();
+      if (referrer) referrerId = referrer.id;
+    } catch (_) {}
+  }
+
   const hashed = await hashPassword(password);
   const row = await env.DB.prepare(
-    'INSERT INTO users (username, password, name, email, role, permissions, auth_provider) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id, username, name, email, role, permissions, created_at'
-  ).bind(email, hashed, name, email, 'user', '["korean"]', 'local').first();
+    'INSERT INTO users (username, password, name, email, role, permissions, auth_provider, referred_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id, username, name, email, role, permissions, created_at'
+  ).bind(email, hashed, name, email, 'user', '["korean"]', 'local', referrerId).first();
 
   if (!row) return jsonResponse({ error: 'Failed to create user' }, 500);
+
+  // 추천인 카운트 증가
+  if (referrerId) {
+    try {
+      await env.DB.prepare('UPDATE users SET referral_count = COALESCE(referral_count, 0) + 1 WHERE id = ?').bind(referrerId).run();
+    } catch (_) {}
+  }
 
   // 관리자 알림 메일 (실패해도 가입은 정상 처리)
   if (context?.waitUntil) {
@@ -225,13 +247,31 @@ async function handleKakaoLogin(request, env, context) {
   ).bind('kakao', kakaoId).first();
 
   if (!row) {
+    // 추천인 코드 검증 (카카오 로그인 시 state 파라미터로 전달)
+    const body = await request.json().catch(() => ({}));
+    const ref = body.ref || null;
+    let referrerId = null;
+    if (ref) {
+      try {
+        const referrer = await env.DB.prepare('SELECT id FROM users WHERE referral_code = ?').bind(ref.toUpperCase()).first();
+        if (referrer) referrerId = referrer.id;
+      } catch (_) {}
+    }
+
     // 신규 카카오 사용자 생성
     const username = `kakao_${kakaoId}`;
     row = await env.DB.prepare(
-      'INSERT INTO users (username, password, name, email, role, permissions, auth_provider, provider_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id, username, name, email, role, permissions, auth_provider, created_at'
-    ).bind(username, '', kakaoName, kakaoEmail, 'user', '["korean"]', 'kakao', kakaoId).first();
+      'INSERT INTO users (username, password, name, email, role, permissions, auth_provider, provider_id, referred_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id, username, name, email, role, permissions, auth_provider, created_at'
+    ).bind(username, '', kakaoName, kakaoEmail, 'user', '["korean"]', 'kakao', kakaoId, referrerId).first();
 
     if (!row) return jsonResponse({ error: '사용자 생성에 실패했습니다.' }, 500);
+
+    // 추천인 카운트 증가
+    if (referrerId) {
+      try {
+        await env.DB.prepare('UPDATE users SET referral_count = COALESCE(referral_count, 0) + 1 WHERE id = ?').bind(referrerId).run();
+      } catch (_) {}
+    }
 
     // 관리자 알림
     if (context?.waitUntil) {
@@ -603,6 +643,60 @@ async function handleKakaoTest(request, env) {
   } catch (err) {
     return jsonResponse({ success: false, error: err.message }, 500);
   }
+}
+
+// ── 추천인 코드 발급/조회 ────────────────────────────────────
+function genReferralCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  const bytes = new Uint8Array(6);
+  crypto.getRandomValues(bytes);
+  for (const b of bytes) code += chars[b % chars.length];
+  return code;
+}
+
+async function handleGetReferralCode(request, env) {
+  const userId = getUserIdFromToken(request);
+  if (!userId) return jsonResponse({ error: 'Unauthorized' }, 401);
+
+  let user = await env.DB.prepare('SELECT id, name, referral_code, referral_count FROM users WHERE id = ?').bind(userId).first();
+  if (!user) return jsonResponse({ error: 'User not found' }, 404);
+
+  // 코드 없으면 생성 (최대 5회 재시도로 충돌 방지)
+  if (!user.referral_code) {
+    let code = '', attempts = 0;
+    while (attempts < 5) {
+      code = genReferralCode();
+      try {
+        await env.DB.prepare('UPDATE users SET referral_code = ? WHERE id = ?').bind(code, userId).run();
+        break;
+      } catch (_) { attempts++; }
+    }
+    user = { ...user, referral_code: code };
+  }
+
+  const referralUrl = `https://99wisdombook.org/?ref=${user.referral_code}`;
+  const count = user.referral_count || 0;
+  const badge = count >= 10 ? { emoji: '👑', label: '지혜의 왕' }
+              : count >= 5  ? { emoji: '🌟', label: '지혜의 별' }
+              : count >= 3  ? { emoji: '🌿', label: '지혜 전파자' }
+              : count >= 1  ? { emoji: '🌱', label: '씨앗 전도사' }
+              : null;
+
+  return jsonResponse({ success: true, code: user.referral_code, url: referralUrl, count, badge });
+}
+
+async function handleGetReferralStats(request, env) {
+  const userId = getUserIdFromToken(request);
+  if (!userId) return jsonResponse({ error: 'Unauthorized' }, 401);
+
+  const user = await env.DB.prepare('SELECT referral_count FROM users WHERE id = ?').bind(userId).first();
+  const referred = await env.DB.prepare(
+    'SELECT name, created_at FROM users WHERE referred_by = ? ORDER BY created_at DESC LIMIT 20'
+  ).bind(userId).all();
+
+  const count = user?.referral_count || 0;
+  return jsonResponse({ success: true, count, referred: referred.results || [] });
 }
 
 // ── 스트릭 끊김 방지 리마인더 (저녁 8시 KST) ─────────────────
