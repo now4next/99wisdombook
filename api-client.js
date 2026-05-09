@@ -102,10 +102,10 @@ class WisdomBookAPI {
     return data;
   }
 
-  async kakaoLogin(code, redirectUri = 'https://99wisdombook.org/', rememberMe = true) {
+  async kakaoLogin(code, redirectUri = 'https://99wisdombook.org/', ref = '', rememberMe = true) {
     const data = await this.request('/api/auth/kakao', {
       method: 'POST',
-      body: JSON.stringify({ code, redirectUri }),
+      body: JSON.stringify({ code, redirectUri, ref }),
       skipAuth: true,
     });
 

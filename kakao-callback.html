@@ -49,7 +49,9 @@
       }
 
       try {
-        const result = await wisdomAPI.kakaoLogin(code, REDIRECT_URI);
+        // 추천인 코드 전달 (sessionStorage에 저장된 값)
+        const ref = sessionStorage.getItem('pendingRef') || '';
+        const result = await wisdomAPI.kakaoLogin(code, REDIRECT_URI, ref);
         if (!result.success) throw new Error(result.error || '로그인 실패');
         window.location.href = result.user.role === 'admin' ? '/admin.html' : '/book.html';
       } catch (err) {

@@ -206,7 +206,7 @@ async function handleRegister(request, env, context) {
 }
 
 async function handleKakaoLogin(request, env, context) {
-  const { code, redirectUri } = await request.json();
+  const { code, redirectUri, ref } = await request.json();
   if (!code || !redirectUri) return jsonResponse({ error: 'code and redirectUri required' }, 400);
   if (!env.KAKAO_REST_API_KEY) return jsonResponse({ error: 'Kakao REST API key not configured' }, 500);
 
@@ -247,9 +247,7 @@ async function handleKakaoLogin(request, env, context) {
   ).bind('kakao', kakaoId).first();
 
   if (!row) {
-    // 추천인 코드 검증 (카카오 로그인 시 state 파라미터로 전달)
-    const body = await request.json().catch(() => ({}));
-    const ref = body.ref || null;
+    // 추천인 코드 검증
     let referrerId = null;
     if (ref) {
       try {
