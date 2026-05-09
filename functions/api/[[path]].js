@@ -529,20 +529,20 @@ async function sendKakaoNotifyMessage(accessToken, wisdomTitle) {
   const url = 'https://99wisdombook.org/?autoopen=1';
   const sentence = wisdomTitle || '오늘의 한 문장이 기다리고 있어요';
   const link = { web_url: url, mobile_web_url: url };
-  // 문장이 합성된 동적 이미지 URL
-  const imageUrl = `https://99wisdombook.org/api/wisdom/card?t=${encodeURIComponent(sentence)}`;
+  // 브랜딩 헤더 이미지 (DAILY WISDOM 정적 배너)
+  const imageUrl = 'https://99wisdombook.org/og-image.png';
   const template = {
     object_type: 'feed',
     content: {
-      title: '📚 오늘의 Daily Wisdom',
-      description: '📋 지혜의 한문장 책 내용 바로 읽기',
+      title: `"${sentence}"`,
+      description: '',
       image_url: imageUrl,
       image_width: 1200, image_height: 630,
       link,
     },
     buttons: [
       {
-        title: '📖 지혜의 한문장 읽기',
+        title: '지혜의 문장 본문 읽기',
         link,
       },
     ],
