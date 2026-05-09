@@ -538,6 +538,12 @@ async function sendKakaoNotifyMessage(accessToken, wisdomTitle) {
       image_width: 1200, image_height: 630,
       link,
     },
+    buttons: [
+      {
+        title: '📖 지혜의 한문장 읽기',
+        link,
+      },
+    ],
   };
   const res = await fetch('https://kapi.kakao.com/v2/api/talk/memo/default/send', {
     method: 'POST',
