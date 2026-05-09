@@ -1431,20 +1431,58 @@
       }
     }
 
-    // 서버 경유 없이 브라우저 직접 알림 표시 (암호화 우회 테스트)
+    // 브라우저 직접 알림 테스트 (서버/암호화 완전 우회)
     async function testLocalNotification() {
       const msg = document.getElementById('push-status-msg');
+      msg.style.color = '#888'; msg.textContent = '알림 권한 확인 중…';
+
+      // 1) 권한 상태 확인
+      const perm = Notification.permission;
+      if (perm === 'denied') {
+        msg.style.color = '#c62828';
+        msg.textContent = '❌ 알림 차단됨 — 브라우저 주소창 좌측 🔒 → 알림 → 허용';
+        return;
+      }
+      if (perm === 'default') {
+        const req = await Notification.requestPermission();
+        if (req !== 'granted') {
+          msg.style.color = '#c62828'; msg.textContent = '❌ 알림 권한 거부됨'; return;
+        }
+      }
+
+      // 2) SW 등록 확인
+      if (!('serviceWorker' in navigator)) {
+        msg.style.color = '#c62828'; msg.textContent = '❌ 이 브라우저는 서비스 워커 미지원'; return;
+      }
+      let swReg;
+      try {
+        swReg = await navigator.serviceWorker.getRegistration('/');
+        if (!swReg) {
+          // 재등록 시도
+          swReg = await navigator.serviceWorker.register('/sw.js');
+          await navigator.serviceWorker.ready;
+        }
+      } catch (swErr) {
+        msg.style.color = '#c62828'; msg.textContent = 'SW 등록 실패: ' + swErr.message; return;
+      }
+
+      // 3) SW로 직접 알림 표시
       try {
         const sw = await navigator.serviceWorker.ready;
         await sw.showNotification('📚 브라우저 알림 테스트', {
-          body: '브라우저 알림이 정상 작동합니다!',
+          body: '이 팝업이 보이면 브라우저 알림 정상!',
           icon: '/og-image.png', tag: 'local-test',
         });
         msg.style.color = '#2e7d32';
-        msg.textContent = '✓ 로컬 알림 발송 — 알림이 보이면 브라우저는 정상, 서버 경유 테스트도 해보세요';
+        msg.textContent = '✓ 알림 발송됨 — 화면 우측 하단 또는 알림 센터를 확인하세요';
       } catch (err) {
-        msg.style.color = '#c62828';
-        msg.textContent = '로컬 알림 실패: ' + err.message;
+        // SW 실패 시 Notification 직접 시도
+        try {
+          new Notification('📚 브라우저 알림 테스트', { body: '이 팝업이 보이면 정상!', icon: '/og-image.png' });
+          msg.style.color = '#2e7d32'; msg.textContent = '✓ 알림 발송됨 (직접)';
+        } catch (e2) {
+          msg.style.color = '#c62828'; msg.textContent = '알림 실패: ' + err.message + ' / ' + e2.message;
+        }
       }
     }
 
