@@ -88,6 +88,14 @@ export async function onRequest(context) {
     if (path === '/api/notify/cron' && method === 'POST')
       return handleNotifyCron(request, env);
 
+    // Web Push
+    if (path === '/api/config/vapid' && method === 'GET')
+      return jsonResponse({ publicKey: (env.VAPID_PUBLIC_KEY || '').trim() });
+    if (path === '/api/push/subscribe' && method === 'POST')
+      return handlePushSubscribe(request, env);
+    if (path === '/api/push/unsubscribe' && method === 'POST')
+      return handlePushUnsubscribe(request, env);
+
     // Users
     if (path === '/api/users' && method === 'GET') return handleGetUsers(request, env);
     if (path.match(/^\/api\/users\/\d+$/) && method === 'GET')    return handleGetUser(path.split('/').pop(), env);
@@ -568,7 +576,7 @@ async function handleNotifyCron(request, env) {
   let users;
   try {
     const result = await env.DB.prepare(`
-      SELECT id, name, kakao_refresh_token, notify_days
+      SELECT id, name, kakao_refresh_token, notify_days, push_endpoint, push_p256dh, push_auth
       FROM users
       WHERE notify_enabled = 1
         AND notify_hour = ?
@@ -592,38 +600,195 @@ async function handleNotifyCron(request, env) {
     }
   } catch (_) {}
 
-  const results = { sent: 0, skipped: 0, errors: [] };
+  const results = { sent: 0, push_sent: 0, skipped: 0, errors: [] };
 
   for (const user of users) {
-    try {
-      // 요일 체크 (notify_days: "1,3,5" 형태)
-      if (user.notify_days) {
-        const days = user.notify_days.split(',').map(Number);
-        if (!days.includes(kstDay)) { results.skipped++; continue; }
-      }
+    // 요일 체크 (notify_days: "1,3,5" 형태)
+    if (user.notify_days) {
+      const days = user.notify_days.split(',').map(Number);
+      if (!days.includes(kstDay)) { results.skipped++; continue; }
+    }
 
-      // refresh_token 없으면 skip
+    // ── 카카오 알림 ──
+    try {
       if (!user.kakao_refresh_token) {
         results.errors.push({ userId: user.id, error: 'refresh_token 없음 - 카카오 재로그인 필요' });
-        continue;
+      } else {
+        const { access_token, new_refresh_token } = await refreshKakaoAccessToken(user.kakao_refresh_token, env);
+        if (new_refresh_token) {
+          await env.DB.prepare('UPDATE users SET kakao_refresh_token = ? WHERE id = ?')
+            .bind(new_refresh_token, user.id).run();
+        }
+        await sendKakaoNotifyMessage(access_token, wisdomTitle);
+        results.sent++;
       }
-
-      // 액세스 토큰 갱신
-      const { access_token, new_refresh_token } = await refreshKakaoAccessToken(user.kakao_refresh_token, env);
-
-      // 새 refresh_token 저장 (갱신된 경우)
-      if (new_refresh_token) {
-        await env.DB.prepare('UPDATE users SET kakao_refresh_token = ? WHERE id = ?')
-          .bind(new_refresh_token, user.id).run();
-      }
-
-      // 메시지 발송
-      await sendKakaoNotifyMessage(access_token, wisdomTitle);
-      results.sent++;
     } catch (err) {
       results.errors.push({ userId: user.id, error: err.message });
+    }
+
+    // ── Web Push 알림 (독립적) ──
+    if (user.push_endpoint && env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY) {
+      try {
+        await sendWebPush(
+          user.push_endpoint, user.push_p256dh, user.push_auth,
+          { title: '📚 오늘의 Daily Wisdom', body: wisdomTitle, url: '/?autoopen=1' },
+          env.VAPID_PRIVATE_KEY.trim(), env.VAPID_PUBLIC_KEY.trim(),
+          (env.VAPID_SUBJECT || 'mailto:info@99wisdombook.org').trim()
+        );
+        results.push_sent++;
+      } catch (pushErr) {
+        results.errors.push({ userId: user.id, error: `WebPush: ${pushErr.message}` });
+      }
     }
   }
 
   return jsonResponse({ success: true, kstHour: kstHourAdj, kstMinute: kstMinuteSlot, kstDay, total: users.length, ...results, debug_notify_users: debugUsers });
+}
+
+// ── Web Push 암호화 ────────────────────────────────────────────
+
+function b64uDecode(str) {
+  str = String(str).replace(/-/g, '+').replace(/_/g, '/');
+  while (str.length % 4) str += '=';
+  const bin = atob(str);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return arr;
+}
+
+function b64uEncode(buf) {
+  const arr = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+  let s = '';
+  arr.forEach(b => s += String.fromCharCode(b));
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+function joinBufs(...bufs) {
+  const n = bufs.reduce((a, b) => a + b.byteLength, 0);
+  const out = new Uint8Array(n);
+  let off = 0;
+  for (const b of bufs) { out.set(new Uint8Array(b), off); off += b.byteLength; }
+  return out;
+}
+
+async function hmacSha256(key, data) {
+  const k = await crypto.subtle.importKey('raw', key, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return new Uint8Array(await crypto.subtle.sign('HMAC', k, data));
+}
+
+async function hkdfExtract(salt, ikm) { return hmacSha256(salt, ikm); }
+
+async function hkdfExpand(prk, info, len) {
+  const out = new Uint8Array(len);
+  let t = new Uint8Array(0), off = 0;
+  for (let i = 1; off < len; i++) {
+    t = await hmacSha256(prk, joinBufs(t, info, new Uint8Array([i])));
+    const take = Math.min(t.length, len - off);
+    out.set(t.slice(0, take), off); off += take;
+  }
+  return out;
+}
+
+// VAPID JWT (ES256) 생성
+async function createVapidJwt(privB64u, pubB64u, aud, sub) {
+  const enc = new TextEncoder();
+  const hdr = b64uEncode(enc.encode(JSON.stringify({ typ: 'JWT', alg: 'ES256' })));
+  const pay = b64uEncode(enc.encode(JSON.stringify({ aud, exp: Math.floor(Date.now() / 1000) + 43200, sub })));
+  const sigInput = `${hdr}.${pay}`;
+  const pub = b64uDecode(pubB64u);
+  const jwk = { kty: 'EC', crv: 'P-256', x: b64uEncode(pub.slice(1, 33)), y: b64uEncode(pub.slice(33, 65)), d: privB64u };
+  const key = await crypto.subtle.importKey('jwk', jwk, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, enc.encode(sigInput));
+  return `${sigInput}.${b64uEncode(new Uint8Array(sig))}`;
+}
+
+// RFC 8291 aes128gcm 암호화
+async function encryptWebPush(plaintext, p256dhB64u, authB64u) {
+  const recvPub = b64uDecode(p256dhB64u);
+  const authSec = b64uDecode(authB64u);
+
+  const sKP = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']);
+  const sPub = new Uint8Array(await crypto.subtle.exportKey('raw', sKP.publicKey));
+
+  const recvKey = await crypto.subtle.importKey('raw', recvPub, { name: 'ECDH', namedCurve: 'P-256' }, false, []);
+  const ecdhBits = new Uint8Array(await crypto.subtle.deriveBits({ name: 'ECDH', public: recvKey }, sKP.privateKey, 256));
+
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+
+  // IKM via RFC 8291 §3.3
+  const ikmInfo = joinBufs(new TextEncoder().encode('WebPush: info\x00'), recvPub, sPub);
+  const prkKey = await hkdfExtract(authSec, ecdhBits);
+  const ikm = await hkdfExpand(prkKey, ikmInfo, 32);
+
+  // PRK for record encryption
+  const prk = await hkdfExtract(salt, ikm);
+  const cek = await hkdfExpand(prk, new TextEncoder().encode('Content-Encoding: aes128gcm\x00'), 16);
+  const nonce = await hkdfExpand(prk, new TextEncoder().encode('Content-Encoding: nonce\x00'), 12);
+
+  // plaintext + 0x02 delimiter (final record)
+  const pt = joinBufs(new TextEncoder().encode(plaintext), new Uint8Array([2]));
+  const aesKey = await crypto.subtle.importKey('raw', cek, { name: 'AES-GCM' }, false, ['encrypt']);
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce }, aesKey, pt));
+
+  // Header: salt(16) + rs(4 BE) + keylen(1) + sender_pub(65)
+  const hdr = new Uint8Array(21 + sPub.length);
+  hdr.set(salt, 0);
+  new DataView(hdr.buffer).setUint32(16, 4096, false);
+  hdr[20] = sPub.length;
+  hdr.set(sPub, 21);
+
+  return joinBufs(hdr, ct);
+}
+
+// Web Push 발송
+async function sendWebPush(endpoint, p256dhB64u, authB64u, payload, vapidPriv, vapidPub, vapidSub) {
+  const origin = new URL(endpoint).origin;
+  const jwt = await createVapidJwt(vapidPriv, vapidPub, origin, vapidSub);
+  const body = await encryptWebPush(JSON.stringify(payload), p256dhB64u, authB64u);
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Authorization': `vapid t=${jwt},k=${vapidPub}`,
+      'Content-Type': 'application/octet-stream',
+      'Content-Encoding': 'aes128gcm',
+      'TTL': '86400',
+    },
+    body,
+  });
+  if (res.status !== 200 && res.status !== 201) {
+    const txt = await res.text().catch(() => '');
+    throw new Error(`${res.status} ${txt.slice(0, 200)}`);
+  }
+  return res.status;
+}
+
+// ── Web Push 구독 관리 ──────────────────────────────────────────
+
+async function handlePushSubscribe(request, env) {
+  const tokenUserId = getUserIdFromToken(request);
+  if (!tokenUserId) return jsonResponse({ error: 'Unauthorized' }, 401);
+  const body = await request.json();
+  const { endpoint } = body;
+  const p256dh = body.keys?.p256dh;
+  const auth   = body.keys?.auth;
+  if (!endpoint || !p256dh || !auth) return jsonResponse({ error: 'Invalid subscription' }, 400);
+  try {
+    await env.DB.prepare(
+      'UPDATE users SET push_endpoint=?, push_p256dh=?, push_auth=? WHERE id=?'
+    ).bind(endpoint, p256dh, auth, tokenUserId).run();
+  } catch (err) {
+    return jsonResponse({ error: err.message }, 500);
+  }
+  return jsonResponse({ success: true });
+}
+
+async function handlePushUnsubscribe(request, env) {
+  const tokenUserId = getUserIdFromToken(request);
+  if (!tokenUserId) return jsonResponse({ error: 'Unauthorized' }, 401);
+  try {
+    await env.DB.prepare(
+      'UPDATE users SET push_endpoint=NULL, push_p256dh=NULL, push_auth=NULL WHERE id=?'
+    ).bind(tokenUserId).run();
+  } catch (_) {}
+  return jsonResponse({ success: true });
 }
