@@ -529,12 +529,12 @@ async function sendKakaoNotifyMessage(accessToken, wisdomTitle) {
   const url = 'https://99wisdombook.org/?autoopen=1';
   const sentence = wisdomTitle || '오늘의 한 문장이 기다리고 있어요';
   const link = { web_url: url, mobile_web_url: url };
-  // 헤더+문장 합성 동적 이미지 (가운데 정렬)
-  const imageUrl = `https://99wisdombook.org/api/wisdom/card?t=${encodeURIComponent(sentence)}`;
+  // 헤더 이미지(정적) + 문장은 title 텍스트로 표시
+  const imageUrl = 'https://99wisdombook.org/og-image.png';
   const template = {
     object_type: 'feed',
     content: {
-      title: '📚 DAILY WISDOM',
+      title: `"${sentence}"`,
       description: '',
       image_url: imageUrl,
       image_width: 1200, image_height: 630,
