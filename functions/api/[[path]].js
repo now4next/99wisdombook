@@ -529,12 +529,12 @@ async function sendKakaoNotifyMessage(accessToken, wisdomTitle) {
   const url = 'https://99wisdombook.org/?autoopen=1';
   const sentence = wisdomTitle || '오늘의 한 문장이 기다리고 있어요';
   const link = { web_url: url, mobile_web_url: url };
-  // 브랜딩 헤더 이미지 (DAILY WISDOM 정적 배너)
-  const imageUrl = 'https://99wisdombook.org/og-image.png';
+  // 헤더+문장 합성 동적 이미지 (가운데 정렬)
+  const imageUrl = `https://99wisdombook.org/api/wisdom/card?t=${encodeURIComponent(sentence)}`;
   const template = {
     object_type: 'feed',
     content: {
-      title: `"${sentence}"`,
+      title: '📚 DAILY WISDOM',
       description: '',
       image_url: imageUrl,
       image_width: 1200, image_height: 630,
@@ -701,26 +701,31 @@ async function handleNotifyCron(request, env) {
   return jsonResponse({ success: true, kstHour: kstHourAdj, kstMinute: kstMinuteSlot, kstDay, total: users.length, ...results, debug_notify_users: debugUsers });
 }
 
-// ── 카카오 알림용 동적 이미지 (SVG → PNG 없이 SVG 직접 반환) ────
+// ── 카카오 알림용 동적 이미지 (SVG 직접 반환) ────
 function handleWisdomCard(request) {
   const url = new URL(request.url);
   const text = (url.searchParams.get('t') || '오늘의 한 문장').slice(0, 60);
 
-  // 줄바꿈 처리: 15자마다 자동 줄바꿈
-  const words = text.split('');
+  // 줄바꿈 처리: 14자마다 자동 줄바꿈
+  const chars = text.split('');
   const lines = [];
   let line = '';
-  for (const ch of words) {
+  for (const ch of chars) {
     line += ch;
-    if (line.length >= 15 && ch !== ' ') { lines.push(line); line = ''; }
+    if (line.length >= 14) { lines.push(line); line = ''; }
   }
   if (line) lines.push(line);
 
   // 줄 수에 따라 폰트 크기 조정
-  const fontSize = lines.length <= 2 ? 64 : lines.length <= 3 ? 54 : 46;
-  const lineH = fontSize * 1.4;
+  const fontSize = lines.length <= 2 ? 58 : lines.length <= 3 ? 50 : 42;
+  const lineH = fontSize * 1.55;
   const totalTextH = lines.length * lineH;
-  const textStartY = (630 - totalTextH) / 2 + fontSize * 0.85;
+
+  // 문장 영역: 헤더(220px) 아래 ~ 하단(610px) 사이 중앙
+  const areaTop = 230;
+  const areaBot = 610;
+  const areaH = areaBot - areaTop;
+  const textStartY = areaTop + (areaH - totalTextH) / 2 + fontSize * 0.85;
 
   const tspans = lines.map((l, i) =>
     `<tspan x="600" dy="${i === 0 ? 0 : lineH}">${escSvg(l)}</tspan>`
@@ -730,11 +735,20 @@ function handleWisdomCard(request) {
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <!-- 배경 -->
   <rect width="1200" height="630" fill="#3e2820"/>
-  <!-- 상단 장식선 -->
-  <line x1="80" y1="60" x2="1120" y2="60" stroke="#c9a96e" stroke-width="1.5" opacity="0.6"/>
-  <!-- 하단 장식선 -->
-  <line x1="80" y1="570" x2="1120" y2="570" stroke="#c9a96e" stroke-width="1.5" opacity="0.6"/>
-  <!-- 문장 텍스트 -->
+
+  <!-- ── 헤더 영역 ── -->
+  <text x="600" y="105"
+    font-family="Georgia,'Times New Roman',serif"
+    font-size="68" font-weight="700"
+    fill="#ffffff" text-anchor="middle" letter-spacing="10">DAILY WISDOM</text>
+  <text x="600" y="152"
+    font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif"
+    font-size="26" font-weight="400"
+    fill="#c9a96e" text-anchor="middle">살아본 뒤에야 비로소 읽히는 문장들</text>
+  <!-- 구분선 -->
+  <line x1="100" y1="185" x2="1100" y2="185" stroke="#c9a96e" stroke-width="1.5" opacity="0.55"/>
+
+  <!-- ── 지혜 문장 (가운데 정렬) ── -->
   <text
     x="600"
     y="${textStartY}"
@@ -745,8 +759,6 @@ function handleWisdomCard(request) {
     text-anchor="middle"
     letter-spacing="-0.5"
   >${tspans}</text>
-  <!-- 하단 서브텍스트 -->
-  <text x="600" y="540" font-family="sans-serif" font-size="22" fill="#c9a96e" text-anchor="middle" opacity="0.9">99wisdombook.org</text>
 </svg>`;
 
   return new Response(svg, {
