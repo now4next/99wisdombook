@@ -87,6 +87,8 @@ export async function onRequest(context) {
       return handleUpdateNotify(path.split('/')[3], request, env);
     if (path === '/api/notify/cron' && method === 'POST')
       return handleNotifyCron(request, env);
+    if (path === '/api/notify/kakao-test' && method === 'POST')
+      return handleKakaoTest(request, env);
 
     // 카카오 알림용 동적 이미지 (문장 합성)
     if (path === '/api/wisdom/card' && method === 'GET')
@@ -558,6 +560,43 @@ async function sendKakaoNotifyMessage(accessToken, wisdomTitle) {
     throw new Error(err.msg || '카카오 메시지 발송 실패');
   }
   return await res.json();
+}
+
+// ── 카카오 알림 테스트 (어드민 전용) ────────────────────────
+async function handleKakaoTest(request, env) {
+  const userId = getUserIdFromToken(request);
+  if (!userId) return jsonResponse({ error: 'Unauthorized' }, 401);
+
+  const user = await env.DB.prepare(
+    'SELECT id, role, kakao_refresh_token FROM users WHERE id = ?'
+  ).bind(userId).first();
+  if (!user || user.role !== 'admin') return jsonResponse({ error: 'Admin only' }, 403);
+  if (!user.kakao_refresh_token) return jsonResponse({ error: '카카오 재로그인 필요' }, 400);
+
+  // 오늘의 지혜 조회
+  let wisdomTitle = '오늘의 한 문장이 기다리고 있어요';
+  try {
+    const wRes = await fetch('https://99wisdombook.org/data/wisdom.json');
+    const wData = await wRes.json();
+    const items = wData.items || [];
+    if (items.length) {
+      const dk = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      const idx = parseInt(dk, 10) % items.length;
+      wisdomTitle = items[idx]?.title || wisdomTitle;
+    }
+  } catch (_) {}
+
+  try {
+    const { access_token, new_refresh_token } = await refreshKakaoAccessToken(user.kakao_refresh_token, env);
+    if (new_refresh_token) {
+      await env.DB.prepare('UPDATE users SET kakao_refresh_token = ? WHERE id = ?')
+        .bind(new_refresh_token, userId).run();
+    }
+    const result = await sendKakaoNotifyMessage(access_token, wisdomTitle);
+    return jsonResponse({ success: true, wisdom: wisdomTitle, kakao: result });
+  } catch (err) {
+    return jsonResponse({ success: false, error: err.message }, 500);
+  }
 }
 
 // ── Cron 엔드포인트 ─────────────────────────────────────────

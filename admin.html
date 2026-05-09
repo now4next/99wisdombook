@@ -551,6 +551,17 @@
       </div>
     </div>
 
+    <!-- 알림 테스트 -->
+    <div class="table-container" style="margin-bottom: 24px; padding: 20px 24px;">
+      <h2 style="margin: 0 0 16px; font-size: 1.1rem;">📣 알림 테스트</h2>
+      <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+        <button class="btn btn-create" onclick="testKakaoNotify()" id="btn-kakao-test">
+          💬 카카오 알림 테스트 발송
+        </button>
+        <span id="kakao-test-result" style="font-size: 0.9rem; color: #666;"></span>
+      </div>
+    </div>
+
     <!-- Members Table -->
     <div class="table-container">
       <div class="table-header">
@@ -1001,6 +1012,34 @@
           console.error('[ADMIN] ❌ Failed to update user:', error);
           alert('회원 정보 수정에 실패했습니다: ' + error.message);
         }
+      }
+    }
+
+    // 카카오 알림 테스트 발송
+    async function testKakaoNotify() {
+      const btn = document.getElementById('btn-kakao-test');
+      const result = document.getElementById('kakao-test-result');
+      btn.disabled = true;
+      result.textContent = '발송 중...';
+      result.style.color = '#666';
+      try {
+        const res = await fetch('/api/notify/kakao-test', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${wisdomAPI.token}` },
+        });
+        const data = await res.json();
+        if (data.success) {
+          result.textContent = `✅ 발송 완료! "${data.wisdom}"`;
+          result.style.color = '#2e7d32';
+        } else {
+          result.textContent = `❌ 실패: ${data.error}`;
+          result.style.color = '#c62828';
+        }
+      } catch (e) {
+        result.textContent = `❌ 오류: ${e.message}`;
+        result.style.color = '#c62828';
+      } finally {
+        btn.disabled = false;
       }
     }
 
