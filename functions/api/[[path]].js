@@ -521,13 +521,18 @@ async function refreshKakaoAccessToken(refreshToken, env) {
 // ── 카카오 나에게 보내기 ────────────────────────────────────
 async function sendKakaoNotifyMessage(accessToken, wisdomTitle) {
   const url = 'https://99wisdombook.org/?autoopen=1';
-  // text 타입: 메시지 본문에 URL을 포함하면 도메인 등록 없이도 항상 클릭 가능
   const sentence = wisdomTitle || '오늘의 한 문장이 기다리고 있어요';
+  const link = { web_url: url, mobile_web_url: url };
   const template = {
-    object_type: 'text',
-    text: `📚 오늘의 Daily Wisdom\n\n"${sentence}"\n\n▶ 지금 읽기: ${url}`,
-    link: { web_url: url, mobile_web_url: url },
-    button_title: '문장 펼쳐 읽기 →',
+    object_type: 'feed',
+    content: {
+      title: `"${sentence}"`,
+      description: '📋 지혜의 한문장 책 내용 바로 읽기',
+      image_url: 'https://99wisdombook.org/og-image.png',
+      image_width: 1200, image_height: 630,
+      link,   // 이미지·제목·설명 전체 영역 클릭 시 URL 이동
+    },
+    // 버튼 없음 — URL 노출 방지, content.link로 카드 전체가 링크 역할
   };
   const res = await fetch('https://kapi.kakao.com/v2/api/talk/memo/default/send', {
     method: 'POST',
