@@ -88,6 +88,10 @@ export async function onRequest(context) {
     if (path === '/api/notify/cron' && method === 'POST')
       return handleNotifyCron(request, env);
 
+    // 카카오 알림용 동적 이미지 (문장 합성)
+    if (path === '/api/wisdom/card' && method === 'GET')
+      return handleWisdomCard(request);
+
     // Web Push
     if (path === '/api/config/vapid' && method === 'GET')
       return jsonResponse({ publicKey: (env.VAPID_PUBLIC_KEY || '').trim() });
@@ -523,16 +527,17 @@ async function sendKakaoNotifyMessage(accessToken, wisdomTitle) {
   const url = 'https://99wisdombook.org/?autoopen=1';
   const sentence = wisdomTitle || '오늘의 한 문장이 기다리고 있어요';
   const link = { web_url: url, mobile_web_url: url };
+  // 문장이 합성된 동적 이미지 URL
+  const imageUrl = `https://99wisdombook.org/api/wisdom/card?t=${encodeURIComponent(sentence)}`;
   const template = {
     object_type: 'feed',
     content: {
-      title: `"${sentence}"`,
+      title: '📚 오늘의 Daily Wisdom',
       description: '📋 지혜의 한문장 책 내용 바로 읽기',
-      image_url: 'https://99wisdombook.org/og-image.png',
+      image_url: imageUrl,
       image_width: 1200, image_height: 630,
-      link,   // 이미지·제목·설명 전체 영역 클릭 시 URL 이동
+      link,
     },
-    // 버튼 없음 — URL 노출 방지, content.link로 카드 전체가 링크 역할
   };
   const res = await fetch('https://kapi.kakao.com/v2/api/talk/memo/default/send', {
     method: 'POST',
@@ -649,6 +654,67 @@ async function handleNotifyCron(request, env) {
   }
 
   return jsonResponse({ success: true, kstHour: kstHourAdj, kstMinute: kstMinuteSlot, kstDay, total: users.length, ...results, debug_notify_users: debugUsers });
+}
+
+// ── 카카오 알림용 동적 이미지 (SVG → PNG 없이 SVG 직접 반환) ────
+function handleWisdomCard(request) {
+  const url = new URL(request.url);
+  const text = (url.searchParams.get('t') || '오늘의 한 문장').slice(0, 60);
+
+  // 줄바꿈 처리: 15자마다 자동 줄바꿈
+  const words = text.split('');
+  const lines = [];
+  let line = '';
+  for (const ch of words) {
+    line += ch;
+    if (line.length >= 15 && ch !== ' ') { lines.push(line); line = ''; }
+  }
+  if (line) lines.push(line);
+
+  // 줄 수에 따라 폰트 크기 조정
+  const fontSize = lines.length <= 2 ? 64 : lines.length <= 3 ? 54 : 46;
+  const lineH = fontSize * 1.4;
+  const totalTextH = lines.length * lineH;
+  const textStartY = (630 - totalTextH) / 2 + fontSize * 0.85;
+
+  const tspans = lines.map((l, i) =>
+    `<tspan x="600" dy="${i === 0 ? 0 : lineH}">${escSvg(l)}</tspan>`
+  ).join('');
+
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <!-- 배경 -->
+  <rect width="1200" height="630" fill="#3e2820"/>
+  <!-- 상단 장식선 -->
+  <line x1="80" y1="60" x2="1120" y2="60" stroke="#c9a96e" stroke-width="1.5" opacity="0.6"/>
+  <!-- 하단 장식선 -->
+  <line x1="80" y1="570" x2="1120" y2="570" stroke="#c9a96e" stroke-width="1.5" opacity="0.6"/>
+  <!-- 문장 텍스트 -->
+  <text
+    x="600"
+    y="${textStartY}"
+    font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif"
+    font-size="${fontSize}"
+    font-weight="700"
+    fill="#f5e9d8"
+    text-anchor="middle"
+    letter-spacing="-0.5"
+  >${tspans}</text>
+  <!-- 하단 서브텍스트 -->
+  <text x="600" y="540" font-family="sans-serif" font-size="22" fill="#c9a96e" text-anchor="middle" opacity="0.9">99wisdombook.org</text>
+</svg>`;
+
+  return new Response(svg, {
+    headers: {
+      'Content-Type': 'image/svg+xml',
+      'Cache-Control': 'public, max-age=3600',
+      ...corsHeaders,
+    },
+  });
+}
+
+function escSvg(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ── Web Push 암호화 ────────────────────────────────────────────
