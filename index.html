@@ -785,9 +785,14 @@
         <button id="btn-push-subscribe" onclick="subscribePush()" style="width:100%;padding:9px;background:#3e2820;color:#f5e9d8;border:none;border-radius:8px;cursor:pointer;font-size:0.86em;font-weight:600;">
           브라우저 알림 허용하기
         </button>
-        <button id="btn-push-test" onclick="testPush()" style="display:none;width:100%;margin-top:6px;padding:8px;background:transparent;color:#3e2820;border:1px solid #c8b89a;border-radius:8px;cursor:pointer;font-size:0.82em;">
-          📨 테스트 알림 보내기
-        </button>
+        <div id="push-test-btns" style="display:none;margin-top:6px;display:none;gap:6px;flex-direction:column;">
+          <button onclick="testLocalNotification()" style="width:100%;padding:8px;background:transparent;color:#3e2820;border:1px solid #c8b89a;border-radius:8px;cursor:pointer;font-size:0.82em;">
+            💻 브라우저 직접 알림 테스트
+          </button>
+          <button id="btn-push-test" onclick="testPush()" style="width:100%;padding:8px;background:transparent;color:#3e2820;border:1px solid #c8b89a;border-radius:8px;cursor:pointer;font-size:0.82em;">
+            📡 서버 경유 알림 테스트
+          </button>
+        </div>
         <div id="push-status-msg" style="font-size:0.78em;text-align:center;margin-top:6px;min-height:14px;color:#888;"></div>
       </div>
       <hr style="border:none;border-top:1px solid #e8ddd0;margin:0 0 16px;">
@@ -1344,43 +1349,42 @@
       return arr;
     }
 
+    function showTestBtns(show) {
+      const el = document.getElementById('push-test-btns');
+      if (el) el.style.display = show ? 'flex' : 'none';
+    }
+
     async function checkPushStatus() {
       const btn = document.getElementById('btn-push-subscribe');
       const msg = document.getElementById('push-status-msg');
-      const testBtn = document.getElementById('btn-push-test');
       if (!btn) return;
       try {
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-          btn.textContent = '이 브라우저는 지원되지 않습니다';
-          btn.disabled = true; return;
+          btn.textContent = '이 브라우저는 지원되지 않습니다'; btn.disabled = true; return;
         }
-        const perm = Notification.permission;
-        if (perm === 'denied') {
-          btn.textContent = '알림이 차단됨 (브라우저 설정 확인)';
-          btn.style.background = '#e0e0e0'; btn.style.color = '#888';
-          btn.disabled = true; return;
+        if (Notification.permission === 'denied') {
+          btn.textContent = '알림이 차단됨'; btn.style.cssText = 'background:#e0e0e0;color:#888;width:100%;padding:9px;border:none;border-radius:8px;cursor:not-allowed;font-size:0.86em;font-weight:600;';
+          btn.disabled = true;
+          msg.style.color = '#c62828'; msg.textContent = '브라우저 설정에서 알림을 허용해주세요';
+          return;
         }
         const sw = await navigator.serviceWorker.ready;
         const localSub = await sw.pushManager.getSubscription();
-
-        // 서버 DB 상태도 함께 확인
         const serverStatus = await wisdomAPI.request('/api/push/status').catch(() => null);
         const savedInDB = serverStatus?.has_subscription;
 
         if (localSub && savedInDB) {
-          // 정상: 브라우저 구독 + DB 저장 모두 완료
           btn.textContent = '브라우저 알림 허용됨 ✓';
-          btn.style.background = '#e8f5e9'; btn.style.color = '#2e7d32';
-          btn.style.border = '1px solid #a5d6a7';
-          msg.style.color = '#2e7d32'; msg.textContent = '정상 등록됨 — 테스트 버튼으로 확인하세요';
-          if (testBtn) testBtn.style.display = 'block';
-        } else if (localSub && !savedInDB) {
-          // 브라우저엔 있는데 DB에 없음 → 재등록 필요
-          msg.style.color = '#e65100';
-          msg.textContent = '⚠️ 서버에 저장되지 않았습니다. 아래 버튼을 다시 눌러주세요.';
-        } else if (!localSub && perm === 'granted') {
-          msg.style.color = '#888';
-          msg.textContent = '브라우저 알림 허용하기를 눌러 등록하세요.';
+          btn.style.cssText = 'width:100%;padding:9px;background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;border-radius:8px;cursor:pointer;font-size:0.86em;font-weight:600;';
+          msg.style.color = '#2e7d32'; msg.textContent = '정상 등록 완료 — 아래 버튼으로 테스트하세요';
+          showTestBtns(true);
+        } else {
+          // 브라우저 구독 없거나 DB 미저장 → 재등록 유도
+          showTestBtns(false);
+          if (localSub && !savedInDB) {
+            msg.style.color = '#e65100';
+            msg.textContent = '⚠️ DB에 저장되지 않았습니다. 아래 버튼을 다시 눌러 재등록하세요.';
+          }
         }
       } catch (_) {}
     }
@@ -1389,16 +1393,18 @@
       const btn = document.getElementById('btn-push-subscribe');
       const msg = document.getElementById('push-status-msg');
       btn.disabled = true; btn.textContent = '처리 중…';
-      msg.textContent = '';
+      msg.textContent = ''; showTestBtns(false);
       try {
-        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window))
           throw new Error('이 브라우저는 Web Push를 지원하지 않습니다.');
-        }
+
         const vapidData = await wisdomAPI.request('/api/config/vapid');
-        if (!vapidData.publicKey) throw new Error('서버 VAPID 설정 오류');
+        if (!vapidData.publicKey) throw new Error('서버 VAPID 키 오류');
+
         const sw = await navigator.serviceWorker.ready;
         const existing = await sw.pushManager.getSubscription();
         if (existing) await existing.unsubscribe();
+
         const sub = await sw.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(vapidData.publicKey),
@@ -1409,22 +1415,36 @@
           body: JSON.stringify({ endpoint: subJson.endpoint, keys: subJson.keys }),
         });
         if (!res.success) throw new Error(res.error || '구독 저장 실패');
+
         btn.textContent = '브라우저 알림 허용됨 ✓';
-        btn.style.background = '#e8f5e9'; btn.style.color = '#2e7d32';
-        btn.style.border = '1px solid #a5d6a7';
-        msg.style.color = '#2e7d32';
-        msg.textContent = '설정 완료! 지정한 시간에 알림이 옵니다';
-        btn.disabled = false;
-        const testBtn = document.getElementById('btn-push-test');
-        if (testBtn) testBtn.style.display = 'block';
+        btn.style.cssText = 'width:100%;padding:9px;background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7;border-radius:8px;cursor:pointer;font-size:0.86em;font-weight:600;';
+        msg.style.color = '#2e7d32'; msg.textContent = '등록 완료! 아래 테스트 버튼으로 확인하세요';
+        btn.disabled = false; showTestBtns(true);
       } catch (err) {
         msg.style.color = '#c62828';
         msg.textContent = err.name === 'NotAllowedError'
-          ? '알림 권한이 차단되었습니다. 브라우저 주소창 좌측 🔒 아이콘 → 알림 허용'
-          : (err.message || '알림 설정에 실패했습니다.');
+          ? '알림이 차단됨 — 브라우저 주소창 🔒 → 알림 허용'
+          : (err.message || '알림 설정 실패');
         btn.textContent = '브라우저 알림 허용하기';
-        btn.style.background = ''; btn.style.color = '';
+        btn.style.cssText = 'width:100%;padding:9px;background:#3e2820;color:#f5e9d8;border:none;border-radius:8px;cursor:pointer;font-size:0.86em;font-weight:600;';
         btn.disabled = false;
+      }
+    }
+
+    // 서버 경유 없이 브라우저 직접 알림 표시 (암호화 우회 테스트)
+    async function testLocalNotification() {
+      const msg = document.getElementById('push-status-msg');
+      try {
+        const sw = await navigator.serviceWorker.ready;
+        await sw.showNotification('📚 브라우저 알림 테스트', {
+          body: '브라우저 알림이 정상 작동합니다!',
+          icon: '/og-image.png', tag: 'local-test',
+        });
+        msg.style.color = '#2e7d32';
+        msg.textContent = '✓ 로컬 알림 발송 — 알림이 보이면 브라우저는 정상, 서버 경유 테스트도 해보세요';
+      } catch (err) {
+        msg.style.color = '#c62828';
+        msg.textContent = '로컬 알림 실패: ' + err.message;
       }
     }
 
@@ -1432,19 +1452,31 @@
       const btn = document.getElementById('btn-push-test');
       const msg = document.getElementById('push-status-msg');
       btn.disabled = true; btn.textContent = '발송 중…';
+      msg.textContent = '';
       try {
         const res = await wisdomAPI.request('/api/push/test', { method: 'POST' });
         if (res.success) {
           msg.style.color = '#2e7d32';
-          msg.textContent = '✓ 테스트 알림 발송! 잠시 후 브라우저 알림을 확인하세요.';
+          msg.textContent = '✓ 서버 발송 완료! 수 초 내에 알림이 표시됩니다';
+        } else if (res.stage === 'encryption') {
+          msg.style.color = '#e65100';
+          msg.textContent = '⚠️ 구독은 유효하나 암호화 오류 — 재등록 후 다시 시도하세요';
+          // 자동 재등록 유도
+          document.getElementById('btn-push-subscribe').textContent = '브라우저 알림 재등록하기';
+        } else if (res.stage === 'subscription') {
+          msg.style.color = '#c62828';
+          msg.textContent = '❌ 구독 만료 — "브라우저 알림 허용하기"를 다시 눌러 재등록하세요';
+          showTestBtns(false);
+          document.getElementById('btn-push-subscribe').textContent = '브라우저 알림 재등록하기';
         } else {
-          throw new Error(res.error || '발송 실패');
+          msg.style.color = '#c62828';
+          msg.textContent = res.error || '알 수 없는 오류';
         }
       } catch (err) {
         msg.style.color = '#c62828';
-        msg.textContent = err.message || '테스트 실패';
+        msg.textContent = err.message || '서버 연결 실패';
       }
-      btn.disabled = false; btn.textContent = '📨 테스트 알림 보내기';
+      btn.disabled = false; btn.textContent = '📡 서버 경유 알림 테스트';
     }
 
     // ── 카톡 알림 설정 모달 ──

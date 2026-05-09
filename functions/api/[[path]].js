@@ -802,27 +802,70 @@ async function handlePushTest(request, env) {
   const tokenUserId = getUserIdFromToken(request);
   if (!tokenUserId) return jsonResponse({ error: 'Unauthorized' }, 401);
 
-  const row = await env.DB.prepare(
-    'SELECT push_endpoint, push_p256dh, push_auth FROM users WHERE id=?'
-  ).bind(tokenUserId).first();
+  let row;
+  try {
+    row = await env.DB.prepare(
+      'SELECT push_endpoint, push_p256dh, push_auth FROM users WHERE id=?'
+    ).bind(tokenUserId).first();
+  } catch (err) {
+    return jsonResponse({ error: 'DB 오류: ' + err.message }, 500);
+  }
 
   if (!row?.push_endpoint) {
-    return jsonResponse({ error: '브라우저 알림 구독 정보가 없습니다. 먼저 알림 설정에서 허용해주세요.' }, 400);
+    return jsonResponse({ error: '구독 정보 없음 — 알림 설정에서 "브라우저 알림 허용하기"를 먼저 눌러주세요.' }, 400);
   }
   if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY) {
-    return jsonResponse({ error: 'VAPID 키가 설정되지 않았습니다.' }, 500);
+    return jsonResponse({ error: 'VAPID 키 미설정 (Cloudflare 시크릿 확인 필요)' }, 500);
   }
 
+  const vapidPriv = env.VAPID_PRIVATE_KEY.trim();
+  const vapidPub  = env.VAPID_PUBLIC_KEY.trim();
+  const vapidSub  = (env.VAPID_SUBJECT || 'mailto:info@99wisdombook.org').trim();
+
+  // 1단계: 암호화된 푸시 시도
   try {
     await sendWebPush(
       row.push_endpoint, row.push_p256dh, row.push_auth,
-      { title: '📚 테스트 알림', body: '웹 푸시 알림이 정상 작동합니다!', url: '/?autoopen=1' },
-      env.VAPID_PRIVATE_KEY.trim(), env.VAPID_PUBLIC_KEY.trim(),
-      (env.VAPID_SUBJECT || 'mailto:info@99wisdombook.org').trim()
+      { title: '📚 오늘의 Daily Wisdom', body: '웹 푸시 알림이 정상 작동합니다!', url: '/?autoopen=1' },
+      vapidPriv, vapidPub, vapidSub
     );
-    return jsonResponse({ success: true, message: '테스트 알림을 발송했습니다.' });
-  } catch (err) {
-    return jsonResponse({ success: false, error: err.message, endpoint_prefix: row.push_endpoint?.slice(0, 40) }, 500);
+    return jsonResponse({ success: true, message: '암호화 푸시 발송 완료' });
+  } catch (encErr) {
+    // 2단계: 암호화 실패 시 빈 body로 재시도 (서비스워커 연결 확인)
+    try {
+      const origin = new URL(row.push_endpoint).origin;
+      const jwt = await createVapidJwt(vapidPriv, vapidPub, origin, vapidSub);
+      const plainRes = await fetch(row.push_endpoint, {
+        method: 'POST',
+        headers: {
+          'Authorization': `vapid t=${jwt},k=${vapidPub}`,
+          'TTL': '60',
+        },
+      });
+      const plainStatus = plainRes.status;
+      if (plainStatus === 200 || plainStatus === 201) {
+        return jsonResponse({
+          success: false,
+          stage: 'encryption',
+          error: '구독 연결은 정상이지만 암호화 오류: ' + encErr.message,
+          hint: '관리자에게 문의하세요 (VAPID 키 불일치 가능성)',
+        });
+      } else {
+        const txt = await plainRes.text().catch(() => '');
+        return jsonResponse({
+          success: false,
+          stage: 'subscription',
+          error: `구독 엔드포인트 오류 (${plainStatus}) — 알림 설정에서 재등록 필요`,
+          detail: txt.slice(0, 200),
+        }, 500);
+      }
+    } catch (plainErr) {
+      return jsonResponse({
+        success: false,
+        stage: 'network',
+        error: '푸시 서버 연결 실패: ' + plainErr.message,
+      }, 500);
+    }
   }
 }
 
