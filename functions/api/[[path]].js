@@ -95,6 +95,8 @@ export async function onRequest(context) {
       return handlePushSubscribe(request, env);
     if (path === '/api/push/unsubscribe' && method === 'POST')
       return handlePushUnsubscribe(request, env);
+    if (path === '/api/push/test' && method === 'POST')
+      return handlePushTest(request, env);
 
     // Users
     if (path === '/api/users' && method === 'GET') return handleGetUsers(request, env);
@@ -792,4 +794,32 @@ async function handlePushUnsubscribe(request, env) {
     ).bind(tokenUserId).run();
   } catch (_) {}
   return jsonResponse({ success: true });
+}
+
+async function handlePushTest(request, env) {
+  const tokenUserId = getUserIdFromToken(request);
+  if (!tokenUserId) return jsonResponse({ error: 'Unauthorized' }, 401);
+
+  const row = await env.DB.prepare(
+    'SELECT push_endpoint, push_p256dh, push_auth FROM users WHERE id=?'
+  ).bind(tokenUserId).first();
+
+  if (!row?.push_endpoint) {
+    return jsonResponse({ error: '브라우저 알림 구독 정보가 없습니다. 먼저 알림 설정에서 허용해주세요.' }, 400);
+  }
+  if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY) {
+    return jsonResponse({ error: 'VAPID 키가 설정되지 않았습니다.' }, 500);
+  }
+
+  try {
+    await sendWebPush(
+      row.push_endpoint, row.push_p256dh, row.push_auth,
+      { title: '📚 테스트 알림', body: '웹 푸시 알림이 정상 작동합니다!', url: '/?autoopen=1' },
+      env.VAPID_PRIVATE_KEY.trim(), env.VAPID_PUBLIC_KEY.trim(),
+      (env.VAPID_SUBJECT || 'mailto:info@99wisdombook.org').trim()
+    );
+    return jsonResponse({ success: true, message: '테스트 알림을 발송했습니다.' });
+  } catch (err) {
+    return jsonResponse({ success: false, error: err.message }, 500);
+  }
 }
