@@ -573,16 +573,18 @@ async function handleKakaoTest(request, env) {
   if (!user || user.role !== 'admin') return jsonResponse({ error: 'Admin only' }, 403);
   if (!user.kakao_refresh_token) return jsonResponse({ error: '카카오 재로그인 필요' }, 400);
 
-  // 오늘의 지혜 조회
+  // 오늘의 지혜 조회 (앱과 동일한 FNV32 로직으로 사용자별 개인화)
   let wisdomTitle = '오늘의 한 문장이 기다리고 있어요';
   try {
     const wRes = await fetch('https://99wisdombook.org/data/wisdom.json');
     const wData = await wRes.json();
     const items = wData.items || [];
     if (items.length) {
-      const dk = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-      const idx = parseInt(dk, 10) % items.length;
-      wisdomTitle = items[idx]?.title || wisdomTitle;
+      const dk = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+      const actor = 'u-' + user.id;
+      let h = 2166136261 >>> 0;
+      for (const c of `${dk}|${actor}`) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; }
+      wisdomTitle = items[h % items.length]?.title || wisdomTitle;
     }
   } catch (_) {}
 
@@ -644,17 +646,32 @@ async function handleNotifyCron(request, env) {
   }
 
   // 오늘의 지혜 데이터 조회
-  let wisdomTitle = '오늘의 한 문장이 기다리고 있어요';
+  let wisdomItems = [];
+  const kstDateKey = new Date(now.getTime() + 9 * 3600 * 1000)
+    .toISOString().slice(0, 10); // "YYYY-MM-DD" KST 기준
   try {
     const wRes = await fetch('https://99wisdombook.org/data/wisdom.json');
     const wData = await wRes.json();
-    const items = wData.items || [];
-    if (items.length) {
-      const dk = now.toISOString().slice(0, 10).replace(/-/g, '');
-      const idx = parseInt(dk, 10) % items.length;
-      wisdomTitle = items[idx]?.title || wisdomTitle;
-    }
+    wisdomItems = wData.items || [];
   } catch (_) {}
+
+  // index.html과 동일한 FNV32 해시 함수
+  function fnv32(s) {
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619) >>> 0;
+    }
+    return h >>> 0;
+  }
+
+  // 사용자별 오늘의 문장 인덱스 계산 (앱과 동일한 로직)
+  function getUserWisdomTitle(userId) {
+    if (!wisdomItems.length) return '오늘의 한 문장이 기다리고 있어요';
+    const actor = 'u-' + userId;
+    const idx = fnv32(`${kstDateKey}|${actor}`) % wisdomItems.length;
+    return wisdomItems[idx]?.title || '오늘의 한 문장이 기다리고 있어요';
+  }
 
   const results = { sent: 0, push_sent: 0, skipped: 0, errors: [] };
 
@@ -664,6 +681,9 @@ async function handleNotifyCron(request, env) {
       const days = user.notify_days.split(',').map(Number);
       if (!days.includes(kstDay)) { results.skipped++; continue; }
     }
+
+    // 사용자별 개인화된 오늘의 문장
+    const wisdomTitle = getUserWisdomTitle(user.id);
 
     // ── 카카오 알림 ──
     try {
