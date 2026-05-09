@@ -554,12 +554,18 @@
     <!-- 알림 테스트 -->
     <div class="table-container" style="margin-bottom: 24px; padding: 20px 24px;">
       <h2 style="margin: 0 0 16px; font-size: 1.1rem;">📣 알림 테스트</h2>
-      <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+      <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
         <button class="btn btn-create" onclick="testKakaoNotify()" id="btn-kakao-test">
-          💬 카카오 알림 테스트 발송
+          💬 카카오 알림 테스트
         </button>
-        <span id="kakao-test-result" style="font-size: 0.9rem; color: #666;"></span>
+        <button class="btn" onclick="testCron('reminder')" id="btn-reminder-test" style="background:#e65100;color:#fff;border:none;">
+          🔥 리마인더 테스트
+        </button>
+        <button class="btn" onclick="testCron('weekly')" id="btn-weekly-test" style="background:#1565c0;color:#fff;border:none;">
+          📊 주간 리포트 테스트
+        </button>
       </div>
+      <div id="kakao-test-result" style="font-size: 0.9rem; color: #666;"></div>
     </div>
 
     <!-- Members Table -->
@@ -1040,6 +1046,29 @@
         result.style.color = '#c62828';
       } finally {
         btn.disabled = false;
+      }
+    }
+
+    // Cron 직접 실행 테스트
+    async function testCron(type) {
+      const result = document.getElementById('kakao-test-result');
+      result.textContent = `${type} 실행 중...`;
+      result.style.color = '#666';
+      try {
+        const cronSecret = prompt('CRON_SECRET 입력:');
+        if (!cronSecret) { result.textContent = '취소됨'; return; }
+        const res = await fetch(`/api/notify/${type}`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${cronSecret}` },
+        });
+        const data = await res.json();
+        result.textContent = data.success
+          ? `✅ 완료: ${data.sent}명 발송, 오류 ${data.errors?.length || 0}건`
+          : `❌ 실패: ${data.error}`;
+        result.style.color = data.success ? '#2e7d32' : '#c62828';
+      } catch (e) {
+        result.textContent = `❌ 오류: ${e.message}`;
+        result.style.color = '#c62828';
       }
     }
 

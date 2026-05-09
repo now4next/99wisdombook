@@ -78,6 +78,7 @@
       background: linear-gradient(160deg, #6d4c41 0%, #3e2820 100%);
       color: #f5e9d8;
       padding: 52px 36px 44px;
+      position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -697,6 +698,41 @@
     }
     .toggle-switch input:checked + .toggle-slider { background:#3e2820; }
     .toggle-switch input:checked + .toggle-slider::before { transform:translateX(22px); }
+
+    /* ── 커버 스트릭 뱃지 ── */
+    .cover-streak {
+      position: absolute;
+      top: 14px; right: 14px;
+      background: rgba(255,255,255,0.18);
+      backdrop-filter: blur(6px);
+      color: #fff;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.8em;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      display: none;
+      pointer-events: none;
+    }
+
+    /* ── 공유 바텀시트 ── */
+    .share-option-btn {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 16px;
+      border: 1px solid #e8ddd0; border-radius: 12px;
+      background: #fff; cursor: pointer;
+      font-size: 0.95em; color: #3e2820; font-weight: 500;
+      width: 100%; text-align: left;
+      transition: background 0.15s;
+    }
+    .share-option-btn:active { background: #f5ede0; }
+    .share-option-icon {
+      width: 42px; height: 42px; border-radius: 11px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25em; flex-shrink: 0;
+    }
+    .share-option-label { display: flex; flex-direction: column; gap: 2px; }
+    .share-option-label small { font-size: 0.75em; color: #999; font-weight: 400; }
   </style>
 </head>
 <body>
@@ -706,6 +742,7 @@
 
     <!-- 표지 -->
     <div class="card-cover" id="card-cover" role="button" tabindex="0" aria-label="오늘의 한 문장 펼치기">
+      <span class="cover-streak" id="cover-streak"></span>
       <span class="cover-label">Daily Wisdom</span>
       <span class="cover-date" id="cover-date"></span>
       <div class="cover-ornament">𝕎</div>
@@ -928,6 +965,37 @@
     </div>
   </div>
 
+  <!-- 공유 바텀시트 -->
+  <div class="modal-backdrop" id="share-sheet" style="display:none;z-index:1200;">
+    <div class="modal-sheet" style="max-width:380px;" onclick="event.stopPropagation()">
+      <div class="modal-handle"></div>
+      <h2 class="modal-title" style="font-size:1.05em;margin-bottom:16px;">공유하기</h2>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button class="share-option-btn" onclick="shareToKakao()">
+          <span class="share-option-icon" style="background:#FEE500;">💬</span>
+          <span class="share-option-label">
+            카카오톡으로 공유
+            <small>친구에게 오늘의 문장 전달</small>
+          </span>
+        </button>
+        <button class="share-option-btn" onclick="shareToInsta()">
+          <span class="share-option-icon" style="background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);">📸</span>
+          <span class="share-option-label">
+            인스타 이미지 저장
+            <small>이미지를 길게 눌러 저장 후 공유</small>
+          </span>
+        </button>
+        <button class="share-option-btn" onclick="copyShareLink()">
+          <span class="share-option-icon" style="background:#f0ebe4;">🔗</span>
+          <span class="share-option-label">
+            링크 복사
+            <small>99wisdombook.org 주소 복사</small>
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- 공유 토스트 -->
   <div class="share-toast" id="share-toast"></div>
 
@@ -1068,23 +1136,63 @@
     }
     const showShareToast = showToast; // 하위 호환
 
-    async function shareWisdom(item) {
-      const siteUrl = window.location.origin;
-      const shareText = `오늘의 지혜 📖\n"${item.title}"\n\n${item.subtitle || ''}\n\n99 Wisdom Book에서 오늘의 한 문장을 만나보세요 →`;
-      if (navigator.share) {
-        try {
-          await navigator.share({ title: item.title, text: shareText, url: siteUrl });
-          return;
-        } catch(e) {
-          if (e.name === 'AbortError') return;
-        }
-      }
+    // ── 공유 바텀시트 ──
+    let _shareItem = null;
+
+    function shareWisdom(item) {
+      _shareItem = item;
+      const sheet = document.getElementById('share-sheet');
+      sheet.style.display = 'flex';
+      sheet.onclick = (e) => { if (e.target === sheet) closeShareSheet(); };
+    }
+
+    function closeShareSheet() {
+      document.getElementById('share-sheet').style.display = 'none';
+    }
+
+    function shareToKakao() {
+      if (!_shareItem) return;
+      closeShareSheet();
       try {
-        await navigator.clipboard.writeText(`${shareText}\n${siteUrl}`);
-        showShareToast('클립보드에 복사되었습니다 ✓');
-      } catch(_) {
-        showShareToast('공유 링크: ' + siteUrl);
+        Kakao.Share.sendDefault({
+          objectType: 'feed',
+          content: {
+            title: `"${_shareItem.title}"`,
+            description: '99 Wisdom Book — 살아본 뒤에야 비로소 읽히는 문장들',
+            imageUrl: 'https://99wisdombook.org/og-image.png',
+            link: {
+              mobileWebUrl: 'https://99wisdombook.org/?autoopen=1',
+              webUrl: 'https://99wisdombook.org/?autoopen=1',
+            },
+          },
+          buttons: [{
+            title: '지혜의 문장 읽기',
+            link: {
+              mobileWebUrl: 'https://99wisdombook.org/?autoopen=1',
+              webUrl: 'https://99wisdombook.org/?autoopen=1',
+            },
+          }],
+        });
+      } catch(e) {
+        showToast('카카오 공유를 사용할 수 없습니다.');
       }
+    }
+
+    function shareToInsta() {
+      if (!_shareItem) return;
+      closeShareSheet();
+      // 정사각형 SVG 카드를 새 탭에서 열어 저장 유도
+      const imgUrl = `/api/wisdom/card?t=${encodeURIComponent(_shareItem.title)}&sq=1`;
+      window.open(imgUrl, '_blank');
+      showToast('이미지를 길게 눌러 저장 후 인스타에 공유하세요 📸');
+    }
+
+    function copyShareLink() {
+      closeShareSheet();
+      const url = `${location.origin}/?autoopen=1`;
+      navigator.clipboard.writeText(url)
+        .then(() => showToast('링크가 복사되었습니다 ✓'))
+        .catch(() => showToast('링크: ' + url));
     }
 
     // ── 스트릭 API ──
@@ -1105,6 +1213,12 @@
           document.getElementById('streak-count').textContent = data.streak_count;
           badge.hidden = false;
           if (data.is_milestone && !data.already_counted) showMilestone(data.streak_count);
+          // 커버 뱃지 & 로컬 저장
+          if (data.streak_count >= 2) {
+            localStorage.setItem('lastStreak', data.streak_count);
+            const cs = document.getElementById('cover-streak');
+            if (cs) { cs.textContent = `🔥 ${data.streak_count}일 연속`; cs.style.display = 'block'; }
+          }
         }
       } catch(_) {}
     }
@@ -1479,6 +1593,12 @@
 
     // ── 초기화 ──
     window.addEventListener('DOMContentLoaded', () => {
+      // 캐시된 스트릭 커버 표시 (로그인 전에도 어제 기록 보여줌)
+      const lastStreak = parseInt(localStorage.getItem('lastStreak') || '0');
+      if (lastStreak >= 2) {
+        const cs = document.getElementById('cover-streak');
+        if (cs) { cs.textContent = `🔥 ${lastStreak}일 연속`; cs.style.display = 'block'; }
+      }
       initWisdom();
 
       // ?autoopen=1 → 카톡 알림 링크로 진입 시 자동 펼치기

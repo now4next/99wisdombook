@@ -87,6 +87,10 @@ export async function onRequest(context) {
       return handleUpdateNotify(path.split('/')[3], request, env);
     if (path === '/api/notify/cron' && method === 'POST')
       return handleNotifyCron(request, env);
+    if (path === '/api/notify/reminder' && method === 'POST')
+      return handleReminderCron(request, env);
+    if (path === '/api/notify/weekly' && method === 'POST')
+      return handleWeeklyCron(request, env);
     if (path === '/api/notify/kakao-test' && method === 'POST')
       return handleKakaoTest(request, env);
 
@@ -601,6 +605,123 @@ async function handleKakaoTest(request, env) {
   }
 }
 
+// ── 스트릭 끊김 방지 리마인더 (저녁 8시 KST) ─────────────────
+async function handleReminderCron(request, env) {
+  const authHeader = request.headers.get('Authorization') || '';
+  const cronSecret = (env.CRON_SECRET || '').trim();
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`)
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+
+  const today = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+
+  // 오늘 읽지 않았고, 스트릭이 있고, 카카오 연동된 사용자
+  let users = [];
+  try {
+    const r = await env.DB.prepare(`
+      SELECT id, kakao_refresh_token, streak_count
+      FROM users
+      WHERE notify_enabled = 1
+        AND kakao_refresh_token IS NOT NULL
+        AND streak_count >= 1
+        AND (last_wisdom_date IS NULL OR last_wisdom_date != ?)
+    `).bind(today).all();
+    users = r.results || [];
+  } catch (err) {
+    return jsonResponse({ error: err.message }, 500);
+  }
+
+  const results = { sent: 0, errors: [] };
+  for (const user of users) {
+    try {
+      const { access_token, new_refresh_token } = await refreshKakaoAccessToken(user.kakao_refresh_token, env);
+      if (new_refresh_token)
+        await env.DB.prepare('UPDATE users SET kakao_refresh_token = ? WHERE id = ?').bind(new_refresh_token, user.id).run();
+
+      const streak = user.streak_count || 1;
+      const url = 'https://99wisdombook.org/?autoopen=1';
+      const link = { web_url: url, mobile_web_url: url };
+      const template = {
+        object_type: 'feed',
+        content: {
+          title: `🔥 ${streak}일 연속 독서 스트릭이 끊길 뻔했어요!`,
+          description: '오늘의 한 문장, 아직 읽지 않으셨네요. 지금 바로 확인해보세요.',
+          image_url: 'https://99wisdombook.org/og-image.png',
+          image_width: 1200, image_height: 630,
+          link,
+        },
+        buttons: [{ title: '오늘의 문장 읽기', link }],
+      };
+      const res = await fetch('https://kapi.kakao.com/v2/api/talk/memo/default/send', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${access_token}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ template_object: JSON.stringify(template) }),
+      });
+      if (res.ok) results.sent++;
+      else results.errors.push({ userId: user.id, error: await res.text() });
+    } catch (err) {
+      results.errors.push({ userId: user.id, error: err.message });
+    }
+  }
+  return jsonResponse({ success: true, date: today, total: users.length, ...results });
+}
+
+// ── 주간 리포트 (일요일 저녁) ──────────────────────────────────
+async function handleWeeklyCron(request, env) {
+  const authHeader = request.headers.get('Authorization') || '';
+  const cronSecret = (env.CRON_SECRET || '').trim();
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`)
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+
+  // 카카오 연동 + 스트릭 있는 사용자
+  let users = [];
+  try {
+    const r = await env.DB.prepare(`
+      SELECT id, name, kakao_refresh_token, streak_count
+      FROM users
+      WHERE kakao_refresh_token IS NOT NULL AND streak_count >= 1
+    `).all();
+    users = r.results || [];
+  } catch (err) {
+    return jsonResponse({ error: err.message }, 500);
+  }
+
+  const results = { sent: 0, errors: [] };
+  for (const user of users) {
+    try {
+      const { access_token, new_refresh_token } = await refreshKakaoAccessToken(user.kakao_refresh_token, env);
+      if (new_refresh_token)
+        await env.DB.prepare('UPDATE users SET kakao_refresh_token = ? WHERE id = ?').bind(new_refresh_token, user.id).run();
+
+      const streak = user.streak_count || 0;
+      const name = user.name || '독자';
+      const url = 'https://99wisdombook.org/?autoopen=1';
+      const link = { web_url: url, mobile_web_url: url };
+      const emoji = streak >= 30 ? '🏆' : streak >= 14 ? '🌟' : streak >= 7 ? '🔥' : '📖';
+      const template = {
+        object_type: 'feed',
+        content: {
+          title: `${emoji} ${name}님, 이번 주도 수고하셨어요!`,
+          description: `현재 ${streak}일 연속 독서 중 · 꾸준함이 지혜가 됩니다.`,
+          image_url: 'https://99wisdombook.org/og-image.png',
+          image_width: 1200, image_height: 630,
+          link,
+        },
+        buttons: [{ title: '내일의 문장 미리 보기', link }],
+      };
+      const res = await fetch('https://kapi.kakao.com/v2/api/talk/memo/default/send', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${access_token}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ template_object: JSON.stringify(template) }),
+      });
+      if (res.ok) results.sent++;
+      else results.errors.push({ userId: user.id, error: await res.text() });
+    } catch (err) {
+      results.errors.push({ userId: user.id, error: err.message });
+    }
+  }
+  return jsonResponse({ success: true, total: users.length, ...results });
+}
+
 // ── Cron 엔드포인트 ─────────────────────────────────────────
 async function handleNotifyCron(request, env) {
   // CRON_SECRET 인증
@@ -721,69 +842,84 @@ async function handleNotifyCron(request, env) {
   return jsonResponse({ success: true, kstHour: kstHourAdj, kstMinute: kstMinuteSlot, kstDay, total: users.length, ...results, debug_notify_users: debugUsers });
 }
 
-// ── 카카오 알림용 동적 이미지 (SVG 직접 반환) ────
+// ── 카카오/인스타 공유용 동적 이미지 (SVG 직접 반환) ────
 function handleWisdomCard(request) {
   const url = new URL(request.url);
   const text = (url.searchParams.get('t') || '오늘의 한 문장').slice(0, 60);
+  const square = url.searchParams.get('sq') === '1'; // 인스타용 정사각형
 
-  // 줄바꿈 처리: 14자마다 자동 줄바꿈
+  const W = square ? 1080 : 1200;
+  const H = square ? 1080 : 630;
+  const cx = W / 2;
+
+  // 줄바꿈 처리
+  const maxChars = square ? 12 : 14;
   const chars = text.split('');
   const lines = [];
   let line = '';
   for (const ch of chars) {
     line += ch;
-    if (line.length >= 14) { lines.push(line); line = ''; }
+    if (line.length >= maxChars) { lines.push(line); line = ''; }
   }
   if (line) lines.push(line);
 
-  // 줄 수에 따라 폰트 크기 조정
-  const fontSize = lines.length <= 2 ? 58 : lines.length <= 3 ? 50 : 42;
+  // 폰트 크기 조정
+  const fontSize = square
+    ? (lines.length <= 2 ? 72 : lines.length <= 3 ? 60 : 50)
+    : (lines.length <= 2 ? 58 : lines.length <= 3 ? 50 : 42);
   const lineH = fontSize * 1.55;
   const totalTextH = lines.length * lineH;
 
-  // 문장 영역: 헤더(220px) 아래 ~ 하단(610px) 사이 중앙
-  const areaTop = 230;
-  const areaBot = 610;
-  const areaH = areaBot - areaTop;
-  const textStartY = areaTop + (areaH - totalTextH) / 2 + fontSize * 0.85;
+  // 헤더 높이 비율 조정
+  const headerH = square ? 340 : 200;
+  const areaTop = headerH + 30;
+  const areaBot = H - 60;
+  const textStartY = areaTop + (areaBot - areaTop - totalTextH) / 2 + fontSize * 0.85;
+
+  // 헤더 텍스트 크기
+  const titleSize  = square ? 88 : 68;
+  const subtitleSize = square ? 34 : 26;
+  const titleY   = square ? 160 : 105;
+  const subtitleY = square ? 230 : 152;
+  const lineY     = square ? 280 : 185;
+  const lineX1    = square ? 120 : 100;
+  const lineX2    = square ? 960 : 1100;
 
   const tspans = lines.map((l, i) =>
-    `<tspan x="600" dy="${i === 0 ? 0 : lineH}">${escSvg(l)}</tspan>`
+    `<tspan x="${cx}" dy="${i === 0 ? 0 : lineH}">${escSvg(l)}</tspan>`
   ).join('');
 
+  // 인스타용: 하단 URL 표시
+  const urlText = square
+    ? `<text x="${cx}" y="${H - 60}" font-family="Georgia,serif" font-size="30" fill="#c9a96e" text-anchor="middle" opacity="0.8">99wisdombook.org</text>`
+    : '';
+
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
-  <!-- 배경 -->
-  <rect width="1200" height="630" fill="#3e2820"/>
-
-  <!-- ── 헤더 영역 ── -->
-  <text x="600" y="105"
+<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <rect width="${W}" height="${H}" fill="#3e2820"/>
+  <text x="${cx}" y="${titleY}"
     font-family="Georgia,'Times New Roman',serif"
-    font-size="68" font-weight="700"
+    font-size="${titleSize}" font-weight="700"
     fill="#ffffff" text-anchor="middle" letter-spacing="10">DAILY WISDOM</text>
-  <text x="600" y="152"
+  <text x="${cx}" y="${subtitleY}"
     font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif"
-    font-size="26" font-weight="400"
+    font-size="${subtitleSize}" font-weight="400"
     fill="#c9a96e" text-anchor="middle">살아본 뒤에야 비로소 읽히는 문장들</text>
-  <!-- 구분선 -->
-  <line x1="100" y1="185" x2="1100" y2="185" stroke="#c9a96e" stroke-width="1.5" opacity="0.55"/>
-
-  <!-- ── 지혜 문장 (가운데 정렬) ── -->
+  <line x1="${lineX1}" y1="${lineY}" x2="${lineX2}" y2="${lineY}" stroke="#c9a96e" stroke-width="1.5" opacity="0.55"/>
   <text
-    x="600"
-    y="${textStartY}"
+    x="${cx}" y="${textStartY}"
     font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif"
-    font-size="${fontSize}"
-    font-weight="700"
-    fill="#f5e9d8"
-    text-anchor="middle"
-    letter-spacing="-0.5"
+    font-size="${fontSize}" font-weight="700"
+    fill="#f5e9d8" text-anchor="middle" letter-spacing="-0.5"
   >${tspans}</text>
+  ${urlText}
 </svg>`;
 
+  const cd = square ? 'attachment; filename="daily-wisdom.svg"' : 'inline';
   return new Response(svg, {
     headers: {
       'Content-Type': 'image/svg+xml',
+      'Content-Disposition': cd,
       'Cache-Control': 'public, max-age=3600',
       ...corsHeaders,
     },
