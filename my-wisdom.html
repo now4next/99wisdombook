@@ -195,6 +195,84 @@
       background: #fff5f5;
     }
 
+    /* ── 소감 영역 ── */
+    .item-memo {
+      font-size: 0.86em;
+      color: var(--brown-mid);
+      line-height: 1.65;
+      background: #faf3e8;
+      border-left: 3px solid #d9b897;
+      padding: 8px 12px;
+      border-radius: 0 6px 6px 0;
+      margin-top: 2px;
+      white-space: pre-wrap;
+      word-break: keep-all;
+    }
+    .btn-memo {
+      padding: 9px 12px;
+      background: none;
+      border: 1px solid #d9b897;
+      color: var(--brown-mid);
+      border-radius: 7px;
+      font-size: 0.82em;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .btn-memo:hover { background: #faf3e8; border-color: var(--brown-light); }
+    .memo-edit-area {
+      margin-top: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .memo-textarea {
+      width: 100%;
+      min-height: 80px;
+      padding: 10px 12px;
+      border: 1px solid #d9b897;
+      border-radius: 8px;
+      font-family: var(--font-sans);
+      font-size: 0.88em;
+      color: var(--text);
+      background: #fffaf2;
+      resize: vertical;
+      outline: none;
+      line-height: 1.6;
+    }
+    .memo-textarea:focus { border-color: var(--brown-light); box-shadow: 0 0 0 2px rgba(141,110,99,0.12); }
+    .memo-char-count {
+      font-size: 0.75em;
+      color: #bbb;
+      text-align: right;
+      margin-top: -4px;
+    }
+    .memo-edit-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .btn-memo-save {
+      padding: 7px 18px;
+      background: var(--brown-dark);
+      color: #f5e9d8;
+      border: none;
+      border-radius: 7px;
+      font-size: 0.84em;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-memo-save:hover { background: var(--brown); }
+    .btn-memo-cancel {
+      padding: 7px 14px;
+      background: none;
+      border: 1px solid #e0d0c0;
+      color: #a08060;
+      border-radius: 7px;
+      font-size: 0.84em;
+      font-family: var(--font-sans);
+      cursor: pointer;
+    }
+    .btn-memo-cancel:hover { background: #f5ede0; }
+
     /* 로딩 */
     .loading {
       text-align: center;
@@ -321,18 +399,96 @@
       }
     }
 
+    async function saveMemo(chapterId, memoText, cardEl) {
+      const token = getToken();
+      try {
+        const res = await fetch(`/api/wisdom/save/${chapterId}/memo`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ memo: memoText }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          // Update displayed memo
+          let memoEl = cardEl.querySelector('.item-memo');
+          if (memoText) {
+            if (!memoEl) {
+              memoEl = document.createElement('div');
+              memoEl.className = 'item-memo';
+              cardEl.querySelector('.item-date').after(memoEl);
+            }
+            memoEl.textContent = memoText;
+          } else if (memoEl) {
+            memoEl.remove();
+          }
+          // Update memo button label
+          const btnMemo = cardEl.querySelector('.btn-memo');
+          if (btnMemo) btnMemo.textContent = memoText ? '💬 소감 수정' : '💬 소감 남기기';
+          showSnackbar(memoText ? '소감을 저장했습니다.' : '소감을 삭제했습니다.');
+        } else {
+          showSnackbar('저장에 실패했습니다.');
+        }
+      } catch(_) {
+        showSnackbar('서버 연결을 확인해주세요.');
+      }
+    }
+
     function buildCard(item) {
       const el = document.createElement('div');
       el.className = 'wisdom-item';
+      const hasMemo = item.memo && item.memo.trim();
       el.innerHTML = `
         <span class="item-chapter">제 ${item.chapter_id} 장</span>
         <h3 class="item-title">${item.title}</h3>
         <span class="item-date">${formatSavedDate(item.saved_at)}</span>
+        ${hasMemo ? `<div class="item-memo">${item.memo.trim()}</div>` : ''}
         <div class="item-actions">
           <a class="btn-item-read" href="book.html#chapter-${item.chapter_id}">챕터 읽기 →</a>
+          <button class="btn-memo" type="button">${hasMemo ? '💬 소감 수정' : '💬 소감 남기기'}</button>
           <button class="btn-item-remove" type="button">삭제</button>
         </div>
+        <div class="memo-edit-area" hidden>
+          <textarea class="memo-textarea" maxlength="300" placeholder="이 문장과 관련된 나만의 생각이나 경험을 기록해보세요…">${hasMemo ? item.memo.trim() : ''}</textarea>
+          <div class="memo-char-count"><span class="memo-count-num">${hasMemo ? item.memo.trim().length : 0}</span>/300</div>
+          <div class="memo-edit-actions">
+            <button class="btn-memo-cancel" type="button">취소</button>
+            <button class="btn-memo-save" type="button">저장</button>
+          </div>
+        </div>
       `;
+
+      const editArea = el.querySelector('.memo-edit-area');
+      const textarea = el.querySelector('.memo-textarea');
+      const charNum = el.querySelector('.memo-count-num');
+      const btnMemo = el.querySelector('.btn-memo');
+      const btnSave = el.querySelector('.btn-memo-save');
+      const btnCancel = el.querySelector('.btn-memo-cancel');
+
+      textarea.addEventListener('input', () => {
+        charNum.textContent = textarea.value.length;
+      });
+
+      btnMemo.addEventListener('click', () => {
+        editArea.hidden = false;
+        textarea.focus();
+        btnMemo.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+
+      btnCancel.addEventListener('click', () => {
+        editArea.hidden = true;
+        // restore textarea to current saved value
+        const curMemo = el.querySelector('.item-memo');
+        textarea.value = curMemo ? curMemo.textContent : '';
+        charNum.textContent = textarea.value.length;
+      });
+
+      btnSave.addEventListener('click', async () => {
+        btnSave.disabled = true;
+        await saveMemo(item.chapter_id, textarea.value.trim(), el);
+        editArea.hidden = true;
+        btnSave.disabled = false;
+      });
+
       el.querySelector('.btn-item-remove').addEventListener('click', () => removeItem(item.chapter_id, el));
       return el;
     }

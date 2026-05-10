@@ -76,6 +76,9 @@ export async function onRequest(context) {
     if (path.match(/^\/api\/wisdom\/save\/\d+$/) && method === 'DELETE') {
       return handleUnsaveWisdom(path.split('/').pop(), request, env);
     }
+    if (path.match(/^\/api\/wisdom\/save\/\d+\/memo$/) && method === 'PUT') {
+      return handleUpdateMemo(path.split('/')[4], request, env);
+    }
 
     // Wisdom – streak (스트릭)
     if (path === '/api/wisdom/streak' && method === 'POST') return handleStreak(request, env);
@@ -370,7 +373,7 @@ async function handleGetSaved(request, env) {
 
   await ensureSavedWisdomTable(env);
   const result = await env.DB.prepare(
-    'SELECT chapter_id, title, saved_at FROM saved_wisdom WHERE user_id = ? ORDER BY saved_at DESC'
+    'SELECT chapter_id, title, memo, saved_at FROM saved_wisdom WHERE user_id = ? ORDER BY saved_at DESC'
   ).bind(userId).all();
 
   return jsonResponse({ success: true, saved: result.results || [] });
@@ -380,19 +383,42 @@ async function handleSaveWisdom(request, env) {
   const userId = getUserIdFromToken(request);
   if (!userId) return jsonResponse({ error: 'Unauthorized' }, 401);
 
-  const { chapter_id, title } = await request.json();
+  const { chapter_id, title, memo } = await request.json();
   if (!chapter_id || !title) return jsonResponse({ error: 'chapter_id and title required' }, 400);
 
+  const memoText = (memo || '').trim().slice(0, 300);
   await ensureSavedWisdomTable(env);
   try {
     await env.DB.prepare(
-      'INSERT INTO saved_wisdom (user_id, chapter_id, title) VALUES (?, ?, ?)'
-    ).bind(userId, parseInt(chapter_id, 10), title).run();
+      'INSERT INTO saved_wisdom (user_id, chapter_id, title, memo) VALUES (?, ?, ?, ?)'
+    ).bind(userId, parseInt(chapter_id, 10), title, memoText || null).run();
     return jsonResponse({ success: true, message: 'Saved' });
   } catch (err) {
-    if (err.message?.includes('UNIQUE')) return jsonResponse({ success: true, message: 'Already saved' });
+    if (err.message?.includes('UNIQUE')) {
+      // 이미 저장된 경우 memo만 업데이트
+      if (memoText) {
+        await env.DB.prepare(
+          'UPDATE saved_wisdom SET memo = ? WHERE user_id = ? AND chapter_id = ?'
+        ).bind(memoText, userId, parseInt(chapter_id, 10)).run();
+      }
+      return jsonResponse({ success: true, message: 'Already saved' });
+    }
     throw err;
   }
+}
+
+async function handleUpdateMemo(chapterId, request, env) {
+  const userId = getUserIdFromToken(request);
+  if (!userId) return jsonResponse({ error: 'Unauthorized' }, 401);
+
+  const { memo } = await request.json();
+  const memoText = (memo || '').trim().slice(0, 300);
+
+  await env.DB.prepare(
+    'UPDATE saved_wisdom SET memo = ? WHERE user_id = ? AND chapter_id = ?'
+  ).bind(memoText || null, userId, parseInt(chapterId, 10)).run();
+
+  return jsonResponse({ success: true, memo: memoText });
 }
 
 async function handleUnsaveWisdom(chapterId, request, env) {

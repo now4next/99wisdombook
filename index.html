@@ -356,6 +356,87 @@
       transform: translateX(-50%) translateY(0);
     }
 
+    /* 소감 입력 모달 */
+    .memo-save-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(30,18,12,0.55);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 600;
+    }
+    .memo-save-sheet {
+      background: #fffaf2;
+      border-radius: 16px 16px 0 0;
+      padding: 24px 20px 36px;
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      animation: slideUp 0.25s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .memo-save-title {
+      font-family: var(--font-serif, 'Nanum Myeongjo', serif);
+      font-size: 1.05em;
+      color: #3e2820;
+      font-weight: 700;
+    }
+    .memo-save-sub {
+      font-size: 0.82em;
+      color: #8d6e63;
+      margin-top: -4px;
+    }
+    .memo-save-textarea {
+      width: 100%;
+      min-height: 88px;
+      padding: 10px 12px;
+      border: 1px solid #d9b897;
+      border-radius: 8px;
+      font-family: var(--font-sans, 'Noto Sans KR', sans-serif);
+      font-size: 0.9em;
+      color: #2c2118;
+      background: #fff;
+      resize: none;
+      outline: none;
+      line-height: 1.6;
+    }
+    .memo-save-textarea:focus { border-color: #8d6e63; }
+    .memo-save-charcount {
+      font-size: 0.75em;
+      color: #bbb;
+      text-align: right;
+      margin-top: -4px;
+    }
+    .memo-save-actions { display: flex; gap: 10px; }
+    .btn-memo-skip {
+      padding: 11px 16px;
+      background: none;
+      border: 1px solid #e0d0c0;
+      color: #a08060;
+      border-radius: 8px;
+      font-size: 0.9em;
+      font-family: var(--font-sans, sans-serif);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-memo-confirm {
+      flex: 1;
+      padding: 11px 16px;
+      background: #3e2820;
+      color: #f5e9d8;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9em;
+      font-weight: 500;
+      font-family: var(--font-sans, sans-serif);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-memo-confirm:hover { background: #5d4037; }
+
     /* 마일스톤 오버레이 */
     .milestone-overlay {
       position: fixed;
@@ -1032,6 +1113,20 @@
   <!-- 공유 토스트 -->
   <div class="share-toast" id="share-toast"></div>
 
+  <!-- 소감 입력 모달 -->
+  <div class="memo-save-overlay" id="memo-save-modal" hidden>
+    <div class="memo-save-sheet" onclick="event.stopPropagation()">
+      <p class="memo-save-title">💬 이 문장에 소감을 남겨보세요</p>
+      <p class="memo-save-sub">나만의 생각이나 경험을 기록할 수 있어요 (선택)</p>
+      <textarea class="memo-save-textarea" id="memo-save-input" maxlength="300" placeholder="이 문장이 와닿은 이유, 비슷한 경험…"></textarea>
+      <div class="memo-save-charcount"><span id="memo-save-count">0</span>/300</div>
+      <div class="memo-save-actions">
+        <button class="btn-memo-skip" id="btn-memo-skip">건너뛰기</button>
+        <button class="btn-memo-confirm" id="btn-memo-confirm">보관하기</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 마일스톤 오버레이 -->
   <div class="milestone-overlay" id="milestone-overlay" hidden>
     <div class="milestone-box">
@@ -1350,9 +1445,10 @@
       const btn = document.getElementById('btn-save');
       const token = getToken();
       if (!token || currentChapterId === null) return;
-      btn.disabled = true;
-      try {
-        if (isSaved) {
+      if (isSaved) {
+        // 삭제 흐름
+        btn.disabled = true;
+        try {
           const res = await fetch(`/api/wisdom/save/${currentChapterId}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` },
@@ -1366,22 +1462,49 @@
           } else {
             showToast(data.error || '삭제에 실패했습니다.');
           }
+        } catch(err) {
+          showToast(err.message || '서버 연결을 확인해주세요.');
+        }
+        btn.disabled = false;
+      } else {
+        // 보관 흐름 → 소감 입력 모달 먼저 표시
+        showMemoSaveModal();
+      }
+    }
+
+    function showMemoSaveModal() {
+      const modal = document.getElementById('memo-save-modal');
+      const input = document.getElementById('memo-save-input');
+      const counter = document.getElementById('memo-save-count');
+      input.value = '';
+      counter.textContent = '0';
+      modal.hidden = false;
+      setTimeout(() => input.focus(), 100);
+    }
+
+    async function doSaveWisdom(memo) {
+      const btn = document.getElementById('btn-save');
+      const modal = document.getElementById('memo-save-modal');
+      const token = getToken();
+      modal.hidden = true;
+      btn.disabled = true;
+      try {
+        const item = window._wisdomItem;
+        const body = { chapter_id: Number(currentChapterId), title: item?.title || '' };
+        if (memo) body.memo = memo;
+        const res = await fetch('/api/wisdom/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify(body),
+        });
+        const data = await safeJson(res);
+        if (data.success) {
+          isSaved = true;
+          btn.innerHTML = `${IC_BOOKMARK(true)} 보관됨`;
+          btn.classList.add('saved');
+          showToast(memo ? '소감과 함께 보관했습니다! 📝' : '보관함에 저장했습니다.');
         } else {
-          const item = window._wisdomItem;
-          const res = await fetch('/api/wisdom/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ chapter_id: Number(currentChapterId), title: item?.title || '' }),
-          });
-          const data = await safeJson(res);
-          if (data.success) {
-            isSaved = true;
-            btn.innerHTML = `${IC_BOOKMARK(true)} 보관됨`;
-            btn.classList.add('saved');
-            showToast('보관함에 저장했습니다.');
-          } else {
-            showToast(data.error || '저장에 실패했습니다.');
-          }
+          showToast(data.error || '저장에 실패했습니다.');
         }
       } catch(err) {
         showToast(err.message || '서버 연결을 확인해주세요.');
@@ -1700,6 +1823,27 @@
           const cover = document.getElementById('card-cover');
           if (cover) cover.click();
         }, 600);
+      }
+
+      // 소감 입력 모달 버튼 연결
+      const memoInput = document.getElementById('memo-save-input');
+      const memoCount = document.getElementById('memo-save-count');
+      const memoModal = document.getElementById('memo-save-modal');
+      if (memoInput) {
+        memoInput.addEventListener('input', () => {
+          memoCount.textContent = memoInput.value.length;
+        });
+      }
+      document.getElementById('btn-memo-confirm')?.addEventListener('click', () => {
+        doSaveWisdom((memoInput?.value || '').trim());
+      });
+      document.getElementById('btn-memo-skip')?.addEventListener('click', () => {
+        doSaveWisdom('');
+      });
+      if (memoModal) {
+        memoModal.addEventListener('click', (e) => {
+          if (e.target === memoModal) doSaveWisdom('');
+        });
       }
 
       try {

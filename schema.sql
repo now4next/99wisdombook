@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS saved_wisdom (
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     chapter_id INTEGER NOT NULL,
     title TEXT NOT NULL,
+    memo TEXT,
     saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(user_id, chapter_id)
 );
