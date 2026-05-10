@@ -554,14 +554,17 @@
     <!-- 알림 테스트 -->
     <div class="table-container" style="margin-bottom: 24px; padding: 20px 24px;">
       <h2 style="margin: 0 0 16px; font-size: 1.1rem;">📣 알림 테스트</h2>
-      <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
-        <button class="btn btn-create" onclick="testKakaoNotify()" id="btn-kakao-test">
+      <div style="display: flex; gap: 12px; align-items: stretch; flex-wrap: wrap; margin-bottom: 10px;">
+        <button class="btn" onclick="testKakaoNotify()" id="btn-kakao-test"
+          style="background:#2e7d32;color:#fff;padding:10px 20px;">
           💬 카카오 알림 테스트
         </button>
-        <button class="btn" onclick="testCron('reminder')" id="btn-reminder-test" style="background:#e65100;color:#fff;border:none;">
+        <button class="btn" onclick="testCron('reminder')" id="btn-reminder-test"
+          style="background:#e65100;color:#fff;padding:10px 20px;">
           🔥 리마인더 테스트
         </button>
-        <button class="btn" onclick="testCron('weekly')" id="btn-weekly-test" style="background:#1565c0;color:#fff;border:none;">
+        <button class="btn" onclick="testCron('weekly')" id="btn-weekly-test"
+          style="background:#1565c0;color:#fff;padding:10px 20px;">
           📊 주간 리포트 테스트
         </button>
       </div>
