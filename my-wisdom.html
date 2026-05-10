@@ -273,6 +273,107 @@
     }
     .btn-memo-cancel:hover { background: #f5ede0; }
 
+    /* ── 공유 버튼 ── */
+    .item-actions-sub {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .btn-item-share {
+      padding: 9px 14px;
+      background: none;
+      border: 1px solid #b8ccda;
+      color: #4a7a9b;
+      border-radius: 7px;
+      font-size: 0.85em;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .btn-item-share:hover { background: #eef4f8; border-color: #4a7a9b; }
+
+    /* ── 공유 바텀시트 ── */
+    .share-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(30,18,12,0.55);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 800;
+    }
+    .share-sheet {
+      background: var(--cream);
+      border-radius: 16px 16px 0 0;
+      padding: 20px 20px 36px;
+      width: 100%;
+      max-width: 560px;
+      animation: slideUpSheet 0.25s ease;
+    }
+    @keyframes slideUpSheet { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .share-handle {
+      width: 36px;
+      height: 4px;
+      background: #ddd;
+      border-radius: 2px;
+      margin: 0 auto 16px;
+    }
+    .share-title {
+      font-family: var(--font-serif);
+      font-size: 1em;
+      color: var(--brown-dark);
+      margin-bottom: 10px;
+    }
+    .share-preview-box {
+      background: #faf3e8;
+      border-left: 3px solid #d9b897;
+      border-radius: 0 8px 8px 0;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      font-size: 0.88em;
+      color: var(--brown-mid);
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: keep-all;
+      max-height: 100px;
+      overflow: hidden;
+    }
+    .share-options { display: flex; flex-direction: column; gap: 10px; }
+    .share-opt-btn {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 14px;
+      background: none;
+      border: 1px solid #e8ddd2;
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: left;
+      font-family: var(--font-sans);
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .share-opt-btn:hover { background: #faf3e8; border-color: #c9b09a; }
+    .share-opt-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3em;
+      flex-shrink: 0;
+    }
+    .share-opt-label {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 0.9em;
+      color: var(--text);
+      font-weight: 500;
+    }
+    .share-opt-label small { font-size: 0.8em; color: var(--text-muted); font-weight: 400; }
+
     /* 로딩 */
     .loading {
       text-align: center;
@@ -348,6 +449,32 @@
   <!-- 스낵바 -->
   <div class="snackbar" id="snackbar"></div>
 
+  <!-- 공유 바텀시트 -->
+  <div class="share-overlay" id="share-overlay" hidden>
+    <div class="share-sheet" onclick="event.stopPropagation()">
+      <div class="share-handle"></div>
+      <h3 class="share-title">공유하기</h3>
+      <div class="share-preview-box" id="share-preview"></div>
+      <div class="share-options">
+        <button class="share-opt-btn" id="share-kakao-btn">
+          <span class="share-opt-icon" style="background:#FEE500;">💬</span>
+          <span class="share-opt-label">카카오톡으로 공유<small>지혜와 소감을 친구에게 전달</small></span>
+        </button>
+        <button class="share-opt-btn" id="share-copy-btn">
+          <span class="share-opt-icon" style="background:#f0ebe4;">📋</span>
+          <span class="share-opt-label">텍스트 복사<small>문장과 소감을 클립보드에 복사</small></span>
+        </button>
+        <button class="share-opt-btn" id="share-native-btn" style="display:none">
+          <span class="share-opt-icon" style="background:#e8f5e9;">↗</span>
+          <span class="share-opt-label">다른 앱으로 공유<small>메시지·메모 등에 공유</small></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
+          integrity="sha384-TiCUE00h649CAMonG018J2ujOgDKW/kVWlChEuu4jK2vxfAAD0eZxzCKakxg55G4"
+          crossorigin="anonymous"></script>
   <script src="/api-client.js"></script>
   <script>
     function getToken() {
@@ -444,6 +571,9 @@
         ${hasMemo ? `<div class="item-memo">${item.memo.trim()}</div>` : ''}
         <div class="item-actions">
           <a class="btn-item-read" href="book.html#chapter-${item.chapter_id}">챕터 읽기 →</a>
+          <button class="btn-item-share" type="button">📤 공유</button>
+        </div>
+        <div class="item-actions-sub">
           <button class="btn-memo" type="button">${hasMemo ? '💬 소감 수정' : '💬 소감 남기기'}</button>
           <button class="btn-item-remove" type="button">삭제</button>
         </div>
@@ -463,6 +593,7 @@
       const btnMemo = el.querySelector('.btn-memo');
       const btnSave = el.querySelector('.btn-memo-save');
       const btnCancel = el.querySelector('.btn-memo-cancel');
+      const btnShare = el.querySelector('.btn-item-share');
 
       textarea.addEventListener('input', () => {
         charNum.textContent = textarea.value.length;
@@ -476,7 +607,6 @@
 
       btnCancel.addEventListener('click', () => {
         editArea.hidden = true;
-        // restore textarea to current saved value
         const curMemo = el.querySelector('.item-memo');
         textarea.value = curMemo ? curMemo.textContent : '';
         charNum.textContent = textarea.value.length;
@@ -489,8 +619,37 @@
         btnSave.disabled = false;
       });
 
+      btnShare.addEventListener('click', () => {
+        // 현재 DOM에서 최신 소감 읽기 (수정 후 반영)
+        const curMemoEl = el.querySelector('.item-memo');
+        const curMemo = curMemoEl ? curMemoEl.textContent.trim() : '';
+        openShareSheet({ title: item.title, chapter_id: item.chapter_id, memo: curMemo });
+      });
+
       el.querySelector('.btn-item-remove').addEventListener('click', () => removeItem(item.chapter_id, el));
       return el;
+    }
+
+    // ── 공유 기능 ──
+    let _shareItem = null;
+
+    function openShareSheet(item) {
+      _shareItem = item;
+      const preview = document.getElementById('share-preview');
+      if (item.memo) {
+        preview.textContent = `"${item.title}"\n\n💭 ${item.memo}`;
+      } else {
+        preview.textContent = `"${item.title}"`;
+      }
+      // 네이티브 공유 가능 여부 확인
+      document.getElementById('share-native-btn').style.display =
+        navigator.share ? 'flex' : 'none';
+      document.getElementById('share-overlay').hidden = false;
+    }
+
+    function closeShareSheet() {
+      document.getElementById('share-overlay').hidden = true;
+      _shareItem = null;
     }
 
     async function loadStreak() {
@@ -546,6 +705,82 @@
     window.addEventListener('DOMContentLoaded', () => {
       loadSaved();
       loadStreak();
+
+      // Kakao 초기화
+      if (typeof Kakao !== 'undefined' && !Kakao.isInitialized()) {
+        Kakao.init('8f717ec6e0665cf2dcaf585f1afa8af7');
+      }
+
+      // 공유 오버레이 배경 클릭 시 닫기
+      document.getElementById('share-overlay').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('share-overlay')) closeShareSheet();
+      });
+
+      // 카카오 공유
+      document.getElementById('share-kakao-btn').addEventListener('click', () => {
+        if (!_shareItem) return;
+        const item = _shareItem;
+        closeShareSheet();
+        try {
+          if (typeof Kakao === 'undefined' || !Kakao.isInitialized()) {
+            Kakao.init('8f717ec6e0665cf2dcaf585f1afa8af7');
+          }
+          const desc = item.memo
+            ? `💭 "${item.memo}"\n\n99 Wisdom Book`
+            : '99 Wisdom Book — 살아본 뒤에야 비로소 읽히는 문장들';
+          Kakao.Share.sendDefault({
+            objectType: 'feed',
+            content: {
+              title: `"${item.title}"`,
+              description: desc,
+              imageUrl: 'https://99wisdombook.org/og-image.png',
+              link: {
+                mobileWebUrl: 'https://99wisdombook.org/?autoopen=1',
+                webUrl: 'https://99wisdombook.org/?autoopen=1',
+              },
+            },
+            buttons: [{
+              title: '지혜의 문장 읽기',
+              link: {
+                mobileWebUrl: 'https://99wisdombook.org/?autoopen=1',
+                webUrl: 'https://99wisdombook.org/?autoopen=1',
+              },
+            }],
+          });
+        } catch(e) {
+          showSnackbar('카카오 공유를 사용할 수 없습니다.');
+        }
+      });
+
+      // 텍스트 복사
+      document.getElementById('share-copy-btn').addEventListener('click', () => {
+        if (!_shareItem) return;
+        const item = _shareItem;
+        closeShareSheet();
+        const text = item.memo
+          ? `"${item.title}"\n\n💭 나의 소감: ${item.memo}\n\n— 99 Wisdom Book (99wisdombook.org)`
+          : `"${item.title}"\n\n— 99 Wisdom Book (99wisdombook.org)`;
+        navigator.clipboard.writeText(text)
+          .then(() => showSnackbar('클립보드에 복사했습니다 ✓'))
+          .catch(() => showSnackbar('복사에 실패했습니다.'));
+      });
+
+      // 네이티브 공유 (Web Share API)
+      document.getElementById('share-native-btn').addEventListener('click', async () => {
+        if (!_shareItem) return;
+        const item = _shareItem;
+        closeShareSheet();
+        const text = item.memo
+          ? `"${item.title}"\n\n💭 나의 소감: ${item.memo}`
+          : `"${item.title}"`;
+        try {
+          await navigator.share({
+            title: '99 Wisdom Book',
+            text,
+            url: 'https://99wisdombook.org/?autoopen=1',
+          });
+        } catch(_) {}
+      });
     });
   </script>
 </body>
