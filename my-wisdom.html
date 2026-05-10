@@ -730,16 +730,14 @@
             : '99 Wisdom Book — 살아본 뒤에야 비로소 읽히는 문장들';
           // 공유된 문장으로 바로 이동하는 딥링크
           const deepLink = `https://99wisdombook.org/?autoopen=1&ch=${item.chapter_id}`;
-          // 문장이 담긴 카드 이미지 (800×400, Kakao 최적화)
-          const cardImg = `https://99wisdombook.org/api/wisdom/card?t=${encodeURIComponent(item.title)}&kakao=1`;
           Kakao.Share.sendDefault({
             objectType: 'feed',
             content: {
               title: `"${item.title}"`,
               description: desc,
-              imageUrl: cardImg,
-              imageWidth: 800,
-              imageHeight: 400,
+              imageUrl: 'https://99wisdombook.org/og-image.png',
+              imageWidth: 1200,
+              imageHeight: 630,
               link: {
                 mobileWebUrl: deepLink,
                 webUrl: deepLink,
