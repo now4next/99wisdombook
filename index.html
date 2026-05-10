@@ -1577,6 +1577,9 @@
       const dk = todayKey();
       document.getElementById('cover-date').textContent = formatDateKo(dk);
 
+      // ?ch=ID → 친구가 공유한 특정 챕터 딥링크
+      const chParam = new URLSearchParams(window.location.search).get('ch');
+
       let data;
       try {
         const res = await fetch('data/wisdom.json', { cache: 'no-cache' });
@@ -1588,13 +1591,32 @@
       const items = data.items || [];
       if (!items.length) return;
 
+      // 공유 링크로 진입 시 해당 챕터 고정
+      let sharedItem = null;
+      if (chParam) {
+        const chId = parseInt(chParam, 10);
+        sharedItem = items.find(it => Number(it.id) === chId) || null;
+      }
+
       const actor = actorId();
       const REROLL_KEY = `wisdom_reroll_${dk}_${actor}`;
-      const rerolled = localStorage.getItem(REROLL_KEY) === '1';
+      const rerolled = !sharedItem && localStorage.getItem(REROLL_KEY) === '1';
       const baseIdx   = fnv32(`${dk}|${actor}`) % items.length;
       const rerollIdx = fnv32(`${dk}|${actor}|reroll`) % items.length;
 
-      renderWisdom(items[rerolled ? rerollIdx : baseIdx]);
+      // 표시 아이템: 공유 링크면 해당 챕터, 아니면 오늘의 문장
+      const selectedItem = sharedItem || items[rerolled ? rerollIdx : baseIdx];
+      renderWisdom(selectedItem);
+
+      // 공유 링크 진입 시: 커버 뱃지 변경 + 다시뽑기 비활성화
+      if (sharedItem) {
+        const cs = document.getElementById('cover-streak');
+        if (cs) { cs.textContent = '💌 친구 추천 문장'; cs.style.display = 'block'; }
+        const rerollWrap = document.getElementById('btn-reroll');
+        if (rerollWrap) { rerollWrap.hidden = true; }
+        const rerollHintEl = document.getElementById('reroll-hint');
+        if (rerollHintEl) { rerollHintEl.hidden = true; }
+      }
 
       // 표지 → 내용 전환
       const cover = document.getElementById('card-cover');
@@ -1608,7 +1630,7 @@
           try {
             if (wisdomAPI.isLoggedIn()) {
               callStreak();
-              initSaveButton(items[rerolled ? rerollIdx : baseIdx]);
+              initSaveButton(selectedItem);
             }
           } catch(_) {}
         }
@@ -1628,33 +1650,35 @@
         openModal();
       });
 
-      // 공유 버튼
+      // 공유 버튼 (공유 링크로 진입한 경우에도 해당 문장 공유)
       document.getElementById('btn-share').addEventListener('click', () => {
-        const currentItem = items[localStorage.getItem(`wisdom_reroll_${todayKey()}_${actorId()}`) === '1' ? rerollIdx : baseIdx];
-        shareWisdom(currentItem);
+        const shareItem = sharedItem || items[localStorage.getItem(`wisdom_reroll_${todayKey()}_${actorId()}`) === '1' ? rerollIdx : baseIdx];
+        shareWisdom(shareItem);
       });
 
-      // 다시 뽑기
+      // 다시 뽑기 (공유 링크 진입 시 비활성화)
       const rerollBtn  = document.getElementById('btn-reroll');
       const rerollHint = document.getElementById('reroll-hint');
-      function updateReroll() {
-        const used = localStorage.getItem(REROLL_KEY) === '1';
-        rerollBtn.disabled = used;
-        rerollHint.textContent = used
-          ? '오늘은 이미 다시 뽑았습니다. 내일 다시 만나요.'
-          : '하루에 한 번 다시 뽑을 수 있습니다.';
-      }
-      updateReroll();
-      rerollBtn.addEventListener('click', () => {
-        if (localStorage.getItem(REROLL_KEY) === '1') return;
-        localStorage.setItem(REROLL_KEY, '1');
-        renderWisdom(items[rerollIdx]);
+      if (!sharedItem && rerollBtn) {
+        function updateReroll() {
+          const used = localStorage.getItem(REROLL_KEY) === '1';
+          rerollBtn.disabled = used;
+          rerollHint.textContent = used
+            ? '오늘은 이미 다시 뽑았습니다. 내일 다시 만나요.'
+            : '하루에 한 번 다시 뽑을 수 있습니다.';
+        }
         updateReroll();
-        try {
-          if (wisdomAPI.isLoggedIn() && opened) initSaveButton(items[rerollIdx]);
-        } catch(_) {}
-      });
-    }
+        rerollBtn.addEventListener('click', () => {
+          if (localStorage.getItem(REROLL_KEY) === '1') return;
+          localStorage.setItem(REROLL_KEY, '1');
+          renderWisdom(items[rerollIdx]);
+          updateReroll();
+          try {
+            if (wisdomAPI.isLoggedIn() && opened) initSaveButton(items[rerollIdx]);
+          } catch(_) {}
+        });
+      } // end if (!sharedItem && rerollBtn)
+    } // end initWisdom
 
     // ── 서비스 워커 등록 ──
     if ('serviceWorker' in navigator) {
@@ -1817,12 +1841,13 @@
       }
       initWisdom();
 
-      // ?autoopen=1 → 카톡 알림 링크로 진입 시 자동 펼치기
-      if (new URLSearchParams(window.location.search).get('autoopen') === '1') {
+      // ?autoopen=1 또는 ?ch=ID → 자동 펼치기
+      const _urlParams = new URLSearchParams(window.location.search);
+      if (_urlParams.get('autoopen') === '1' || _urlParams.get('ch')) {
         setTimeout(() => {
           const cover = document.getElementById('card-cover');
           if (cover) cover.click();
-        }, 600);
+        }, 700);
       }
 
       // 소감 입력 모달 버튼 연결

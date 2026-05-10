@@ -726,24 +726,30 @@
             Kakao.init('8f717ec6e0665cf2dcaf585f1afa8af7');
           }
           const desc = item.memo
-            ? `💭 "${item.memo}"\n\n99 Wisdom Book`
+            ? `💭 ${item.memo}`
             : '99 Wisdom Book — 살아본 뒤에야 비로소 읽히는 문장들';
+          // 공유된 문장으로 바로 이동하는 딥링크
+          const deepLink = `https://99wisdombook.org/?autoopen=1&ch=${item.chapter_id}`;
+          // 문장이 담긴 카드 이미지 (800×400, Kakao 최적화)
+          const cardImg = `https://99wisdombook.org/api/wisdom/card?t=${encodeURIComponent(item.title)}&kakao=1`;
           Kakao.Share.sendDefault({
             objectType: 'feed',
             content: {
               title: `"${item.title}"`,
               description: desc,
-              imageUrl: 'https://99wisdombook.org/og-image.png',
+              imageUrl: cardImg,
+              imageWidth: 800,
+              imageHeight: 400,
               link: {
-                mobileWebUrl: 'https://99wisdombook.org/?autoopen=1',
-                webUrl: 'https://99wisdombook.org/?autoopen=1',
+                mobileWebUrl: deepLink,
+                webUrl: deepLink,
               },
             },
             buttons: [{
-              title: '지혜의 문장 읽기',
+              title: '이 문장 보러 가기',
               link: {
-                mobileWebUrl: 'https://99wisdombook.org/?autoopen=1',
-                webUrl: 'https://99wisdombook.org/?autoopen=1',
+                mobileWebUrl: deepLink,
+                webUrl: deepLink,
               },
             }],
           });

@@ -965,13 +965,14 @@ function handleWisdomCard(request) {
   const url = new URL(request.url);
   const text = (url.searchParams.get('t') || '오늘의 한 문장').slice(0, 60);
   const square = url.searchParams.get('sq') === '1'; // 인스타용 정사각형
+  const kakao  = url.searchParams.get('kakao') === '1'; // 카카오 공유용 800×400
 
-  const W = square ? 1080 : 1200;
-  const H = square ? 1080 : 630;
+  const W = square ? 1080 : (kakao ? 800 : 1200);
+  const H = square ? 1080 : (kakao ? 400 : 630);
   const cx = W / 2;
 
   // 줄바꿈 처리
-  const maxChars = square ? 12 : 14;
+  const maxChars = square ? 12 : (kakao ? 14 : 14);
   const chars = text.split('');
   const lines = [];
   let line = '';
@@ -984,32 +985,34 @@ function handleWisdomCard(request) {
   // 폰트 크기 조정
   const fontSize = square
     ? (lines.length <= 2 ? 72 : lines.length <= 3 ? 60 : 50)
-    : (lines.length <= 2 ? 58 : lines.length <= 3 ? 50 : 42);
+    : kakao
+      ? (lines.length <= 2 ? 38 : lines.length <= 3 ? 32 : 28)
+      : (lines.length <= 2 ? 58 : lines.length <= 3 ? 50 : 42);
   const lineH = fontSize * 1.55;
   const totalTextH = lines.length * lineH;
 
   // 헤더 높이 비율 조정
-  const headerH = square ? 340 : 200;
-  const areaTop = headerH + 30;
-  const areaBot = H - 60;
+  const headerH = square ? 340 : (kakao ? 110 : 200);
+  const areaTop = headerH + (kakao ? 20 : 30);
+  const areaBot = H - (kakao ? 44 : 60);
   const textStartY = areaTop + (areaBot - areaTop - totalTextH) / 2 + fontSize * 0.85;
 
   // 헤더 텍스트 크기
-  const titleSize  = square ? 88 : 68;
-  const subtitleSize = square ? 34 : 26;
-  const titleY   = square ? 160 : 105;
-  const subtitleY = square ? 230 : 152;
-  const lineY     = square ? 280 : 185;
-  const lineX1    = square ? 120 : 100;
-  const lineX2    = square ? 960 : 1100;
+  const titleSize    = square ? 88 : (kakao ? 44 : 68);
+  const subtitleSize = square ? 34 : (kakao ? 17 : 26);
+  const titleY       = square ? 160 : (kakao ? 62 : 105);
+  const subtitleY    = square ? 230 : (kakao ? 92 : 152);
+  const lineY        = square ? 280 : (kakao ? 110 : 185);
+  const lineX1       = square ? 120 : (kakao ? 60 : 100);
+  const lineX2       = square ? 960 : (kakao ? 740 : 1100);
 
   const tspans = lines.map((l, i) =>
     `<tspan x="${cx}" dy="${i === 0 ? 0 : lineH}">${escSvg(l)}</tspan>`
   ).join('');
 
-  // 인스타용: 하단 URL 표시
-  const urlText = square
-    ? `<text x="${cx}" y="${H - 60}" font-family="Georgia,serif" font-size="30" fill="#c9a96e" text-anchor="middle" opacity="0.8">99wisdombook.org</text>`
+  // 인스타/카카오용: 하단 URL 표시
+  const urlText = (square || kakao)
+    ? `<text x="${cx}" y="${H - (kakao ? 14 : 60)}" font-family="Georgia,serif" font-size="${kakao ? 16 : 30}" fill="#c9a96e" text-anchor="middle" opacity="0.7">99wisdombook.org</text>`
     : '';
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
@@ -1018,7 +1021,7 @@ function handleWisdomCard(request) {
   <text x="${cx}" y="${titleY}"
     font-family="Georgia,'Times New Roman',serif"
     font-size="${titleSize}" font-weight="700"
-    fill="#ffffff" text-anchor="middle" letter-spacing="10">DAILY WISDOM</text>
+    fill="#ffffff" text-anchor="middle" letter-spacing="8">DAILY WISDOM</text>
   <text x="${cx}" y="${subtitleY}"
     font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif"
     font-size="${subtitleSize}" font-weight="400"
