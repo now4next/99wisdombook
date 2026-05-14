@@ -1281,11 +1281,14 @@
       _shareItem = item;
       const sheet = document.getElementById('share-sheet');
       sheet.style.display = 'flex';
+      requestAnimationFrame(() => sheet.classList.add('visible'));
       sheet.onclick = (e) => { if (e.target === sheet) closeShareSheet(); };
     }
 
     function closeShareSheet() {
-      document.getElementById('share-sheet').style.display = 'none';
+      const sheet = document.getElementById('share-sheet');
+      sheet.classList.remove('visible');
+      setTimeout(() => { sheet.style.display = 'none'; }, 320);
     }
 
     function shareToKakao() {
