@@ -971,16 +971,30 @@ function handleWisdomCard(request) {
   const H = square ? 1080 : (kakao ? 400 : 630);
   const cx = W / 2;
 
-  // 줄바꿈 처리
-  const maxChars = square ? 12 : (kakao ? 14 : 14);
-  const chars = text.split('');
+  // 어절(공백) 단위 줄바꿈 — 한 줄에 들어가면 1줄, 길면 단어 경계에서 분리
+  const maxLineLen = square ? 10 : (kakao ? 14 : 15);
+  const words = text.split(' ');
   const lines = [];
-  let line = '';
-  for (const ch of chars) {
-    line += ch;
-    if (line.length >= maxChars) { lines.push(line); line = ''; }
+  let cur = '';
+  for (const word of words) {
+    const test = cur ? `${cur} ${word}` : word;
+    if (test.length <= maxLineLen) {
+      cur = test;
+    } else {
+      if (cur) lines.push(cur);
+      if (word.length > maxLineLen) {
+        // 단어 자체가 너무 길면 글자 단위로 분할
+        for (let i = 0; i < word.length; i += maxLineLen) {
+          const chunk = word.slice(i, i + maxLineLen);
+          if (i + maxLineLen < word.length) lines.push(chunk);
+          else cur = chunk;
+        }
+      } else {
+        cur = word;
+      }
+    }
   }
-  if (line) lines.push(line);
+  if (cur) lines.push(cur);
 
   // 폰트 크기 조정
   const fontSize = square
@@ -1019,9 +1033,9 @@ function handleWisdomCard(request) {
 <svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <rect width="${W}" height="${H}" fill="#3e2820"/>
   <text x="${cx}" y="${titleY}"
-    font-family="Georgia,'Times New Roman',serif"
-    font-size="${titleSize}" font-weight="700"
-    fill="#ffffff" text-anchor="middle" letter-spacing="8">DAILY WISDOM</text>
+    font-family="'Helvetica Neue',Arial,'Apple SD Gothic Neo','Malgun Gothic',sans-serif"
+    font-size="${titleSize}" font-weight="300"
+    fill="#ffffff" text-anchor="middle" letter-spacing="14">DAILY WISDOM</text>
   <text x="${cx}" y="${subtitleY}"
     font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif"
     font-size="${subtitleSize}" font-weight="400"

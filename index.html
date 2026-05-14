@@ -437,6 +437,69 @@
     }
     .btn-memo-confirm:hover { background: #5d4037; }
 
+    /* 인스타 프리뷰 모달 */
+    .insta-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(20,10,5,0.75);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 700;
+    }
+    .insta-sheet {
+      background: #fffaf2;
+      border-radius: 16px 16px 0 0;
+      padding: 20px 20px 36px;
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      animation: slideUpSheet 0.25s ease;
+    }
+    .insta-instruction {
+      font-size: 0.88em;
+      color: #8d6e63;
+      text-align: center;
+      background: #faf3e8;
+      border-radius: 8px;
+      padding: 9px 14px;
+    }
+    .insta-preview-img {
+      width: 100%;
+      max-width: 320px;
+      aspect-ratio: 1/1;
+      display: block;
+      margin: 0 auto;
+      border-radius: 10px;
+      background: #3e2820;
+    }
+    .btn-insta-open {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95em;
+      font-weight: 600;
+      font-family: var(--font-sans, sans-serif);
+      cursor: pointer;
+      letter-spacing: 0.03em;
+    }
+    .btn-insta-close {
+      width: 100%;
+      padding: 11px;
+      background: none;
+      border: 1px solid #e0d0c0;
+      color: #a08060;
+      border-radius: 10px;
+      font-size: 0.9em;
+      font-family: var(--font-sans, sans-serif);
+      cursor: pointer;
+    }
+
     /* 마일스톤 오버레이 */
     .milestone-overlay {
       position: fixed;
@@ -1113,6 +1176,17 @@
   <!-- 공유 토스트 -->
   <div class="share-toast" id="share-toast"></div>
 
+  <!-- 인스타 프리뷰 모달 -->
+  <div class="insta-overlay" id="insta-modal" hidden>
+    <div class="insta-sheet" onclick="event.stopPropagation()">
+      <div class="share-handle" style="width:36px;height:4px;background:#ddd;border-radius:2px;margin:0 auto -4px;"></div>
+      <p class="insta-instruction">📲 이미지를 <strong>길게 눌러 저장</strong>한 뒤 인스타그램에 업로드하세요</p>
+      <img class="insta-preview-img" id="insta-preview-img" src="" alt="Daily Wisdom 카드">
+      <button class="btn-insta-open" id="btn-insta-open">📷 인스타그램 앱 열기</button>
+      <button class="btn-insta-close" onclick="closeInstaSheet()">닫기</button>
+    </div>
+  </div>
+
   <!-- 소감 입력 모달 -->
   <div class="memo-save-overlay" id="memo-save-modal" hidden>
     <div class="memo-save-sheet" onclick="event.stopPropagation()">
@@ -1322,11 +1396,39 @@
     function shareToInsta() {
       if (!_shareItem) return;
       closeShareSheet();
-      // 정사각형 SVG 카드를 새 탭에서 열어 저장 유도
       const imgUrl = `/api/wisdom/card?t=${encodeURIComponent(_shareItem.title)}&sq=1`;
-      window.open(imgUrl, '_blank');
-      showToast('이미지를 길게 눌러 저장 후 인스타에 공유하세요 📸');
+      // 이미지 프리뷰 모달 표시
+      const modal = document.getElementById('insta-modal');
+      const preview = document.getElementById('insta-preview-img');
+      preview.src = imgUrl;
+      modal.hidden = false;
     }
+
+    function closeInstaSheet() {
+      document.getElementById('insta-modal').hidden = true;
+    }
+
+    // 인스타그램 앱 열기 (딥링크 → 앱스토어 fallback)
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('btn-insta-open')?.addEventListener('click', () => {
+        // 인스타 앱 딥링크 시도
+        window.location.href = 'instagram://app';
+        // 1.5초 후 앱이 없으면 스토어로 이동
+        setTimeout(() => {
+          const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+          window.open(
+            isIOS
+              ? 'https://apps.apple.com/app/instagram/id389801252'
+              : 'https://play.google.com/store/apps/details?id=com.instagram.android',
+            '_blank'
+          );
+        }, 1500);
+      });
+      // 배경 클릭 닫기
+      document.getElementById('insta-modal')?.addEventListener('click', (e) => {
+        if (e.target === document.getElementById('insta-modal')) closeInstaSheet();
+      });
+    });
 
     function copyShareLink() {
       closeShareSheet();
