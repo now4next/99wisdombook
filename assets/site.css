@@ -527,12 +527,14 @@ select { cursor: pointer; }
 /* ══════════ 칼럼 머리 — 앵커 문장이 주인공 ══════════
    각 장의 대표 문장(속담)이 독자에게 가장 먼저, 가장 크게 닿도록 한다.
    칼럼 제목은 그 문장을 읽는 '각도'로서 아래에 놓인다. */
-.anchor-hero { margin: 24px 0 18px; }
+.anchor-hero { margin: 22px 0 16px; }
 .anchor-hero-q {
   position: relative;
   font-family: var(--serif); font-weight: 700;
-  font-size: clamp(2rem, 5.6vw, 3.15rem);
-  line-height: 1.32; letter-spacing: -.038em;
+  /* 데스크톱 30.4px = 기존 50.4px의 60%.
+     하한을 1.45rem로 둔 이유: 모바일에서 본문(16.6px)과 붙어 위계가 사라지기 때문. */
+  font-size: clamp(1.45rem, 3.7vw, 1.9rem);
+  line-height: 1.42; letter-spacing: -.03em;
   color: var(--ink); word-break: keep-all;
   padding-left: .55em; text-indent: -.55em;
 }
@@ -545,21 +547,31 @@ select { cursor: pointer; }
   font-family: var(--serif-display); margin-left: .02em;
 }
 
-/* 칼럼 제목 — 앵커 아래, 부 색상으로 각도를 표시 */
-.art-head .art-title {
-  font-family: var(--serif); font-weight: 700;
-  font-size: clamp(1.22rem, 2.9vw, 1.62rem);
-  line-height: 1.45; letter-spacing: -.025em;
-  color: color-mix(in srgb, var(--accent) 82%, #000);
-  margin: 0; padding-left: 17px; position: relative;
+/* 상단은 앵커만 — 여백을 줄이고 구분선으로 본문과 끊는다 */
+.art-head.anchor-only { padding: 44px 0 26px; }
+
+/* 본문 시작부 — 칼럼 제목과 메타.
+   ⚠ .art-head .art-title 로 쓰면 장 페이지(chapter-view) 제목까지
+     줄어드므로 반드시 .art-open 아래로 한정한다. */
+.art-open { margin-bottom: 0; }
+/* 칼럼 제목은 화면에서 감춘다 — 앵커와 리드가 이미 글을 소개하므로 중복.
+   다만 h1 은 검색·스크린리더·공유 카드의 근거이므로 마크업에는 남긴다. */
+.art-open .art-title {
+  position: absolute; width: 1px; height: 1px;
+  margin: -1px; padding: 0; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap; border: 0;
 }
-.art-head .art-title::before {
-  content: ''; position: absolute; left: 0; top: .52em;
-  width: 9px; height: 2px; background: var(--accent);
+.art-open-meta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 9px;
+  font-family: var(--mono); font-size: .67rem; letter-spacing: .03em;
+  color: var(--muted-2);
 }
-.art-head .art-hook {
-  font-family: var(--sans); font-size: 1rem; line-height: 1.85;
-  color: var(--muted); margin-top: 16px; padding-left: 17px;
+.art-open-meta span + span::before { content: '· '; margin-right: 6px; }
+
+/* 리드 — 훅을 본문 첫 문단으로. 구분선 없이 본문으로 이어진다. */
+.art-body .art-lead {
+  font-family: var(--serif); font-size: 1.1rem; line-height: 1.8;
+  color: var(--ink-2); word-break: keep-all; margin-top: 16px;
 }
 
 /* 출처 1개일 때 — 목록 대신 한 줄 */
@@ -576,6 +588,6 @@ select { cursor: pointer; }
 .source-one a { color: var(--muted); border-bottom: 1px solid var(--line); }
 
 @media (max-width: 720px) {
-  .anchor-hero { margin: 18px 0 14px; }
-  .art-head .art-title, .art-head .art-hook { padding-left: 14px; }
+  .anchor-hero { margin: 16px 0 12px; }
+  .anchor-hero-q { line-height: 1.46; }
 }

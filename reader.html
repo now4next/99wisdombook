@@ -18,8 +18,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+KR:wght@400;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/app.css?v=20260922f">
-<link rel="stylesheet" href="/assets/site.css?v=20260922f">
+<link rel="stylesheet" href="/assets/app.css?v=20260922j">
+<link rel="stylesheet" href="/assets/site.css?v=20260922j">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='80'>%F0%9F%8C%BF</text></svg>">
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js" crossorigin="anonymous"></script>
 </head>
@@ -153,24 +153,28 @@
       var html = '';
 
       /* 머리 — 앵커 문장이 주인공, 제목은 그 아래 각도 */
-      html += '<header class="art-head">' +
+      html += '<header class="art-head anchor-only">' +
         '<span class="kicker">제' + partNo + '부 ' + it.chapter_id + '장 · ' + esc(lensKo) + '</span>' +
         (it.anchor_quote
           ? '<div class="anchor-hero">' +
               '<p class="anchor-hero-q">' + esc(it.anchor_quote) + '</p>' +
             '</div>'
           : '') +
-        '<h1 class="art-title">' + esc(it.title) + '</h1>' +
-        (it.hook ? '<p class="art-hook">' + esc(it.hook) + '</p>' : '') +
-        '<div class="art-meta">' +
-          (it.reading_time ? '<span class="pill">⏱ ' + it.reading_time + '분</span>' : '') +
-          (dateStr ? '<span class="pill">' + dateStr + '</span>' : '') +
-          '<span class="tag-soft">' + esc(lensKo) + '</span>' +
-        '</div>' +
       '</header>';
 
-      /* 본문 */
-      html += '<div class="art-body">' + md(it.body_md) + '</div>';
+      /* 본문 — 제목·메타·리드를 본문 시작부로 내린다 */
+      html += '<div class="art-body">' +
+        '<div class="art-open">' +
+          '<h1 class="art-title">' + esc(it.title) + '</h1>' +
+          '<div class="art-open-meta">' +
+            (it.reading_time ? '<span>읽는 시간 ' + it.reading_time + '분</span>' : '') +
+            (dateStr ? '<span>' + dateStr + '</span>' : '') +
+            '<span>' + esc(lensKo) + '</span>' +
+          '</div>' +
+        '</div>' +
+        (it.hook ? '<p class="art-lead">' + esc(it.hook) + '</p>' : '') +
+        md(it.body_md) +
+      '</div>';
 
       /* 실천 */
       if (it.action) {
