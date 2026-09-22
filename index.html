@@ -17,6 +17,20 @@
   }
 
   /* ── 발행된 칼럼 목록 ── */
+
+  /* 렌즈별 라인아트 — 카드가 한눈에 구분되도록 */
+  var LENS_ART = {
+    origin:     '<path d="M20 78V30a8 8 0 018-8h28a8 8 0 018 8v48"/><path d="M20 78h52M34 40h28M34 54h20"/>',
+    science:    '<circle cx="50" cy="50" r="10"/><ellipse cx="50" cy="50" rx="34" ry="14"/><ellipse cx="50" cy="50" rx="34" ry="14" transform="rotate(60 50 50)"/>',
+    history:    '<circle cx="50" cy="50" r="30"/><path d="M50 28v22l16 10"/><path d="M76 24l-8 8"/>',
+    person:     '<circle cx="50" cy="38" r="14"/><path d="M24 80c0-14 12-24 26-24s26 10 26 24"/>',
+    business:   '<path d="M22 76h56M32 76V50M48 76V34M64 76V44"/><path d="M28 32l16 10 14-16 14 8"/>',
+    daily:      '<circle cx="50" cy="50" r="28"/><path d="M50 32v18l12 8"/><path d="M22 22l8 8M78 22l-8 8"/>',
+    counter:    '<path d="M28 34h44M28 34l12-12M28 34l12 12"/><path d="M72 66H28M72 66L60 54M72 66L60 78"/>',
+    eastwest:   '<circle cx="50" cy="50" r="28"/><path d="M50 22a28 28 0 000 56 14 14 0 010-56"/>',
+    practice:   '<rect x="26" y="22" width="48" height="56" rx="6"/><path d="M38 42l8 8 16-16M38 62h24"/>',
+    reflection: '<circle cx="50" cy="44" r="20"/><path d="M50 64v16M34 80h32"/><path d="M42 40a8 8 0 0116 0"/>'
+  };
   var LENS_KO = { origin:'원형', science:'과학', history:'역사', person:'인물', business:'비즈니스',
                   daily:'일상', counter:'반론', eastwest:'동서', practice:'실천', reflection:'성찰' };
   function escH(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -34,7 +48,7 @@
         return '<a class="col-card t-p' + (it.part_id || 1) + '" href="/insight/' + encodeURIComponent(it.slug) + '">' +
           '<div class="col-art">' +
             '<span class="num">' + ('0' + it.chapter_id).slice(-2) + '</span>' +
-            '<svg class="art" viewBox="0 0 100 100"><circle cx="50" cy="50" r="30"/><path d="M50 24v26l18 11"/></svg>' +
+            '<svg class="art" viewBox="0 0 100 100">' + (LENS_ART[it.lens] || LENS_ART.origin) + '</svg>' +
           '</div>' +
           '<div class="col-body">' +
             '<div class="col-kicker">제' + (it.part_id || 1) + '부 ' + it.chapter_id + '장 · ' + escH(lens) + '</div>' +
