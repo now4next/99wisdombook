@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0f0f0f">
+  <meta name="theme-color" content="#FBFBF8">
   <title>9부 99장 · 99 Wisdom Insight</title>
   <meta name="description" content="9부 99장으로 분류한 인생의 법칙 — 경제와 거래부터 운명과 수용까지.">
 
@@ -25,17 +25,19 @@
 </head>
 <body>
 
-<header class="topbar">
-  <div class="topbar-in">
+<header class="masthead">
+  <div class="masthead-in">
     <a class="brand" href="/">
       <span class="brand-mark">99</span>
       <span class="brand-word">Wisdom Insight</span>
+      <span class="brand-sub">지혜를 읽는 칼럼</span>
     </a>
     <nav class="nav">
-      <a href="/">Today</a>
-      <a href="/parts.html" class="on">9부</a>
+      <a href="/">칼럼</a>
+      <a href="/parts.html" class="on">9부 99장</a>
+      <a href="/daily.html">오늘의 한 문장</a>
       <a href="/my-wisdom.html">보관함</a>
-      <a class="btn-cta keep" href="/">오늘의 문장 →</a>
+      <a class="btn-cta keep" href="/daily.html">구독하기</a>
     </nav>
   </div>
 </header>
@@ -60,20 +62,20 @@
 </section>
 </main>
 
-<footer class="foot wrap">
+<footer class="foot"><div class="wrap">
   <div class="foot-in">
     <div>
       <div class="brand"><span class="brand-mark">99</span><span class="brand-word">Wisdom Insight</span></div>
       <p class="foot-tag">살아본 뒤에야 비로소 읽히는 문장들 &middot; 매일 아침 한 편</p>
     </div>
     <nav class="foot-nav">
-      <a href="/">Today</a>
-      <a href="/parts.html">9부</a>
+      <a href="/">칼럼</a>
+      <a href="/parts.html">9부 99장</a>
       <a href="/my-wisdom.html">보관함</a>
     </nav>
   </div>
   <div class="foot-c">&copy; 2026 99 Wisdom Insight &middot; 9부 99장 &middot; 99wisdombook.org</div>
-</footer>
+</div></footer>
 
 <script>
 (function () {
@@ -117,6 +119,7 @@
                      '<span class="chap-t">' + esc(it.title) + '</span>' +
                      '<span class="chap-s">' + esc(it.subtitle) + '</span>' +
                    '</span>' +
+                   '<span class="chap-state">원문</span>' +
                  '</a>';
         }).join('');
 

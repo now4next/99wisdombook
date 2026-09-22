@@ -649,8 +649,8 @@ async function sendKakaoNotifyMessage(accessToken, wisdomItem) {
   const sentence = (typeof wisdomItem === 'object' ? wisdomItem?.title : wisdomItem) || '오늘의 한 문장이 기다리고 있어요';
   const chId     = typeof wisdomItem === 'object' ? wisdomItem?.id : null;
   const url      = chId
-    ? `https://99wisdombook.org/?autoopen=1&ch=${chId}`
-    : 'https://99wisdombook.org/?autoopen=1';
+    ? `https://99wisdombook.org/daily.html?autoopen=1&ch=${chId}`
+    : 'https://99wisdombook.org/daily.html?autoopen=1';
   const link = { web_url: url, mobile_web_url: url };
   // 헤더 이미지(정적) + 문장은 title 텍스트로 표시
   const imageUrl = 'https://99wisdombook.org/og-image.png';
@@ -812,7 +812,7 @@ async function handleReminderCron(request, env) {
         await env.DB.prepare('UPDATE users SET kakao_refresh_token = ? WHERE id = ?').bind(new_refresh_token, user.id).run();
 
       const streak = user.streak_count || 1;
-      const url = 'https://99wisdombook.org/?autoopen=1';
+      const url = 'https://99wisdombook.org/daily.html?autoopen=1';
       const link = { web_url: url, mobile_web_url: url };
       const template = {
         object_type: 'feed',
@@ -868,7 +868,7 @@ async function handleWeeklyCron(request, env) {
 
       const streak = user.streak_count || 0;
       const name = user.name || '독자';
-      const url = 'https://99wisdombook.org/?autoopen=1';
+      const url = 'https://99wisdombook.org/daily.html?autoopen=1';
       const link = { web_url: url, mobile_web_url: url };
       const emoji = streak >= 30 ? '🏆' : streak >= 14 ? '🌟' : streak >= 7 ? '🔥' : '📖';
       const template = {
@@ -981,8 +981,8 @@ async function handleNotifyCron(request, env) {
     // 사용자별 개인화된 오늘의 문장 (챕터 ID 포함)
     const wisdomItem = getUserWisdomItem(user.id);
     const pushUrl = wisdomItem.id
-      ? `/?autoopen=1&ch=${wisdomItem.id}`
-      : '/?autoopen=1';
+      ? `/daily.html?autoopen=1&ch=${wisdomItem.id}`
+      : '/daily.html?autoopen=1';
 
     // ── 카카오 알림 ──
     try {
@@ -1301,7 +1301,7 @@ async function handlePushTest(request, env) {
   try {
     await sendWebPush(
       row.push_endpoint, row.push_p256dh, row.push_auth,
-      { title: '📚 오늘의 Daily Wisdom', body: '웹 푸시 알림이 정상 작동합니다!', url: '/?autoopen=1' },
+      { title: '📚 오늘의 Daily Wisdom', body: '웹 푸시 알림이 정상 작동합니다!', url: '/daily.html?autoopen=1' },
       vapidPriv, vapidPub, vapidSub
     );
     return jsonResponse({ success: true, message: '암호화 푸시 발송 완료' });
