@@ -56,6 +56,19 @@ function verifyAdmin(request) {
   return token && token.length > 10;
 }
 
+/**
+ * 토큰의 사용자 ID를 DB에서 확인해 실제 admin인지 검증한다.
+ * verifyAdmin()은 토큰 길이만 보므로 쓰기 엔드포인트에는 이 함수를 쓴다.
+ */
+async function verifyAdminStrict(request, env) {
+  const userId = getUserIdFromToken(request);
+  if (!userId) return false;
+  try {
+    const row = await env.DB.prepare('SELECT role FROM users WHERE id = ?').bind(userId).first();
+    return !!row && row.role === 'admin';
+  } catch (_) { return false; }
+}
+
 async function recordLoginLog(env, request, { user_id, user_name, user_email, login_type }) {
   try {
     await env.DB.prepare(
@@ -141,6 +154,17 @@ export async function onRequest(context) {
 
     // Admin – login logs
     if (path === '/api/admin/login-logs' && method === 'GET') return handleGetLoginLogs(request, env);
+
+    // Insights (칼럼)
+    if (path === '/api/insights' && method === 'GET') return handleListInsights(request, env);
+    if (path.match(/^\/api\/insights\/[A-Za-z0-9가-힣_-]+$/) && method === 'GET')
+      return handleGetInsight(decodeURIComponent(path.split('/').pop()), env);
+    if (path === '/api/admin/insights' && method === 'GET')    return handleAdminListInsights(request, env);
+    if (path === '/api/admin/insights' && method === 'POST')   return handleCreateInsight(request, env);
+    if (path.match(/^\/api\/admin\/insights\/\d+$/) && method === 'PUT')
+      return handleUpdateInsight(path.split('/').pop(), request, env);
+    if (path.match(/^\/api\/admin\/insights\/\d+$/) && method === 'DELETE')
+      return handleDeleteInsight(path.split('/').pop(), request, env);
 
     // Users
     if (path === '/api/users' && method === 'GET') return handleGetUsers(request, env);
@@ -521,6 +545,187 @@ async function handleGetLoginLogs(request, env) {
   } catch (err) {
     return jsonResponse({ error: err.message }, 500);
   }
+}
+
+// ══════════ Insights (칼럼) ══════════════════════════════════
+const INSIGHTS_DDL = `CREATE TABLE IF NOT EXISTS insights (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  chapter_id    INTEGER NOT NULL,
+  part_id       INTEGER NOT NULL,
+  lens          TEXT NOT NULL,
+  slug          TEXT UNIQUE NOT NULL,
+  title         TEXT NOT NULL,
+  hook          TEXT,
+  anchor_quote  TEXT,
+  body_md       TEXT,
+  action        TEXT,
+  quotable      TEXT,
+  hero_image    TEXT,
+  reading_time  INTEGER,
+  tags          TEXT,
+  sources       TEXT,
+  status        TEXT DEFAULT 'draft',
+  scheduled_for TEXT,
+  published_at  TEXT,
+  author        TEXT,
+  created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)`;
+
+const LENSES = ['origin','science','history','person','business','daily','counter','eastwest','practice','reflection'];
+
+async function ensureInsights(env) {
+  await env.DB.prepare(INSIGHTS_DDL).run();
+  try {
+    await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_insights_status ON insights(status, published_at DESC)').run();
+    await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_insights_chapter ON insights(chapter_id)').run();
+  } catch (_) {}
+}
+
+function parseInsight(row) {
+  if (!row) return null;
+  let sources = [], tags = [];
+  try { sources = JSON.parse(row.sources || '[]'); } catch (_) {}
+  try { tags = JSON.parse(row.tags || '[]'); } catch (_) {}
+  return { ...row, sources, tags };
+}
+
+/** 발행 조건: 출처 1개 이상 + quotable 존재. 미충족 시 이유를 돌려준다. */
+function publishBlockers(data) {
+  const out = [];
+  let sources = data.sources;
+  if (typeof sources === 'string') { try { sources = JSON.parse(sources || '[]'); } catch (_) { sources = []; } }
+  if (!Array.isArray(sources) || sources.length === 0) out.push('출처가 1개 이상 필요합니다');
+  if (!data.quotable || !String(data.quotable).trim()) out.push('quotable(공유용 한 줄)이 필요합니다');
+  if (!data.body_md || String(data.body_md).trim().length < 200) out.push('본문이 너무 짧습니다 (200자 이상)');
+  return out;
+}
+
+async function handleListInsights(request, env) {
+  await ensureInsights(env);
+  const url = new URL(request.url);
+  const limit   = Math.min(parseInt(url.searchParams.get('limit') || '24', 10), 100);
+  const partId  = url.searchParams.get('part');
+  const lens    = url.searchParams.get('lens');
+  const chapter = url.searchParams.get('chapter');
+
+  let sql = "SELECT id, chapter_id, part_id, lens, slug, title, hook, quotable, hero_image, reading_time, tags, published_at FROM insights WHERE status = 'published'";
+  const binds = [];
+  if (partId)  { sql += ' AND part_id = ?';    binds.push(parseInt(partId, 10)); }
+  if (lens)    { sql += ' AND lens = ?';       binds.push(lens); }
+  if (chapter) { sql += ' AND chapter_id = ?'; binds.push(parseInt(chapter, 10)); }
+  sql += ' ORDER BY published_at DESC, id DESC LIMIT ?';
+  binds.push(limit);
+
+  const res = await env.DB.prepare(sql).bind(...binds).all();
+  const items = (res.results || []).map(parseInsight);
+  return jsonResponse({ success: true, items, count: items.length });
+}
+
+async function handleGetInsight(slug, env) {
+  await ensureInsights(env);
+  const row = await env.DB.prepare(
+    "SELECT * FROM insights WHERE slug = ? AND status = 'published'"
+  ).bind(slug).first();
+  if (!row) return jsonResponse({ error: 'Not found' }, 404);
+  return jsonResponse({ success: true, insight: parseInsight(row) });
+}
+
+async function handleAdminListInsights(request, env) {
+  if (!await verifyAdminStrict(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
+  await ensureInsights(env);
+  const res = await env.DB.prepare(
+    'SELECT * FROM insights ORDER BY chapter_id ASC, id ASC'
+  ).all();
+  const items = (res.results || []).map(parseInsight);
+  const byStatus = items.reduce((a, i) => { a[i.status] = (a[i.status] || 0) + 1; return a; }, {});
+  return jsonResponse({ success: true, items, count: items.length, by_status: byStatus });
+}
+
+async function handleCreateInsight(request, env) {
+  if (!await verifyAdminStrict(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
+  await ensureInsights(env);
+  const d = await request.json();
+
+  if (!d.chapter_id || !d.title || !d.slug) return jsonResponse({ error: 'chapter_id, title, slug은 필수입니다.' }, 400);
+  if (d.lens && !LENSES.includes(d.lens))   return jsonResponse({ error: '알 수 없는 lens: ' + d.lens }, 400);
+
+  const status = d.status || 'draft';
+  if (status === 'published') {
+    const blockers = publishBlockers(d);
+    if (blockers.length) return jsonResponse({ error: '발행 조건 미충족', blockers }, 400);
+  }
+
+  const chapterId = parseInt(d.chapter_id, 10);
+  const partId    = d.part_id ? parseInt(d.part_id, 10) : Math.min(9, Math.floor((chapterId - 1) / 11) + 1);
+
+  try {
+    const row = await env.DB.prepare(
+      `INSERT INTO insights
+         (chapter_id, part_id, lens, slug, title, hook, anchor_quote, body_md, action,
+          quotable, hero_image, reading_time, tags, sources, status, scheduled_for, published_at, author)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+       RETURNING *`
+    ).bind(
+      chapterId, partId, d.lens || 'origin', d.slug, d.title,
+      d.hook || null, d.anchor_quote || null, d.body_md || null, d.action || null,
+      d.quotable || null, d.hero_image || null,
+      d.reading_time || null,
+      JSON.stringify(d.tags || []), JSON.stringify(d.sources || []),
+      status, d.scheduled_for || null,
+      status === 'published' ? (d.published_at || new Date().toISOString()) : null,
+      d.author || null
+    ).first();
+    return jsonResponse({ success: true, insight: parseInsight(row) }, 201);
+  } catch (err) {
+    if (String(err.message || '').includes('UNIQUE')) return jsonResponse({ error: '이미 존재하는 slug입니다.' }, 409);
+    return jsonResponse({ error: err.message }, 500);
+  }
+}
+
+async function handleUpdateInsight(id, request, env) {
+  if (!await verifyAdminStrict(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
+  await ensureInsights(env);
+  const d = await request.json();
+
+  const cur = await env.DB.prepare('SELECT * FROM insights WHERE id = ?').bind(id).first();
+  if (!cur) return jsonResponse({ error: 'Not found' }, 404);
+
+  if (d.status === 'published') {
+    const merged = { ...parseInsight(cur), ...d };
+    const blockers = publishBlockers(merged);
+    if (blockers.length) return jsonResponse({ error: '발행 조건 미충족', blockers }, 400);
+  }
+
+  const cols = ['chapter_id','part_id','lens','slug','title','hook','anchor_quote','body_md',
+                'action','quotable','hero_image','reading_time','status','scheduled_for','author'];
+  const sets = [], binds = [];
+  for (const c of cols) {
+    if (d[c] !== undefined) { sets.push(c + ' = ?'); binds.push(d[c]); }
+  }
+  if (d.tags    !== undefined) { sets.push('tags = ?');    binds.push(JSON.stringify(d.tags)); }
+  if (d.sources !== undefined) { sets.push('sources = ?'); binds.push(JSON.stringify(d.sources)); }
+  if (d.status === 'published' && !cur.published_at) {
+    sets.push('published_at = ?'); binds.push(new Date().toISOString());
+  }
+  if (!sets.length) return jsonResponse({ error: '변경할 내용이 없습니다.' }, 400);
+
+  sets.push('updated_at = CURRENT_TIMESTAMP');
+  binds.push(id);
+
+  const row = await env.DB.prepare(
+    `UPDATE insights SET ${sets.join(', ')} WHERE id = ? RETURNING *`
+  ).bind(...binds).first();
+  return jsonResponse({ success: true, insight: parseInsight(row) });
+}
+
+async function handleDeleteInsight(id, request, env) {
+  if (!await verifyAdminStrict(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
+  await ensureInsights(env);
+  const cur = await env.DB.prepare('SELECT id FROM insights WHERE id = ?').bind(id).first();
+  if (!cur) return jsonResponse({ error: 'Not found' }, 404);
+  await env.DB.prepare('DELETE FROM insights WHERE id = ?').bind(id).run();
+  return jsonResponse({ success: true });
 }
 
 // ── Users (기존) ─────────────────────────────────────────────

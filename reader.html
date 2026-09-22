@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#FBFBF8">
+<title>칼럼 · 99 Wisdom Insight</title>
+<meta name="description" content="9부 99장의 지혜를 사례와 출처가 있는 칼럼으로.">
+
+<meta property="og:type"        content="article">
+<meta property="og:site_name"   content="99 Wisdom Insight">
+<meta property="og:image"       content="https://99wisdombook.org/og-kakao.png">
+<meta property="og:image:width"  content="800">
+<meta property="og:image:height" content="400">
+<meta property="og:locale"      content="ko_KR">
+<meta name="twitter:card"        content="summary_large_image">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+KR:wght@400;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/app.css?v=20260922b">
+<link rel="stylesheet" href="/assets/site.css?v=20260922b">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='80'>%F0%9F%8C%BF</text></svg>">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-in">
+    <a class="brand" href="/">
+      <span class="brand-mark">99</span>
+      <span class="brand-word">Wisdom Insight</span>
+      <span class="brand-sub">지혜를 읽는 칼럼</span>
+    </a>
+    <nav class="nav">
+      <a href="/">칼럼</a>
+      <a href="/parts.html">9부 99장</a>
+      <a href="/daily.html">오늘의 한 문장</a>
+      <a href="/my-wisdom.html">보관함</a>
+      <a class="btn-cta keep" href="/daily.html">구독하기</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+  <article class="art" id="root">
+    <div style="padding:90px 0;text-align:center;color:var(--muted-2)">
+      <div class="spinner"></div>
+      칼럼을 불러오는 중…
+    </div>
+  </article>
+</div>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-in">
+      <div>
+        <div class="brand"><span class="brand-mark">99</span><span class="brand-word">Wisdom Insight</span></div>
+        <p class="foot-tag">살아본 뒤에야 비로소 읽히는 문장들 &middot; 매일 아침 한 편</p>
+      </div>
+      <nav class="foot-nav">
+        <a href="/">칼럼</a><a href="/parts.html">9부 99장</a>
+        <a href="/daily.html">오늘의 한 문장</a><a href="/my-wisdom.html">보관함</a>
+      </nav>
+    </div>
+    <div class="foot-c">&copy; 2026 99 Wisdom Insight &middot; 9부 99장 &middot; 99wisdombook.org</div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  var LENS_KO = {
+    origin:'원형', science:'과학', history:'역사', person:'인물', business:'비즈니스',
+    daily:'일상', counter:'반론', eastwest:'동서', practice:'실천', reflection:'성찰'
+  };
+  var LENS_EN = {
+    origin:'Origin', science:'Science', history:'History', person:'Person', business:'Business',
+    daily:'Daily', counter:'Counter', eastwest:'East & West', practice:'Practice', reflection:'Reflection'
+  };
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* 최소 Markdown → HTML (## 제목, > 인용, - 목록, **굵게**, *기울임*) */
+  function md(src) {
+    if (!src) return '';
+    var blocks = String(src).split(/\n{2,}/), out = [];
+    blocks.forEach(function (b) {
+      b = b.trim();
+      if (!b) return;
+      var inline = function (t) {
+        return esc(t)
+          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+          .replace(/(^|[^*])\*([^*\n]+?)\*/g, '$1<em>$2</em>')
+          .replace(/\n/g, '<br>');
+      };
+      if (/^##\s+/.test(b))       out.push('<h3>' + inline(b.replace(/^##\s+/, '')) + '</h3>');
+      else if (/^>\s?/.test(b))   out.push('<blockquote style="border-left:3px solid var(--accent);padding-left:16px;color:var(--muted);font-family:var(--serif)">' + inline(b.replace(/^>\s?/gm, '')) + '</blockquote>');
+      else if (/^-\s+/.test(b))   out.push('<ul style="padding-left:20px">' + b.split('\n').map(function (l) {
+                                     return '<li>' + inline(l.replace(/^-\s+/, '')) + '</li>';
+                                   }).join('') + '</ul>');
+      else                        out.push('<p>' + inline(b) + '</p>');
+    });
+    return out.join('\n');
+  }
+
+  function getSlug() {
+    var q = new URLSearchParams(location.search).get('s');
+    if (q) return q;
+    var m = location.pathname.match(/\/insight\/([^/?#]+)/);
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+
+  function notFound(msg) {
+    document.getElementById('root').innerHTML =
+      '<div style="padding:80px 0;text-align:center">' +
+        '<span class="icon-chip lg t-p9" style="margin:0 auto 20px">' +
+          '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>' +
+        '</span>' +
+        '<h1 style="font-family:var(--serif);font-weight:700;font-size:1.5rem;letter-spacing:-.025em">' + esc(msg) + '</h1>' +
+        '<p style="color:var(--muted);margin-top:12px;font-size:.93rem">아직 발행되지 않았거나 주소가 바뀌었을 수 있어요.</p>' +
+        '<div style="display:flex;gap:11px;justify-content:center;flex-wrap:wrap;margin-top:26px">' +
+          '<a class="btn-line" href="/parts.html">99장 목록</a>' +
+          '<a class="btn-accent" href="/">칼럼 홈</a>' +
+        '</div>' +
+      '</div>';
+  }
+
+  var slug = getSlug();
+  if (!slug) { notFound('칼럼을 찾을 수 없습니다'); return; }
+
+  fetch('/api/insights/' + encodeURIComponent(slug))
+    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+    .then(function (d) {
+      var it = d && d.insight;
+      if (!it) return notFound('칼럼을 찾을 수 없습니다');
+
+      var partNo = it.part_id || 1;
+      document.body.className = 't-p' + partNo;
+      document.title = it.title + ' · 99 Wisdom Insight';
+
+      var lensKo = LENS_KO[it.lens] || it.lens;
+      var lensEn = LENS_EN[it.lens] || '';
+      var pubDate = it.published_at ? new Date(it.published_at) : null;
+      var dateStr = pubDate && !isNaN(pubDate)
+        ? pubDate.getFullYear() + '. ' + String(pubDate.getMonth() + 1).padStart(2, '0') + '. ' + String(pubDate.getDate()).padStart(2, '0')
+        : '';
+
+      var html = '';
+
+      /* 머리 */
+      html += '<header class="art-head">' +
+        '<span class="kicker">제' + partNo + '부 ' + it.chapter_id + '장 · ' + esc(lensKo) + (lensEn ? ' ' + esc(lensEn) : '') + '</span>' +
+        '<h1 class="art-title">' + esc(it.title) + '</h1>' +
+        (it.hook ? '<p class="art-hook">' + esc(it.hook) + '</p>' : '') +
+        '<div class="art-meta">' +
+          (it.reading_time ? '<span class="pill">⏱ 읽는 시간 ' + it.reading_time + '분</span>' : '') +
+          (dateStr ? '<span class="pill">' + dateStr + '</span>' : '') +
+          '<span class="pill">출처 ' + (it.sources || []).length + '</span>' +
+          '<span class="tag-soft">' + esc(lensKo) + '</span>' +
+        '</div>' +
+      '</header>';
+
+      /* 앵커 */
+      if (it.anchor_quote) {
+        html += '<div class="anchor" style="margin:28px 0">' +
+          '<span class="k">Anchor · 제' + it.chapter_id + '장</span>' +
+          '<div class="q">“' + esc(it.anchor_quote) + '”</div>' +
+        '</div>';
+      }
+
+      /* 본문 */
+      html += '<div class="art-body">' + md(it.body_md) + '</div>';
+
+      /* 실천 */
+      if (it.action) {
+        var lines = String(it.action).split('\n').filter(function (l) { return l.trim(); });
+        html += '<div class="action"><span class="k">Action · 오늘의 실천</span><ul>' +
+          lines.map(function (l) { return '<li>' + esc(l.replace(/^[-•]\s*/, '')) + '</li>'; }).join('') +
+        '</ul></div>';
+      }
+
+      /* Quotable */
+      if (it.quotable) {
+        html += '<div class="quotable">' +
+          '<div class="k">Quotable · 오늘의 한 줄</div>' +
+          '<div class="q">“' + esc(it.quotable) + '”</div>' +
+        '</div>';
+      }
+
+      /* 출처 */
+      if ((it.sources || []).length) {
+        html += '<section class="sources" style="margin-bottom:44px"><h4>Sources · 출처</h4><ol>' +
+          it.sources.map(function (s) {
+            if (typeof s === 'string') return '<li>' + esc(s) + '</li>';
+            return '<li>' +
+              (s.type ? '<span class="t">' + esc(s.type) + '</span><br>' : '') +
+              esc(s.title || '') +
+              (s.url ? ' <a href="' + esc(s.url) + '" target="_blank" rel="noopener noreferrer">링크</a>' : '') +
+              (s.accessed_at ? ' <span style="color:var(--muted-2)">(접근 ' + esc(s.accessed_at) + ')</span>' : '') +
+            '</li>';
+          }).join('') +
+        '</ol></section>';
+      }
+
+      /* 원문 · 같은 장 */
+      html += '<section style="margin-bottom:56px;border-top:1px solid var(--line);padding-top:28px;' +
+                'display:flex;flex-wrap:wrap;gap:16px;align-items:center">' +
+        '<div><span class="col-kicker">이 칼럼의 앵커</span>' +
+          '<div style="font-family:var(--serif);font-weight:700;font-size:1.1rem;margin-top:6px;letter-spacing:-.02em">제' + it.chapter_id + '장</div></div>' +
+        '<div style="margin-left:auto;display:flex;gap:10px;flex-wrap:wrap">' +
+          '<a class="btn-line" href="/parts.html#part-' + partNo + '">제' + partNo + '부 목록</a>' +
+          '<a class="btn-line" href="/book.html#chapter-' + it.chapter_id + '">원문 보기</a>' +
+        '</div>' +
+      '</section>';
+
+      document.getElementById('root').innerHTML = html;
+
+      /* OG/설명 갱신 */
+      var dsc = document.querySelector('meta[name="description"]');
+      if (dsc) dsc.setAttribute('content', it.hook || it.quotable || it.title);
+    })
+    .catch(function () { notFound('칼럼을 찾을 수 없습니다'); });
+})();
+</script>
+
+</body>
+</html>

@@ -15,6 +15,38 @@
   if (/[?&](autoopen|ch|memo)=/.test(q)) {
     window.location.replace('/daily.html' + q + window.location.hash);
   }
+
+  /* ── 발행된 칼럼 목록 ── */
+  var LENS_KO = { origin:'원형', science:'과학', history:'역사', person:'인물', business:'비즈니스',
+                  daily:'일상', counter:'반론', eastwest:'동서', practice:'실천', reflection:'성찰' };
+  function escH(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  fetch('/api/insights?limit=9')
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      var items = (d && d.items) || [];
+      if (!items.length) return;                   // 비어 있으면 준비 중 안내 유지
+      var root = document.getElementById('columns-root');
+      if (!root) return;
+      root.className = 'grid3';
+      root.innerHTML = items.map(function (it) {
+        var lens = LENS_KO[it.lens] || it.lens || '';
+        return '<a class="col-card t-p' + (it.part_id || 1) + '" href="/insight/' + encodeURIComponent(it.slug) + '">' +
+          '<div class="col-art">' +
+            '<span class="num">' + ('0' + it.chapter_id).slice(-2) + '</span>' +
+            '<svg class="art" viewBox="0 0 100 100"><circle cx="50" cy="50" r="30"/><path d="M50 24v26l18 11"/></svg>' +
+          '</div>' +
+          '<div class="col-body">' +
+            '<div class="col-kicker">제' + (it.part_id || 1) + '부 ' + it.chapter_id + '장 · ' + escH(lens) + '</div>' +
+            '<h3 class="col-title">' + escH(it.title) + '</h3>' +
+            '<p class="col-lead">' + escH(it.hook || it.quotable || '') + '</p>' +
+            '<div class="col-foot"><span class="tag-soft">' + escH(lens) + '</span>' +
+              (it.reading_time ? '<span class="rt">⏱ ' + it.reading_time + '분</span>' : '<span class="rt"></span>') +
+            '</div>' +
+          '</div></a>';
+      }).join('');
+    })
+    .catch(function () {});
 })();
 </script>
 
