@@ -30,13 +30,9 @@
 
   // Authentication and permission check
   (function() {
+    // 콘텐츠는 로그인 없이 공개 — 비로그인 사용자는 기본 권한으로 열람
     const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
-    if (!currentUser) {
-      window.location.href = 'index.html';
-      return;
-    }
-    
-    const user = JSON.parse(currentUser);
+    const user = currentUser ? JSON.parse(currentUser) : { name: '', username: '', role: 'guest', permissions: ['korean'] };
     
     // Update userName display
     const userNameElement = document.getElementById('userName');

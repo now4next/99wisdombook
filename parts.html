@@ -53,7 +53,7 @@
 
   <p style="max-width:660px;color:var(--muted);font-size:.93rem;line-height:1.85;margin-bottom:34px;word-break:keep-all">
     인생의 법칙을 <strong style="color:var(--ink)">9개의 축</strong>으로 나누고, 각 축마다 11개의
-    <strong style="color:var(--ink)">앵커 문장</strong>을 두었습니다. 매일 아침 이 99장 가운데 한 문장이 도착합니다.
+    <strong style="color:var(--ink)">앵커 문장</strong>을 두었습니다. 칼럼이 준비된 장은 <strong style="color:var(--ink)">초록 배지</strong>로 표시되며, 나머지는 원문을 바로 읽을 수 있습니다. 모두 로그인 없이 공개됩니다.
   </p>
 
   <div id="parts-root">
@@ -96,9 +96,14 @@
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
-  fetch('/data/wisdom.json', { cache: 'no-cache' })
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
+  Promise.all([
+    fetch('/data/wisdom.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }),
+    fetch('/api/insights?limit=100').then(function (r) { return r.json(); }).catch(function () { return { items: [] }; })
+  ])
+    .then(function (res) {
+      var data = res[0];
+      var cols = {};
+      ((res[1] && res[1].items) || []).forEach(function (c) { cols[c.chapter_id] = c; });
       var items = (data && data.items) || [];
       var root = document.getElementById('parts-root');
       if (!items.length) { root.innerHTML = '<p style="color:var(--muted)">데이터를 불러오지 못했습니다.</p>'; return; }
@@ -113,13 +118,14 @@
 
         var rows = chunk.map(function (it) {
           var n = ('0' + it.id).slice(-2);
-          return '<a class="chap" href="/book.html#chapter-' + it.id + '">' +
+          var c = cols[it.id];
+          return '<a class="chap" href="' + (c ? '/insight/' + encodeURIComponent(c.slug) : '/chapter/' + it.id) + '">' +
                    '<span class="chap-no">' + n + '</span>' +
                    '<span>' +
                      '<span class="chap-t">' + esc(it.title) + '</span>' +
-                     '<span class="chap-s">' + esc(it.subtitle) + '</span>' +
+                     '<span class="chap-s">' + esc(c ? c.title : it.subtitle) + '</span>' +
                    '</span>' +
-                   '<span class="chap-state">원문</span>' +
+                   '<span class="chap-state' + (c ? ' live' : '') + '">' + (c ? '칼럼' : '원문') + '</span>' +
                  '</a>';
         }).join('');
 
@@ -130,14 +136,15 @@
                       '<span class="part-name">' + esc(meta[0]) + '</span>' +
                       '<span class="part-axis">' + esc(meta[1]) + ' · &ldquo;' + esc(meta[2]) + '&rdquo;</span>' +
                     '</span>' +
-                    '<span class="part-stat">' + chunk.length + '장 · ' + esc(meta[3]) + '</span>' +
+                    '<span class="part-stat">칼럼 ' + chunk.filter(function (x) { return cols[x.id]; }).length + ' / ' + chunk.length + '장</span>' +
                   '</div>' +
                   '<div class="chap-list">' + rows + '</div>' +
                 '</section>';
       }
 
       root.innerHTML = html;
-      document.getElementById('stat-line').textContent = items.length + '장';
+      var nCols = Object.keys(cols).length;
+      document.getElementById('stat-line').textContent = '칼럼 ' + nCols + '편 · 원문 ' + items.length + '장';
 
       if (location.hash) {
         var t = document.querySelector(location.hash);

@@ -806,7 +806,7 @@
       document.getElementById('key-title').textContent = item.title;
       document.getElementById('page-subtitle').textContent = item.subtitle || '';
       document.getElementById('page-summary').textContent = item.summary || '';
-      pendingChapterHref = `book.html#chapter-${item.id}`;
+      pendingChapterHref = `/chapter/${item.id}`;
     }
 
     async function initWisdom() {
@@ -890,12 +890,8 @@
 
       // "Wisdom Book 읽기" 버튼
       document.getElementById('btn-read').addEventListener('click', () => {
-        try {
-          if (wisdomAPI.isLoggedIn()) {
-            window.location.href = pendingChapterHref; return;
-          }
-        } catch(_) {}
-        openModal();
+        // 콘텐츠는 로그인 없이 공개 — 바로 해당 장으로 이동
+        window.location.href = pendingChapterHref;
       });
 
       // 공유 버튼 (공유 링크로 진입한 경우에도 해당 문장 공유)

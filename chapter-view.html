@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#FBFBF8">
+<title>지혜 · 99 Wisdom Insight</title>
+<meta name="description" content="9부 99장의 지혜.">
+
+<meta property="og:type"        content="article">
+<meta property="og:site_name"   content="99 Wisdom Insight">
+<meta property="og:image"       content="https://99wisdombook.org/og-kakao.png">
+<meta property="og:image:width"  content="800">
+<meta property="og:image:height" content="400">
+<meta property="og:locale"      content="ko_KR">
+<meta name="twitter:card"        content="summary_large_image">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+KR:wght@400;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/app.css?v=20260922b">
+<link rel="stylesheet" href="/assets/site.css?v=20260922b">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='80'>%F0%9F%8C%BF</text></svg>">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-in">
+    <a class="brand" href="/">
+      <span class="brand-mark">99</span>
+      <span class="brand-word">Wisdom Insight</span>
+      <span class="brand-sub">지혜를 읽는 칼럼</span>
+    </a>
+    <nav class="nav">
+      <a href="/">칼럼</a>
+      <a href="/parts.html">9부 99장</a>
+      <a href="/daily.html">오늘의 한 문장</a>
+      <a href="/my-wisdom.html">보관함</a>
+      <a class="btn-cta keep" href="/daily.html">구독하기</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+  <article class="art" id="root">
+    <div style="padding:90px 0;text-align:center;color:var(--muted-2)">
+      <div class="spinner"></div>본문을 불러오는 중…
+    </div>
+  </article>
+</div>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-in">
+      <div>
+        <div class="brand"><span class="brand-mark">99</span><span class="brand-word">Wisdom Insight</span></div>
+        <p class="foot-tag">살아본 뒤에야 비로소 읽히는 문장들 &middot; 매일 아침 한 편</p>
+      </div>
+      <nav class="foot-nav">
+        <a href="/">칼럼</a><a href="/parts.html">9부 99장</a>
+        <a href="/daily.html">오늘의 한 문장</a><a href="/my-wisdom.html">보관함</a>
+      </nav>
+    </div>
+    <div class="foot-c">&copy; 2026 99 Wisdom Insight &middot; 9부 99장 &middot; 99wisdombook.org</div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  var PART_NAMES = ['경제와 거래의 법칙','인과와 자연의 법칙','시간과 변화의 법칙',
+                    '인간 본성과 심리의 법칙','관계와 처세의 법칙','실행과 노력의 법칙',
+                    '위기와 생존의 법칙','지혜와 통찰의 법칙','운명과 수용의 법칙'];
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function md(src) {
+    if (!src) return '';
+    var out = [];
+    String(src).split(/\n{2,}/).forEach(function (b) {
+      b = b.trim(); if (!b) return;
+      var inline = function (t) {
+        return esc(t)
+          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+          .replace(/(^|[^*])\*([^*\n]+?)\*/g, '$1<em>$2</em>')
+          .replace(/\n/g, '<br>');
+      };
+      if (/^##\s+/.test(b))     out.push('<h3>' + inline(b.replace(/^##\s+/,'')) + '</h3>');
+      else if (/^>\s?/.test(b)) out.push('<blockquote style="border-left:3px solid var(--accent);padding-left:18px;color:var(--muted);font-family:var(--serif);font-size:1.05rem;line-height:1.85">' + inline(b.replace(/^>\s?/gm,'')) + '</blockquote>');
+      else if (/^-\s+/.test(b)) out.push('<ul style="padding-left:20px">' + b.split('\n').map(function (l) {
+                                  return '<li>' + inline(l.replace(/^-\s+/,'')) + '</li>'; }).join('') + '</ul>');
+      else                      out.push('<p>' + inline(b) + '</p>');
+    });
+    return out.join('\n');
+  }
+
+  function parseFront(text) {
+    var m = text.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+    if (!m) return { meta: {}, body: text };
+    var meta = {};
+    m[1].split('\n').forEach(function (line) {
+      var i = line.indexOf(':');
+      if (i < 0) return;
+      var k = line.slice(0, i).trim();
+      var v = line.slice(i + 1).trim().replace(/^"(.*)"$/, '$1');
+      meta[k] = v;
+    });
+    return { meta: meta, body: m[2] };
+  }
+
+  function chapterId() {
+    var m = location.pathname.match(/\/chapter\/(\d+)/);
+    if (m) return parseInt(m[1], 10);
+    var q = new URLSearchParams(location.search).get('id');
+    return q ? parseInt(q, 10) : null;
+  }
+
+  function fail(msg) {
+    document.getElementById('root').innerHTML =
+      '<div style="padding:80px 0;text-align:center">' +
+        '<h1 style="font-family:var(--serif);font-weight:700;font-size:1.5rem;letter-spacing:-.025em">' + esc(msg) + '</h1>' +
+        '<div style="display:flex;gap:11px;justify-content:center;margin-top:24px"><a class="btn-accent" href="/parts.html">99장 목록</a></div>' +
+      '</div>';
+  }
+
+  var id = chapterId();
+  if (!id || id < 1 || id > 99) { fail('장을 찾을 수 없습니다'); return; }
+
+  var partNo = Math.min(9, Math.floor((id - 1) / 11) + 1);
+  document.body.className = 't-p' + partNo;
+
+  var pre = window.__CHAPTER_MD__;
+  var load = pre ? Promise.resolve(pre)
+                 : fetch('/data/chapters/' + id + '.md').then(function (r) {
+                     return r.ok ? r.text() : Promise.reject(r.status); });
+
+  load.then(function (text) {
+    var p = parseFront(text);
+    var title = p.meta.title || ('제' + id + '장');
+    var subtitle = p.meta.subtitle || '';
+    document.title = title + ' · 99 Wisdom Insight';
+
+    var html = '';
+    html += '<header class="art-head">' +
+      '<span class="kicker">제' + partNo + '부 ' + id + '장 · ' + esc(PART_NAMES[partNo - 1]) + '</span>' +
+      '<h1 class="art-title">' + esc(title) + '</h1>' +
+      (subtitle ? '<p class="art-hook">' + esc(subtitle) + '</p>' : '') +
+      '<div class="art-meta"><span class="pill">원문</span><span class="tag-soft">제' + partNo + '부</span></div>' +
+    '</header>';
+
+    html += '<div class="art-body">' + md(p.body) + '</div>';
+
+    // 이 장의 칼럼
+    html += '<section id="related" style="margin:8px 0 44px"></section>';
+
+    // 앞뒤 장
+    html += '<nav style="margin-bottom:56px;border-top:1px solid var(--line);padding-top:26px;display:flex;gap:12px;flex-wrap:wrap">' +
+      (id > 1  ? '<a class="btn-line" href="/chapter/' + (id - 1) + '">← 제' + (id - 1) + '장</a>' : '') +
+      '<a class="btn-line" href="/parts.html#part-' + partNo + '" style="margin-inline:auto">제' + partNo + '부 목록</a>' +
+      (id < 99 ? '<a class="btn-line" href="/chapter/' + (id + 1) + '">제' + (id + 1) + '장 →</a>' : '') +
+    '</nav>';
+
+    document.getElementById('root').innerHTML = html;
+
+    // 이 장에 칼럼이 있으면 안내
+    fetch('/api/insights?chapter=' + id)
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        var items = (d && d.items) || [];
+        if (!items.length) return;
+        document.getElementById('related').innerHTML =
+          '<div class="daily-invite" style="grid-template-columns:1fr auto">' +
+            '<div><h3 style="font-size:1.12rem">이 지혜를 다룬 칼럼 ' + items.length + '편</h3>' +
+            '<p style="margin-top:6px">사례와 출처를 붙여 다시 쓴 글이 있습니다.</p></div>' +
+            '<a class="btn-accent" href="/insight/' + encodeURIComponent(items[0].slug) + '">칼럼 읽기 →</a>' +
+          '</div>';
+      })
+      .catch(function () {});
+  }).catch(function () { fail('본문을 불러오지 못했습니다'); });
+})();
+</script>
+
+</body>
+</html>

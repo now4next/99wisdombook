@@ -21,7 +21,7 @@
                   daily:'일상', counter:'반론', eastwest:'동서', practice:'실천', reflection:'성찰' };
   function escH(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-  fetch('/api/insights?limit=9')
+  fetch('/api/insights?limit=12')
     .then(function (r) { return r.json(); })
     .then(function (d) {
       var items = (d && d.items) || [];
