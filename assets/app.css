@@ -74,7 +74,9 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 
 /* ---------- Layout ---------- */
 .wrap    { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
-.section { padding: 64px 0; }
+/* ⚠ padding 단축형을 쓰면 같은 요소의 .wrap 좌우 여백을 덮어쓴다.
+   (.section.wrap 조합이 많으므로 반드시 padding-block 을 쓸 것) */
+.section { padding-block: 64px; }
 .section + .section { border-top: 1px solid var(--line); }
 
 /* ---------- Masthead ---------- */
@@ -503,17 +505,63 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 }
 @media (max-width: 720px) {
   .wrap { padding: 0 16px; }
-  .section { padding: 46px 0; }
-  .masthead-in { padding: 13px 16px; gap: 12px; }
-  .nav { gap: 15px; }
-  .nav a:not(.keep) { display: none; }
+  .section { padding-block: 46px; }
+
+  /* ── 마스트헤드: 2줄 구성 ──
+     이전에는 .nav a:not(.keep) 을 숨겨 모바일에 내비게이션이 아예 없었다.
+     브랜드를 1줄, 메뉴를 2줄로 내려 항상 노출한다. */
+  .masthead-in { padding: 12px 16px 0; gap: 10px; flex-wrap: wrap; }
+  .brand { flex: 1 0 100%; }
   .brand-sub { display: none; }
+  .nav {
+    flex: 1 0 100%; margin-left: 0; gap: 13px;
+    align-items: center; flex-wrap: nowrap;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; padding-bottom: 2px;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav a {
+    font-size: .82rem; white-space: nowrap; flex: none;
+    padding: 9px 0;                  /* 터치 영역 확보 */
+  }
+  .nav a.on { border-bottom-width: 2px; }
+  /* .nav a (0,0,1,1) 가 .btn-cta (0,0,1,0) 를 이기므로 선택자를 맞춰 준다.
+     그러지 않으면 좌우 패딩이 0이 되어 버튼 안에서 글자가 삐져나온다. */
+  .nav a.btn-cta {
+    padding: 8px 15px; font-size: .78rem;
+    margin-left: auto; flex: none; border-bottom: none;
+  }
+
+  /* ── 헤드라인: 모바일에선 제목을 먼저 ── */
+  .feature { gap: 20px; }
+  .feature-art { order: 2; aspect-ratio: 16/10; border-radius: 16px; }
+  .feature-art .num { font-size: 5rem; right: 14px; bottom: 2px; }
+  .feature-art svg.art { width: 30%; }
+  .feature-title { margin-top: 12px; }
+
   .grid3, .grid2 { grid-template-columns: 1fr; }
   .slabel .sub { display: none; }
-  .row-card { grid-template-columns: 84px 1fr; gap: 14px; }
+  .slabel .right { font-size: .74rem; }
+  .row-card { grid-template-columns: 76px 1fr; gap: 14px; padding: 14px; }
   .news { padding: 34px 20px; }
-  .part-stat { display: none; }
   .lens-item { grid-template-columns: 38px 1fr; }
   .lens-meta { display: none; }
-  .art-head { padding: 32px 0 24px; }
+  .art-head { padding: 30px 0 22px; }
+
+  /* 장 목록 — 통계는 줄여서 유지(이전엔 통째로 숨겼음) */
+  .part-head { padding: 16px; gap: 12px; }
+  .part-stat { font-size: .64rem; }
+  .chap { padding: 13px 16px; }
+
+  /* 푸터 링크 터치 영역 */
+  .foot-nav { gap: 6px 18px; flex-wrap: wrap; margin-left: 0; }
+  .foot-nav a { padding: 8px 0; }
+  .foot-in { gap: 18px; }
+}
+
+/* 아주 좁은 화면 */
+@media (max-width: 380px) {
+  .nav { gap: 11px; }
+  .nav a { font-size: .79rem; }
+  .nav a.btn-cta { padding: 7px 13px; font-size: .75rem; }
 }
