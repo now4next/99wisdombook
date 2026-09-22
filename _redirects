@@ -1,0 +1,22 @@
+# 2026-09-22 다국어판 제거 — 구 URL 정리
+# Pages는 404.html이 없으면 없는 경로에 index.html을 200으로 돌려주므로(소프트 404),
+# 제거된 경로를 명시적으로 홈으로 영구 이동시킨다.
+
+/book-en.html      /  301
+/book-zh.html      /  301
+/book-ja.html      /  301
+/book-es.html      /  301
+/book-fr.html      /  301
+/book-ru.html      /  301
+/book-ar.html      /  301
+/book-hi.html      /  301
+/book-en           /  301
+/book-zh           /  301
+/book-ja           /  301
+/book-es           /  301
+/book-fr           /  301
+/book-ru           /  301
+/book-ar           /  301
+/book-hi           /  301
+/translations/*    /  301
+/js/i18n.js        /  301

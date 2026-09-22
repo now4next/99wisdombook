@@ -500,6 +500,30 @@
       margin-top: 12px;
     }
 
+    /* Login Logs */
+    .log-type-local {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    .log-type-kakao {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: #fffde7;
+      color: #f57f17;
+    }
+    .log-table-wrap {
+      max-height: 420px;
+      overflow-y: auto;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .stats {
@@ -569,6 +593,30 @@
         </button>
       </div>
       <div id="kakao-test-result" style="font-size: 0.9rem; color: #666;"></div>
+    </div>
+
+    <!-- 로그인 접속기록 -->
+    <div class="table-container" style="margin-bottom: 24px;">
+      <div class="table-header" style="display:flex;justify-content:space-between;align-items:center;">
+        <h2>🔐 로그인 접속기록</h2>
+        <button class="btn" onclick="loadLoginLogs()" style="background:#5d4037;color:#fff;padding:8px 16px;font-size:0.85rem;">새로고침</button>
+      </div>
+      <div class="log-table-wrap">
+        <table id="login-log-table">
+          <thead>
+            <tr>
+              <th>이름</th>
+              <th>이메일</th>
+              <th>로그인 방식</th>
+              <th>IP 주소</th>
+              <th>접속 시각</th>
+            </tr>
+          </thead>
+          <tbody id="login-log-body">
+            <tr><td colspan="5" style="text-align:center;color:#999;padding:32px;">로딩 중...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- Members Table -->
@@ -1075,6 +1123,45 @@
       }
     }
 
+    // 로그인 접속기록 로드
+    async function loadLoginLogs() {
+      const tbody = document.getElementById('login-log-body');
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;padding:24px;">로딩 중...</td></tr>';
+      try {
+        const res = await fetch('/api/admin/login-logs?limit=100', {
+          headers: { 'Authorization': `Bearer ${wisdomAPI.token}` }
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Failed');
+        const logs = data.logs || [];
+        if (logs.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;padding:32px;">접속 기록이 없습니다.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = '';
+        logs.forEach(log => {
+          const tr = document.createElement('tr');
+          const typeClass = log.login_type === 'kakao' ? 'log-type-kakao' : 'log-type-local';
+          const typeLabel = log.login_type === 'kakao' ? '카카오' : '이메일';
+          let dateStr = '-';
+          try {
+            const d = new Date(log.logged_in_at);
+            if (!isNaN(d)) dateStr = d.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+          } catch (_) {}
+          tr.innerHTML = `
+            <td>${log.user_name || '-'}</td>
+            <td style="font-size:0.85em;color:#555;">${log.user_email || '-'}</td>
+            <td><span class="${typeClass}">${typeLabel}</span></td>
+            <td style="font-size:0.82em;color:#888;font-family:monospace;">${log.ip_address || '-'}</td>
+            <td style="font-size:0.85em;">${dateStr}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#c62828;padding:24px;">⚠️ 로드 실패: ${e.message}</td></tr>`;
+      }
+    }
+
     // Open create user modal
     function openCreateModal() {
       currentEditUser = { _isNew: true };
@@ -1186,6 +1273,7 @@
       // Small delay to ensure DOM is ready
       setTimeout(() => {
         loadUsers();
+        loadLoginLogs();
       }, 100);
     } else {
       console.log('[ADMIN] ✗ Authentication failed');

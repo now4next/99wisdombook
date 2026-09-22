@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>9부 99장 · 99 Wisdom Insight</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+KR:wght@400;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='80'>%F0%9F%8C%BF</text></svg>">
+</head>
+<body>
+
+<div class="mock-bar">
+  MOCKUP v2 · 9부 99장 — <strong>10개씩 순차 발행</strong> 진행 현황 &nbsp;·&nbsp;
+  <a href="index.html">홈으로</a>
+</div>
+
+<header class="masthead">
+  <div class="masthead-in">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">99</span>
+      <span class="brand-word">Wisdom Insight</span>
+      <span class="brand-sub">지혜를 읽는 칼럼</span>
+    </a>
+    <nav class="nav">
+      <a href="index.html">칼럼</a>
+      <a href="parts.html" class="on">9부 99장</a>
+      <a href="daily.html">오늘의 한 문장</a>
+      <a class="btn-cta keep" href="index.html#news">구독하기</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<section class="section wrap">
+  <div class="slabel">
+    <h2>Nine Laws &middot; 99 Chapters</h2>
+    <span class="sub">9부 &times; 11장</span>
+    <span class="rule"></span>
+    <span class="right" id="stat">불러오는 중&hellip;</span>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:30px">
+    <span class="chip on"><i class="dot" style="--c:var(--p2)"></i>칼럼 발행됨 <span class="n">10</span></span>
+    <span class="chip"><i class="dot" style="--c:var(--muted-2)"></i>원문 보유 · 칼럼 준비 중 <span class="n">89</span></span>
+  </div>
+
+  <p style="max-width:680px;color:var(--muted);font-size:.93rem;line-height:1.85;margin-bottom:32px;word-break:keep-all">
+    99장은 변하지 않는 <strong style="color:var(--ink)">앵커 문장</strong>입니다. 한글 원문 DB는 그대로 두고,
+    <strong style="color:var(--ink)">10개 단위</strong>로 칼럼을 디자인해 순차 공개합니다.
+    아직 칼럼이 없는 장은 목록에만 표시되고, 준비가 끝나면 초록 배지로 바뀝니다.
+  </p>
+
+  <div id="root"><p style="color:var(--muted-2);font-size:.9rem">99장을 불러오는 중입니다&hellip;</p></div>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-in">
+      <div>
+        <div class="brand"><span class="brand-mark">99</span><span class="brand-word">Wisdom Insight</span></div>
+        <p class="foot-tag">살아본 뒤에야 비로소 읽히는 문장들 &middot; 매일 아침 한 편</p>
+      </div>
+      <nav class="foot-nav">
+        <a href="index.html">칼럼</a><a href="parts.html">9부 99장</a><a href="daily.html">오늘의 한 문장</a>
+      </nav>
+    </div>
+    <div class="foot-c">&copy; 2026 99 Wisdom Insight &middot; 9부 99장 &middot; 99wisdombook.org</div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var PARTS = [
+    ['경제와 거래의 법칙','자원 · 교환 · 대가'],
+    ['인과와 자연의 법칙','원인 · 결과 · 물리'],
+    ['시간과 변화의 법칙','시간 · 순환 · 복리'],
+    ['인간 본성과 심리의 법칙','인지 · 편향 · 욕망'],
+    ['관계와 처세의 법칙','관계 · 신뢰 · 평판'],
+    ['실행과 노력의 법칙','습관 · 축적 · 숙련'],
+    ['위기와 생존의 법칙','위험 · 회복 · 결단'],
+    ['지혜와 통찰의 법칙','학습 · 판단 · 메타인지'],
+    ['운명과 수용의 법칙','한계 · 수용 · 평정']
+  ];
+  var LIVE = 10;   // 1차 배치: 1~10장 칼럼 공개
+
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  fetch('/data/wisdom.json', { cache:'no-cache' })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var items = (d && d.items) || [], root = document.getElementById('root');
+      if (!items.length) { root.innerHTML = '<p style="color:var(--muted)">데이터를 불러오지 못했습니다.</p>'; return; }
+      var per = Math.ceil(items.length / 9), html = '';
+
+      for (var p = 0; p < 9; p++) {
+        var chunk = items.slice(p*per, (p+1)*per);
+        if (!chunk.length) continue;
+        var live = chunk.filter(function(it){ return it.id <= LIVE; }).length;
+
+        var rows = chunk.map(function(it){
+          var on = it.id <= LIVE;
+          return '<a class="chap" href="'+(on?'insight.html':'#')+'">' +
+                   '<span class="chap-no">'+('0'+it.id).slice(-2)+'</span>' +
+                   '<span><span class="chap-t">'+esc(it.title)+'</span>' +
+                   '<span class="chap-s">'+esc(it.subtitle)+'</span></span>' +
+                   '<span class="chap-state'+(on?' live':'')+'">'+(on?'칼럼 공개':'준비 중')+'</span>' +
+                 '</a>';
+        }).join('');
+
+        html += '<section class="part t-p'+(p+1)+'">' +
+                  '<div class="part-head">' +
+                    '<span class="part-num">'+(p+1)+'</span>' +
+                    '<span><span class="part-name">'+esc(PARTS[p][0])+'</span>' +
+                    '<span class="part-axis">'+esc(PARTS[p][1])+'</span></span>' +
+                    '<span class="part-stat">칼럼 '+live+' / '+chunk.length+'장</span>' +
+                  '</div>' +
+                  '<div class="chap-list">'+rows+'</div>' +
+                '</section>';
+      }
+      root.innerHTML = html;
+      document.getElementById('stat').textContent = '칼럼 ' + LIVE + '편 공개 · 원문 ' + items.length + '장 보유';
+    })
+    .catch(function(){
+      document.getElementById('root').innerHTML = '<p style="color:var(--muted)">데이터를 불러오지 못했습니다.</p>';
+      document.getElementById('stat').textContent = '—';
+    });
+})();
+</script>
+
+</body>
+</html>

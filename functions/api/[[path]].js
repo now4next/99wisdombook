@@ -56,6 +56,26 @@ function verifyAdmin(request) {
   return token && token.length > 10;
 }
 
+async function recordLoginLog(env, request, { user_id, user_name, user_email, login_type }) {
+  try {
+    await env.DB.prepare(
+      `CREATE TABLE IF NOT EXISTS login_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        user_name TEXT,
+        user_email TEXT,
+        login_type TEXT DEFAULT 'local',
+        ip_address TEXT,
+        logged_in_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
+    ).run();
+    const ip = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For') || null;
+    await env.DB.prepare(
+      'INSERT INTO login_logs (user_id, user_name, user_email, login_type, ip_address) VALUES (?, ?, ?, ?, ?)'
+    ).bind(user_id, user_name, user_email, login_type, ip).run();
+  } catch (_) {}
+}
+
 // ── Router ──────────────────────────────────────────────────
 export async function onRequest(context) {
   const { request, env } = context;
@@ -119,6 +139,9 @@ export async function onRequest(context) {
     if (path === '/api/push/status' && method === 'GET')
       return handlePushStatus(request, env);
 
+    // Admin – login logs
+    if (path === '/api/admin/login-logs' && method === 'GET') return handleGetLoginLogs(request, env);
+
     // Users
     if (path === '/api/users' && method === 'GET') return handleGetUsers(request, env);
     if (path.match(/^\/api\/users\/\d+$/) && method === 'GET')    return handleGetUser(path.split('/').pop(), env);
@@ -153,6 +176,7 @@ async function handleLogin(request, env) {
   if (!row) return jsonResponse({ error: '이메일 또는 비밀번호가 올바르지 않습니다.' }, 401);
 
   await env.DB.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?').bind(row.id).run();
+  await recordLoginLog(env, request, { user_id: row.id, user_name: row.name || row.username, user_email: row.email, login_type: 'local' });
 
   // streak 컬럼은 마이그레이션 후에만 존재 — 없어도 로그인 정상 동작
   let streak_count = 0, last_wisdom_date = null;
@@ -287,6 +311,7 @@ async function handleKakaoLogin(request, env, context) {
   } else {
     await env.DB.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?').bind(row.id).run();
   }
+  await recordLoginLog(env, request, { user_id: row.id, user_name: row.name || row.username, user_email: row.email, login_type: 'kakao' });
 
   let streak_count = 0, last_wisdom_date = null;
   try {
@@ -472,6 +497,32 @@ async function handleStreak(request, env) {
   return jsonResponse({ success: true, streak_count: streak, is_milestone, already_counted: false });
 }
 
+// ── Admin: Login Logs ────────────────────────────────────────
+async function handleGetLoginLogs(request, env) {
+  if (!verifyAdmin(request)) return jsonResponse({ error: 'Unauthorized' }, 401);
+  try {
+    await env.DB.prepare(
+      `CREATE TABLE IF NOT EXISTS login_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        user_name TEXT,
+        user_email TEXT,
+        login_type TEXT DEFAULT 'local',
+        ip_address TEXT,
+        logged_in_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
+    ).run();
+    const url = new URL(request.url);
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '100', 10), 500);
+    const result = await env.DB.prepare(
+      'SELECT id, user_id, user_name, user_email, login_type, ip_address, logged_in_at FROM login_logs ORDER BY logged_in_at DESC LIMIT ?'
+    ).bind(limit).all();
+    return jsonResponse({ success: true, logs: result.results });
+  } catch (err) {
+    return jsonResponse({ error: err.message }, 500);
+  }
+}
+
 // ── Users (기존) ─────────────────────────────────────────────
 async function handleGetUsers(request, env) {
   if (!verifyAdmin(request)) return jsonResponse({ error: 'Unauthorized' }, 401);
@@ -593,9 +644,13 @@ async function refreshKakaoAccessToken(refreshToken, env) {
 }
 
 // ── 카카오 나에게 보내기 ────────────────────────────────────
-async function sendKakaoNotifyMessage(accessToken, wisdomTitle) {
-  const url = 'https://99wisdombook.org/?autoopen=1';
-  const sentence = wisdomTitle || '오늘의 한 문장이 기다리고 있어요';
+async function sendKakaoNotifyMessage(accessToken, wisdomItem) {
+  // wisdomItem: { title, id } 또는 문자열(하위 호환)
+  const sentence = (typeof wisdomItem === 'object' ? wisdomItem?.title : wisdomItem) || '오늘의 한 문장이 기다리고 있어요';
+  const chId     = typeof wisdomItem === 'object' ? wisdomItem?.id : null;
+  const url      = chId
+    ? `https://99wisdombook.org/?autoopen=1&ch=${chId}`
+    : 'https://99wisdombook.org/?autoopen=1';
   const link = { web_url: url, mobile_web_url: url };
   // 헤더 이미지(정적) + 문장은 title 텍스트로 표시
   const imageUrl = 'https://99wisdombook.org/og-image.png';
@@ -641,8 +696,8 @@ async function handleKakaoTest(request, env) {
   if (!user || user.role !== 'admin') return jsonResponse({ error: 'Admin only' }, 403);
   if (!user.kakao_refresh_token) return jsonResponse({ error: '카카오 재로그인 필요' }, 400);
 
-  // 오늘의 지혜 조회 (앱과 동일한 FNV32 로직으로 사용자별 개인화)
-  let wisdomTitle = '오늘의 한 문장이 기다리고 있어요';
+  // 오늘의 지혜 조회 (앱과 동일한 FNV32 로직으로 사용자별 개인화) → { title, id }
+  let wisdomItem = { title: '오늘의 한 문장이 기다리고 있어요', id: null };
   try {
     const wRes = await fetch('https://99wisdombook.org/data/wisdom.json');
     const wData = await wRes.json();
@@ -652,7 +707,8 @@ async function handleKakaoTest(request, env) {
       const actor = 'u-' + user.id;
       let h = 2166136261 >>> 0;
       for (const c of `${dk}|${actor}`) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; }
-      wisdomTitle = items[h % items.length]?.title || wisdomTitle;
+      const item = items[h % items.length];
+      wisdomItem = { title: item?.title || wisdomItem.title, id: item?.id ?? null };
     }
   } catch (_) {}
 
@@ -662,8 +718,8 @@ async function handleKakaoTest(request, env) {
       await env.DB.prepare('UPDATE users SET kakao_refresh_token = ? WHERE id = ?')
         .bind(new_refresh_token, userId).run();
     }
-    const result = await sendKakaoNotifyMessage(access_token, wisdomTitle);
-    return jsonResponse({ success: true, wisdom: wisdomTitle, kakao: result });
+    const result = await sendKakaoNotifyMessage(access_token, wisdomItem);
+    return jsonResponse({ success: true, wisdom: wisdomItem.title, kakao: result });
   } catch (err) {
     return jsonResponse({ success: false, error: err.message }, 500);
   }
@@ -904,12 +960,13 @@ async function handleNotifyCron(request, env) {
     return h >>> 0;
   }
 
-  // 사용자별 오늘의 문장 인덱스 계산 (앱과 동일한 로직)
-  function getUserWisdomTitle(userId) {
-    if (!wisdomItems.length) return '오늘의 한 문장이 기다리고 있어요';
+  // 사용자별 오늘의 문장 인덱스 계산 (앱과 동일한 로직) → { title, id } 반환
+  function getUserWisdomItem(userId) {
+    if (!wisdomItems.length) return { title: '오늘의 한 문장이 기다리고 있어요', id: null };
     const actor = 'u-' + userId;
     const idx = fnv32(`${kstDateKey}|${actor}`) % wisdomItems.length;
-    return wisdomItems[idx]?.title || '오늘의 한 문장이 기다리고 있어요';
+    const item = wisdomItems[idx];
+    return { title: item?.title || '오늘의 한 문장이 기다리고 있어요', id: item?.id ?? null };
   }
 
   const results = { sent: 0, push_sent: 0, skipped: 0, errors: [] };
@@ -921,8 +978,11 @@ async function handleNotifyCron(request, env) {
       if (!days.includes(kstDay)) { results.skipped++; continue; }
     }
 
-    // 사용자별 개인화된 오늘의 문장
-    const wisdomTitle = getUserWisdomTitle(user.id);
+    // 사용자별 개인화된 오늘의 문장 (챕터 ID 포함)
+    const wisdomItem = getUserWisdomItem(user.id);
+    const pushUrl = wisdomItem.id
+      ? `/?autoopen=1&ch=${wisdomItem.id}`
+      : '/?autoopen=1';
 
     // ── 카카오 알림 ──
     try {
@@ -934,7 +994,7 @@ async function handleNotifyCron(request, env) {
           await env.DB.prepare('UPDATE users SET kakao_refresh_token = ? WHERE id = ?')
             .bind(new_refresh_token, user.id).run();
         }
-        await sendKakaoNotifyMessage(access_token, wisdomTitle);
+        await sendKakaoNotifyMessage(access_token, wisdomItem);
         results.sent++;
       }
     } catch (err) {
@@ -946,7 +1006,7 @@ async function handleNotifyCron(request, env) {
       try {
         await sendWebPush(
           user.push_endpoint, user.push_p256dh, user.push_auth,
-          { title: '📚 오늘의 Daily Wisdom', body: wisdomTitle, url: '/?autoopen=1' },
+          { title: '📚 오늘의 Daily Wisdom', body: wisdomItem.title, url: pushUrl },
           env.VAPID_PRIVATE_KEY.trim(), env.VAPID_PUBLIC_KEY.trim(),
           (env.VAPID_SUBJECT || 'mailto:info@99wisdombook.org').trim()
         );

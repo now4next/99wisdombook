@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>내 보관함 · 99 Wisdom Insight</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+KR:wght@400;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='80'>%F0%9F%93%9C</text></svg>">
+<style>
+  .memo { border-left:2px solid var(--accent); background:color-mix(in srgb,var(--accent) 6%,transparent);
+          padding:13px 15px; border-radius:0 8px 8px 0; margin-top:13px; }
+  .memo .k { font-family:var(--mono); font-size:.6rem; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); }
+  .memo .t { font-size:.88rem; color:var(--ink-2); line-height:1.8; margin-top:6px; white-space:pre-wrap; word-break:keep-all; }
+  .prog-row { display:flex; align-items:center; gap:13px; padding:10px 0; }
+  .prog-row + .prog-row { border-top:1px solid rgba(255,255,255,.05); }
+  .prog-name { font-size:.88rem; min-width:118px; }
+  .prog-bar { flex:1; height:6px; background:var(--surface-2); border-radius:3px; overflow:hidden; }
+  .prog-bar i { display:block; height:100%; background:var(--accent); border-radius:3px; }
+  .prog-n { font-family:var(--mono); font-size:.68rem; color:var(--muted-2); min-width:58px; text-align:right; }
+</style>
+</head>
+<body>
+
+<div class="mock-bar">
+  MOCKUP · 내 보관함 — 스트릭 &middot; 9부 진도 &middot; 소감 &nbsp;·&nbsp;
+  <a href="index.html">홈으로</a>
+</div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">99</span>
+      <span class="brand-word">Wisdom Insight</span>
+    </a>
+    <nav class="nav">
+      <a href="index.html">Today</a>
+      <a href="parts.html">9부</a>
+      <a href="archive.html">아카이브</a>
+      <a href="my.html" class="on">보관함</a>
+      <a class="btn-cta keep" href="subscribe.html">알림 설정</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ══════════ 스트릭 + 진도 ══════════ -->
+<section class="section wrap">
+  <div class="slabel">
+    <h2>My Wisdom</h2>
+    <span class="sub">읽은 편 · 보관한 편 · 남긴 소감</span>
+    <span class="rule"></span>
+    <span class="right">2026년 9월 22일</span>
+  </div>
+
+  <div class="grid2" style="gap:22px;align-items:start">
+
+    <!-- 스트릭 -->
+    <div class="field t-p1" style="padding:26px 28px">
+      <span class="mono-label">Streak · 연속 읽기</span>
+      <div class="streak" style="margin-top:18px">
+        <div class="streak-n">31</div>
+        <div>
+          <div style="font-size:.94rem;color:var(--ink-2)">일 연속</div>
+          <div style="font-size:.8rem;color:var(--muted-2);margin-top:3px">최장 기록 47일 · 다음 배지까지 4일</div>
+        </div>
+      </div>
+      <div class="streak-dots" style="margin-top:20px">
+        <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i>
+        <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i>
+        <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i>
+        <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i>
+        <i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i>
+      </div>
+      <div style="display:flex;gap:26px;margin-top:24px;padding-top:20px;border-top:1px solid var(--line)">
+        <div><div style="font-family:var(--serif-display);font-weight:900;font-size:1.7rem">184</div><div style="font-size:.78rem;color:var(--muted-2)">읽은 편</div></div>
+        <div><div style="font-family:var(--serif-display);font-weight:900;font-size:1.7rem">37</div><div style="font-size:.78rem;color:var(--muted-2)">보관한 편</div></div>
+        <div><div style="font-family:var(--serif-display);font-weight:900;font-size:1.7rem">12</div><div style="font-size:.78rem;color:var(--muted-2)">남긴 소감</div></div>
+      </div>
+    </div>
+
+    <!-- 9부 진도 -->
+    <div class="field" style="padding:26px 28px">
+      <span class="mono-label bare" style="color:var(--muted-2)">Progress · 9부 진도</span>
+      <div style="margin-top:16px">
+        <div class="prog-row t-p1"><span class="prog-name">경제와 거래</span><span class="prog-bar"><i style="width:82%"></i></span><span class="prog-n">23/28</span></div>
+        <div class="prog-row t-p2"><span class="prog-name">인과와 자연</span><span class="prog-bar"><i style="width:74%"></i></span><span class="prog-n">20/27</span></div>
+        <div class="prog-row t-p3"><span class="prog-name">시간과 변화</span><span class="prog-bar"><i style="width:90%"></i></span><span class="prog-n">26/29</span></div>
+        <div class="prog-row t-p4"><span class="prog-name">본성과 심리</span><span class="prog-bar"><i style="width:69%"></i></span><span class="prog-n">18/26</span></div>
+        <div class="prog-row t-p5"><span class="prog-name">관계와 처세</span><span class="prog-bar"><i style="width:77%"></i></span><span class="prog-n">23/30</span></div>
+        <div class="prog-row t-p6"><span class="prog-name">실행과 노력</span><span class="prog-bar"><i style="width:71%"></i></span><span class="prog-n">20/28</span></div>
+        <div class="prog-row t-p7"><span class="prog-name">위기와 생존</span><span class="prog-bar"><i style="width:63%"></i></span><span class="prog-n">17/27</span></div>
+        <div class="prog-row t-p8"><span class="prog-name">지혜와 통찰</span><span class="prog-bar"><i style="width:73%"></i></span><span class="prog-n">19/26</span></div>
+        <div class="prog-row t-p9"><span class="prog-name">운명과 수용</span><span class="prog-bar"><i style="width:69%"></i></span><span class="prog-n">18/26</span></div>
+      </div>
+      <p style="margin-top:18px;font-size:.8rem;color:var(--muted-2);line-height:1.7">
+        가장 덜 읽은 <strong style="color:var(--p7)">위기와 생존</strong>에서 다음 편을 골라 드릴까요?
+        <a href="subscribe.html" style="color:var(--muted);border-bottom:1px solid var(--line)">발송 순서 변경</a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 보관함 ══════════ -->
+<section class="section wrap">
+  <div class="slabel">
+    <h2>Saved</h2>
+    <span class="sub">보관한 37편</span>
+    <span class="rule"></span>
+    <span class="right">소감 남긴 편 먼저</span>
+  </div>
+
+  <div class="opts" style="margin-bottom:28px">
+    <span class="chip on">전체 <span class="n">37</span></span>
+    <span class="chip">소감 있음 <span class="n">12</span></span>
+    <span class="chip">소감 없음 <span class="n">25</span></span>
+    <span class="chip">최근 보관순</span>
+  </div>
+
+  <div class="grid2">
+
+    <div class="card t-p1">
+      <div class="card-body" style="padding:22px 24px 20px">
+        <div class="card-no">No. 247 &middot; 제1부 3장 &middot; 역사</div>
+        <h4 style="font-size:1.18rem">배를 나눠 실었다</h4>
+        <p>한 배에 다 싣지 않은 이유는 용기가 아니라 계산이었다.</p>
+        <div class="memo">
+          <div class="k">💭 나의 소감</div>
+          <div class="t">수입원이 회사 하나뿐이라는 게 계속 걸린다. 사이드 프로젝트를 “여유 있을 때”가 아니라 지금 시작해야 하는 이유를 오늘 찾았다.</div>
+        </div>
+        <div class="card-foot">
+          <span class="lens">2026. 09. 22 보관</span>
+          <span style="display:flex;gap:9px">
+            <button class="sbtn" style="padding:6px 13px;font-size:.76rem">공유</button>
+            <button class="sbtn" style="padding:6px 13px;font-size:.76rem">소감 수정</button>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card t-p9">
+      <div class="card-body" style="padding:22px 24px 20px">
+        <div class="card-no">No. 242 &middot; 제9부 91장 &middot; 인물</div>
+        <h4 style="font-size:1.18rem">돌아온 폭격기만 셌다</h4>
+        <p>총알 구멍이 적은 곳을 보강하자는 결론은 돌아온 기체만 본 결과였다.</p>
+        <div class="memo">
+          <div class="k">💭 나의 소감</div>
+          <div class="t">우리 팀 회고가 딱 이거다. 남아 있는 사람들 얘기만 듣고 있었다. 퇴사한 사람들에게 물어본 적이 없다.</div>
+        </div>
+        <div class="card-foot">
+          <span class="lens">2026. 09. 17 보관</span>
+          <span style="display:flex;gap:9px">
+            <button class="sbtn" style="padding:6px 13px;font-size:.76rem">공유</button>
+            <button class="sbtn" style="padding:6px 13px;font-size:.76rem">소감 수정</button>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card t-p8">
+      <div class="card-body" style="padding:22px 24px 20px">
+        <div class="card-no">No. 239 &middot; 제8부 79장 &middot; 과학</div>
+        <h4 style="font-size:1.18rem">모를수록 확신했다</h4>
+        <p>무능은 답을 모르는 것이자, 모른다는 사실을 모르는 것이었다.</p>
+        <div class="memo">
+          <div class="k">💭 나의 소감</div>
+          <div class="t">회의에서 제일 확신 있게 말한 사람이 제일 준비가 안 됐던 경우가 많았다. 나도 그랬을 것이다.</div>
+        </div>
+        <div class="card-foot">
+          <span class="lens">2026. 09. 14 보관</span>
+          <span style="display:flex;gap:9px">
+            <button class="sbtn" style="padding:6px 13px;font-size:.76rem">공유</button>
+            <button class="sbtn" style="padding:6px 13px;font-size:.76rem">소감 수정</button>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card t-p6">
+      <div class="card-body" style="padding:22px 24px 20px">
+        <div class="card-no">No. 237 &middot; 제6부 62장 &middot; 원형</div>
+        <h4 style="font-size:1.18rem">천천히 서둘러라</h4>
+        <p>되돌릴 수 없는 일에만 시간을 쓰라는 뜻이었다.</p>
+        <div style="margin-top:15px;padding:13px 15px;border:1px dashed var(--line);border-radius:8px;text-align:center">
+          <span style="font-size:.83rem;color:var(--muted-2)">아직 소감을 남기지 않았어요</span>
+          <button class="sbtn" style="padding:6px 14px;font-size:.76rem;margin-left:9px">소감 쓰기</button>
+        </div>
+        <div class="card-foot">
+          <span class="lens">2026. 09. 12 보관</span>
+          <button class="sbtn" style="padding:6px 13px;font-size:.76rem">공유</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="text-align:center;margin-top:34px">
+    <a class="btn-line" href="#">더 보기 &middot; 33편</a>
+  </div>
+</section>
+
+<footer class="foot wrap">
+  <div class="foot-in">
+    <div>
+      <div class="brand"><span class="brand-mark">99</span><span class="brand-word">Wisdom Insight</span></div>
+      <p class="foot-tag">살아본 뒤에야 비로소 읽히는 문장들 &middot; 매일 아침 한 편</p>
+    </div>
+    <nav class="foot-nav">
+      <a href="parts.html">9부</a><a href="archive.html">아카이브</a>
+      <a href="subscribe.html">구독</a><a href="my.html">보관함</a>
+    </nav>
+  </div>
+  <div class="foot-c">&copy; 2026 99 Wisdom Insight &middot; 9부 99장 990편 &middot; 99wisdombook.org</div>
+</footer>
+
+</body>
+</html>

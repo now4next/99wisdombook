@@ -26,9 +26,21 @@ CREATE TABLE IF NOT EXISTS saved_wisdom (
     UNIQUE(user_id, chapter_id)
 );
 
+CREATE TABLE IF NOT EXISTS login_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    user_name TEXT,
+    user_email TEXT,
+    login_type TEXT DEFAULT 'local',
+    ip_address TEXT,
+    logged_in_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE INDEX IF NOT EXISTS idx_username ON users(username);
 CREATE INDEX IF NOT EXISTS idx_role ON users(role);
 CREATE INDEX IF NOT EXISTS idx_saved_user ON saved_wisdom(user_id);
+CREATE INDEX IF NOT EXISTS idx_login_logs_at ON login_logs(logged_in_at DESC);
+CREATE INDEX IF NOT EXISTS idx_login_logs_user ON login_logs(user_id);
 
 INSERT INTO users (username, password, name, email, role, permissions)
 VALUES (

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>구독 설정 · 99 Wisdom Insight</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+KR:wght@400;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='80'>%F0%9F%93%9C</text></svg>">
+<style>
+  .kk-card { max-width:330px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#1b1b1b; }
+  .kk-img { aspect-ratio:2/1; position:relative; overflow:hidden; padding:14px;
+            background:linear-gradient(150deg,#0a0a0a,#15161a 60%,#101115);
+            display:flex; flex-direction:column; justify-content:space-between; }
+  .kk-img::after{content:'';position:absolute;inset:0;background:radial-gradient(110% 75% at 18% 0%,color-mix(in srgb,var(--p1) 18%,transparent),transparent 62%);}
+  .kk-body { padding:13px 15px 15px; }
+  .kk-btn { margin:0 12px 12px; border:1px solid var(--line); border-radius:7px; text-align:center;
+            padding:9px; font-size:.83rem; color:var(--ink-2); }
+  .ml-card { max-width:400px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--surface); }
+  .ml-head { padding:12px 15px; border-bottom:1px solid var(--line); font-family:var(--mono); font-size:.68rem; color:var(--muted-2); letter-spacing:.05em; }
+  .ml-body { padding:20px 18px 22px; }
+  .day { width:40px; height:40px; border-radius:50%; border:1px solid var(--line); display:grid; place-items:center; font-size:.83rem; color:var(--ink-2); }
+  .day.on { background:var(--ink); color:#111; border-color:var(--ink); font-weight:600; }
+  .day.off { color:var(--muted-2); }
+</style>
+</head>
+<body class="t-p1">
+
+<div class="mock-bar">
+  MOCKUP · 구독 설정 — 채널 · 시각 · 요일 개인화 + 발송 미리보기 &nbsp;·&nbsp;
+  <a href="index.html">홈으로</a>
+</div>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">99</span>
+      <span class="brand-word">Wisdom Insight</span>
+    </a>
+    <nav class="nav">
+      <a href="index.html">Today</a>
+      <a href="parts.html">9부</a>
+      <a href="archive.html">아카이브</a>
+      <a href="subscribe.html" class="on">구독</a>
+      <a class="btn-cta keep" href="#set">설정 저장</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ══════════ 히어로 ══════════ -->
+<section class="section wrap">
+  <div class="sub-hero">
+    <span class="mono-label bare" style="color:var(--muted-2)">Subscribe · 매일 아침 한 편</span>
+    <h3>하루는 짧지만,<br>지혜가 필요 없는 날은 없으니까</h3>
+    <p>990편 중 아직 읽지 않은 한 편을, 당신이 정한 요일과 시간에 보내드립니다.
+       회원가입 없이 카카오톡으로 받을 수 있어요.</p>
+    <div class="sub-btns">
+      <a class="btn-solid" href="#set">💬 카카오톡으로 받기</a>
+      <a class="btn-line" href="#set">✉ 이메일로 받기</a>
+    </div>
+    <div class="sub-note">무료 · 요일과 시간은 내가 정해요 · 언제든 그만 받기</div>
+  </div>
+</section>
+
+<!-- ══════════ 설정 ══════════ -->
+<section class="section wrap" id="set">
+  <div class="slabel">
+    <h2>My Settings</h2>
+    <span class="sub">언제, 어디로 받을까요</span>
+    <span class="rule"></span>
+    <span class="right">변경은 즉시 반영됩니다</span>
+  </div>
+
+  <div class="grid2" style="align-items:start;gap:26px">
+
+    <!-- 좌: 설정 -->
+    <div>
+      <!-- 채널 -->
+      <div class="field">
+        <div class="field-row">
+          <div class="grow">
+            <h4>💬 카카오톡</h4>
+            <div class="d">가장 빠르게 받는 방법 · 회원가입 불필요</div>
+          </div>
+          <span class="tog on"></span>
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-row">
+          <div class="grow">
+            <h4>✉ 이메일</h4>
+            <div class="d">본문 전체를 읽기 좋은 뉴스레터로 · assess@nfn.co.kr</div>
+          </div>
+          <span class="tog on"></span>
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-row">
+          <div class="grow">
+            <h4>🔔 웹 푸시</h4>
+            <div class="d">브라우저 알림 · 현재 이 기기에서 허용됨</div>
+          </div>
+          <span class="tog"></span>
+        </div>
+      </div>
+
+      <!-- 시각 -->
+      <div class="field" style="margin-top:22px">
+        <h4>받을 시각</h4>
+        <div class="d">KST 기준 · 5분 단위로 지정할 수 있어요</div>
+        <div class="opts">
+          <span class="chip">06:00</span>
+          <span class="chip on">06:30</span>
+          <span class="chip">07:00</span>
+          <span class="chip">08:00</span>
+          <span class="chip">12:00</span>
+          <span class="chip">21:00</span>
+          <span class="chip">직접 입력</span>
+        </div>
+      </div>
+
+      <!-- 요일 -->
+      <div class="field">
+        <h4>받을 요일</h4>
+        <div class="d">주말은 쉬어도 연속 기록(스트릭)은 끊기지 않아요</div>
+        <div class="opts" style="gap:9px">
+          <span class="day on">월</span>
+          <span class="day on">화</span>
+          <span class="day on">수</span>
+          <span class="day on">목</span>
+          <span class="day on">금</span>
+          <span class="day off">토</span>
+          <span class="day off">일</span>
+        </div>
+      </div>
+
+      <!-- 발송 순서 -->
+      <div class="field">
+        <h4>어떤 순서로 받을까요</h4>
+        <div class="d">990편 중 아직 읽지 않은 편에서 고릅니다</div>
+        <div class="opts">
+          <span class="chip on">균형 추천</span>
+          <span class="chip">1부 → 9부 순서</span>
+          <span class="chip">완전 랜덤</span>
+          <span class="chip">특정 부만</span>
+        </div>
+        <p style="margin-top:13px;font-size:.82rem;color:var(--muted-2);line-height:1.7">
+          <strong style="color:var(--ink-2)">균형 추천</strong> — 9부를 골고루 순환하고, 같은 렌즈가 연달아 오지 않도록 섞습니다.
+        </p>
+      </div>
+
+      <div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap">
+        <button class="btn-solid">설정 저장</button>
+        <button class="btn-line">지금 테스트 발송</button>
+      </div>
+      <p style="margin-top:18px;font-size:.78rem;color:var(--muted-2);line-height:1.8">
+        언제든 <a href="#" style="color:var(--muted);border-bottom:1px solid var(--line)">수신거부</a>할 수 있고,
+        모든 메일 하단에 원클릭 해지 링크가 있습니다. 이메일 주소는 발송 목적으로만 사용합니다.
+      </p>
+    </div>
+
+    <!-- 우: 미리보기 -->
+    <div>
+      <div class="slabel" style="margin-bottom:20px">
+        <h2 style="font-size:.7rem">Preview</h2>
+        <span class="rule"></span>
+        <span class="right">내일 아침 06:30 발송 예정</span>
+      </div>
+
+      <!-- 카톡 -->
+      <p style="font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;color:var(--muted-2);text-transform:uppercase;margin-bottom:11px">카카오톡</p>
+      <div class="kk-card">
+        <div class="kk-img">
+          <div class="sc-k" style="position:relative;z-index:2">No. 248 · 제1부 4장</div>
+          <div class="sc-q" style="position:relative;z-index:2;font-size:1.02rem">금지는 수요를 없애지 못했다</div>
+          <div class="sc-b" style="position:relative;z-index:2">99 Wisdom Insight</div>
+        </div>
+        <div class="kk-body">
+          <div style="font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;color:var(--p1);text-transform:uppercase">오늘의 지혜 · Daily Wisdom</div>
+          <div style="font-family:var(--serif);font-weight:700;font-size:1rem;margin-top:8px;line-height:1.45;letter-spacing:-.02em">수요가 있으면 공급이 있다 — 금주법의 밀주 지도</div>
+          <div style="font-size:.83rem;color:var(--muted);margin-top:8px;line-height:1.7">1920년 미국은 술을 금지했다. 13년 뒤 남은 것은 금주가 아니라 조직범죄의 유통망이었다.</div>
+        </div>
+        <div class="kk-btn">지혜의 문장 본문 읽기</div>
+      </div>
+
+      <!-- 이메일 -->
+      <p style="font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;color:var(--muted-2);text-transform:uppercase;margin:28px 0 11px">이메일</p>
+      <div class="ml-card">
+        <div class="ml-head">
+          받는 사람 assess@nfn.co.kr<br>
+          제목 <span style="color:var(--ink-2)">[99WI No.248] 금지는 수요를 없애지 못했다</span>
+        </div>
+        <div class="ml-body">
+          <div style="font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;color:var(--p1);text-transform:uppercase">No. 248 · 제1부 4장 · 역사</div>
+          <div style="font-family:var(--serif);font-weight:700;font-size:1.32rem;margin-top:11px;line-height:1.35;letter-spacing:-.025em">금지는 수요를 없애지 못했다</div>
+          <div style="margin-top:16px;padding:14px 16px;border-left:2px solid var(--p1);background:color-mix(in srgb,var(--p1) 6%,transparent);border-radius:0 8px 8px 0">
+            <div style="font-family:var(--mono);font-size:.58rem;letter-spacing:.14em;color:var(--p1);text-transform:uppercase">Anchor · 제4장</div>
+            <div style="font-family:var(--serif);font-weight:700;font-size:1rem;margin-top:6px">“수요가 있으면 공급이 있다”</div>
+          </div>
+          <p style="font-size:.88rem;color:var(--ink-2);margin-top:16px;line-height:1.85">1920년 1월 미국은 수정헌법 제18조로 술을 금지했다. 13년 뒤 남은 것은 금주가 아니라 밀주 유통망과 조직범죄였다…</p>
+          <div style="margin-top:20px"><span class="btn-line" style="padding:9px 20px;font-size:.82rem">전문 읽기 →</span></div>
+          <div style="margin-top:20px;padding-top:15px;border-top:1px solid var(--line);font-family:var(--mono);font-size:.6rem;color:var(--muted-2);letter-spacing:.04em;line-height:1.8">
+            99 WISDOM INSIGHT · 매일 아침 한 편<br>
+            <span style="border-bottom:1px solid var(--line)">알림 설정 변경</span> ·
+            <span style="border-bottom:1px solid var(--line)">수신거부</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="foot wrap">
+  <div class="foot-in">
+    <div>
+      <div class="brand"><span class="brand-mark">99</span><span class="brand-word">Wisdom Insight</span></div>
+      <p class="foot-tag">살아본 뒤에야 비로소 읽히는 문장들 · 매일 아침 한 편</p>
+    </div>
+    <nav class="foot-nav">
+      <a href="parts.html">9부</a><a href="archive.html">아카이브</a>
+      <a href="subscribe.html">구독</a><a href="my.html">보관함</a>
+    </nav>
+  </div>
+  <div class="foot-c">© 2026 99 Wisdom Insight · 9부 99장 990편 · 99wisdombook.org</div>
+</footer>
+
+</body>
+</html>

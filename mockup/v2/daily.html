@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>오늘의 한 문장 · 99 Wisdom Insight</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+KR:wght@400;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='80'>%F0%9F%8C%BF</text></svg>">
+<style>
+  .card-wrap { max-width: 560px; margin: 0 auto; }
+  .cover {
+    position: relative; overflow: hidden; cursor: pointer;
+    border: 1px solid color-mix(in srgb, var(--accent) 26%, #fff);
+    border-radius: 22px; padding: 46px 34px 40px; text-align: center;
+    background:
+      radial-gradient(110% 80% at 50% 0%, color-mix(in srgb, var(--accent) 20%, #fff), transparent 62%),
+      var(--surface);
+    box-shadow: var(--shadow); transition: transform .25s, box-shadow .25s;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .cover:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+  .cover.hiding { display: none; }
+  .cover-ghost {
+    position: absolute; left: 50%; top: 44%; transform: translate(-50%,-50%);
+    font-family: var(--serif-display); font-weight: 900; font-size: 11rem; line-height: 1;
+    color: color-mix(in srgb, var(--accent) 12%, #fff); letter-spacing: -.05em; pointer-events: none;
+  }
+  .cover > * { position: relative; z-index: 2; }
+  .cover-label { font-family: var(--mono); font-size: .7rem; letter-spacing: .24em; text-transform: uppercase; color: color-mix(in srgb,var(--accent) 82%,#000); }
+  .cover-date { font-size: .87rem; color: var(--muted); margin-top: 7px; margin-bottom: 30px; }
+  .cover-title { font-family: var(--serif); font-weight: 700; font-size: clamp(1.7rem,5.4vw,2.1rem); line-height: 1.38; letter-spacing: -.02em; margin-top: 18px; }
+  .cover-desc { font-size: .9rem; color: var(--muted); line-height: 1.8; margin-top: 12px; margin-bottom: 28px; word-break: keep-all; }
+
+  .page {
+    border: 1px solid var(--line); border-radius: 22px;
+    background: var(--surface); box-shadow: var(--shadow); padding: 32px 30px 28px;
+    animation: pageIn .45s ease both;
+  }
+  @keyframes pageIn { from { opacity:0; transform: translateY(12px);} to { opacity:1; transform:none; } }
+  .page-header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding-bottom: 15px; border-bottom: 1px solid var(--line); }
+  .page-date { margin-left: auto; font-family: var(--mono); font-size: .69rem; color: var(--muted-2); }
+  .key-label { font-family: var(--mono); font-size: .64rem; letter-spacing: .15em; text-transform: uppercase; color: var(--muted-2); display: block; margin-bottom: 10px; }
+  .key-title { font-family: var(--serif); font-weight: 700; font-size: clamp(1.6rem,5vw,2.05rem); line-height: 1.34; letter-spacing: -.03em; word-break: keep-all; }
+  .page-subtitle { font-family: var(--serif); font-size: 1rem; line-height: 1.7; color: var(--muted); margin-top: 13px; word-break: keep-all; }
+  .page-summary { font-size: .96rem; line-height: 1.92; color: var(--ink-2); margin-top: 19px; padding-top: 19px; border-top: 1px solid var(--line); word-break: keep-all; }
+  .page-actions { margin-top: 24px; display: flex; flex-direction: column; gap: 10px; }
+  .btn-row { display: flex; gap: 10px; }
+  .btn-row > * { flex: 1; justify-content: center; }
+  .btn-soft {
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    border: 1px solid var(--line); border-radius: 999px; background: var(--surface);
+    padding: 11px 16px; font-size: .85rem; color: var(--ink-2); transition: all .18s;
+  }
+  .btn-soft:hover { border-color: var(--line-strong); background: var(--surface-2); }
+  .reroll-hint { font-family: var(--mono); font-size: .69rem; color: var(--muted-2); text-align: center; }
+</style>
+</head>
+<body class="t-p4">
+
+<div class="mock-bar">
+  MOCKUP v2 · <strong>오늘의 한 문장</strong> — 홈에서 분리된 서브 기능 &nbsp;·&nbsp;
+  <a href="index.html">칼럼 홈으로</a>
+</div>
+
+<header class="masthead">
+  <div class="masthead-in">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">99</span>
+      <span class="brand-word">Wisdom Insight</span>
+      <span class="brand-sub">지혜를 읽는 칼럼</span>
+    </a>
+    <nav class="nav">
+      <a href="index.html">칼럼</a>
+      <a href="parts.html">9부 99장</a>
+      <a href="daily.html" class="on">오늘의 한 문장</a>
+      <a class="btn-cta keep" href="index.html#news">구독하기</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<section class="section wrap">
+  <div class="slabel">
+    <h2>Daily One Line</h2>
+    <span class="rule"></span>
+    <span class="right">2026년 9월 22일 화요일</span>
+  </div>
+
+  <div class="card-wrap">
+
+    <!-- 표지 -->
+    <div class="cover" id="cover" tabindex="0" role="button">
+      <div class="cover-ghost">99</div>
+      <div class="cover-label">Daily One Line</div>
+      <div class="cover-date">2026년 9월 22일</div>
+      <span class="icon-chip lg">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3c-3 3-5 5.2-5 8a5 5 0 0010 0c0-2.8-2-5-5-8z"/>
+          <path d="M12 11v8M7 21h10"/>
+        </svg>
+      </span>
+      <h1 class="cover-title">오늘의 한 문장</h1>
+      <p class="cover-desc">9부 99장의 지혜 가운데<br>오늘 당신에게 도착한 한 문장</p>
+      <span class="btn-line">표지 넘기기 →</span>
+    </div>
+
+    <!-- 본문 -->
+    <div class="page" id="page" hidden>
+      <div class="page-header">
+        <span class="kicker">제4부 36장</span>
+        <span class="tag-soft">🔥 31일 연속</span>
+        <span class="page-date">2026. 09. 22</span>
+      </div>
+
+      <div style="margin-top:22px">
+        <span class="key-label">Anchor · 오늘의 지혜</span>
+        <h2 class="key-title">남의 떡이 더 커 보인다</h2>
+      </div>
+      <p class="page-subtitle">비교라는 지옥과 모방하는 욕망, 상대적 박탈감의 심리학</p>
+      <p class="page-summary">내 손에 들린 떡의 크기보다 옆 사람의 떡 크기가 더 잘 보이는 것은 두뇌의 비교 회로 때문이다. 비교는 가장 빠르게 행복을 빼앗는 도둑이다.</p>
+
+      <div class="page-actions">
+        <a class="btn-accent" href="insight.html" style="justify-content:center">이 지혜의 칼럼 읽기 →</a>
+        <div class="btn-row">
+          <button class="btn-soft">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+            보관하기
+          </button>
+          <button class="btn-soft">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+            공유하기
+          </button>
+        </div>
+        <button class="btn-soft" style="border-style:dashed">다른 문장 뽑기</button>
+        <p class="reroll-hint">하루에 한 번 다시 뽑을 수 있습니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <p style="max-width:560px;margin:26px auto 0;font-size:.84rem;color:var(--muted-2);line-height:1.8;text-align:center">
+    이 화면은 칼럼 홈(<a href="index.html" style="color:var(--muted);border-bottom:1px solid var(--line)">/</a>)에서 분리된 서브 기능입니다.<br>
+    기존 카카오·푸시 알림 링크(<code style="font-family:var(--mono);font-size:.78rem">/?autoopen=1&amp;ch=N</code>)는 이 화면으로 자동 연결됩니다.
+  </p>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-in">
+      <div>
+        <div class="brand"><span class="brand-mark">99</span><span class="brand-word">Wisdom Insight</span></div>
+        <p class="foot-tag">살아본 뒤에야 비로소 읽히는 문장들 · 매일 아침 한 편</p>
+      </div>
+      <nav class="foot-nav">
+        <a href="index.html">칼럼</a><a href="parts.html">9부 99장</a><a href="daily.html">오늘의 한 문장</a>
+      </nav>
+    </div>
+    <div class="foot-c">© 2026 99 Wisdom Insight · 9부 99장 · 99wisdombook.org</div>
+  </div>
+</footer>
+
+<script>
+  var cover = document.getElementById('cover'), page = document.getElementById('page');
+  function open() { cover.classList.add('hiding'); page.hidden = false; }
+  cover.addEventListener('click', open);
+  cover.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f0f0f">
+  <title>9부 99장 · 99 Wisdom Insight</title>
+  <meta name="description" content="9부 99장으로 분류한 인생의 법칙 — 경제와 거래부터 운명과 수용까지.">
+
+  <meta property="og:type"        content="website">
+  <meta property="og:url"         content="https://99wisdombook.org/parts.html">
+  <meta property="og:title"       content="9부 99장 · 99 Wisdom Insight">
+  <meta property="og:description" content="9부 99장으로 분류한 인생의 법칙">
+  <meta property="og:image"       content="https://99wisdombook.org/og-kakao.png">
+  <meta property="og:image:width"  content="800">
+  <meta property="og:image:height" content="400">
+  <meta property="og:locale"      content="ko_KR">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+KR:wght@400;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/app.css">
+  <link rel="stylesheet" href="/assets/site.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='80'>%F0%9F%93%9C</text></svg>">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="/">
+      <span class="brand-mark">99</span>
+      <span class="brand-word">Wisdom Insight</span>
+    </a>
+    <nav class="nav">
+      <a href="/">Today</a>
+      <a href="/parts.html" class="on">9부</a>
+      <a href="/my-wisdom.html">보관함</a>
+      <a class="btn-cta keep" href="/">오늘의 문장 →</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<section class="section wrap">
+  <div class="slabel">
+    <h2>Nine Laws &middot; 99 Chapters</h2>
+    <span class="sub">9부 &times; 11장</span>
+    <span class="rule"></span>
+    <span class="right" id="stat-line">불러오는 중…</span>
+  </div>
+
+  <p style="max-width:660px;color:var(--muted);font-size:.93rem;line-height:1.85;margin-bottom:34px;word-break:keep-all">
+    인생의 법칙을 <strong style="color:var(--ink)">9개의 축</strong>으로 나누고, 각 축마다 11개의
+    <strong style="color:var(--ink)">앵커 문장</strong>을 두었습니다. 매일 아침 이 99장 가운데 한 문장이 도착합니다.
+  </p>
+
+  <div id="parts-root">
+    <p style="color:var(--muted-2);font-size:.9rem">99장을 불러오는 중입니다…</p>
+  </div>
+</section>
+</main>
+
+<footer class="foot wrap">
+  <div class="foot-in">
+    <div>
+      <div class="brand"><span class="brand-mark">99</span><span class="brand-word">Wisdom Insight</span></div>
+      <p class="foot-tag">살아본 뒤에야 비로소 읽히는 문장들 &middot; 매일 아침 한 편</p>
+    </div>
+    <nav class="foot-nav">
+      <a href="/">Today</a>
+      <a href="/parts.html">9부</a>
+      <a href="/my-wisdom.html">보관함</a>
+    </nav>
+  </div>
+  <div class="foot-c">&copy; 2026 99 Wisdom Insight &middot; 9부 99장 &middot; 99wisdombook.org</div>
+</footer>
+
+<script>
+(function () {
+  var PARTS = [
+    ['경제와 거래의 법칙', '자원 · 교환 · 대가',     '이 선택의 진짜 비용은?',      '의사결정'],
+    ['인과와 자연의 법칙', '원인 · 결과 · 물리',     '왜 이런 결과가 왔나?',        '구조 이해'],
+    ['시간과 변화의 법칙', '시간 · 순환 · 복리',     '지금 서둘러야 하나?',         '인내 · 타이밍'],
+    ['인간 본성과 심리의 법칙', '인지 · 편향 · 욕망', '나는 왜 이러지?',             '자기 인식'],
+    ['관계와 처세의 법칙', '관계 · 신뢰 · 평판',     '이 사람을 어떻게 대할까?',    '관계 실무'],
+    ['실행과 노력의 법칙', '습관 · 축적 · 숙련',     '어떻게 시작하고 지속하나?',   '실행'],
+    ['위기와 생존의 법칙', '위험 · 회복 · 결단',     '버틸까 뛸까?',                '위기 대응'],
+    ['지혜와 통찰의 법칙', '학습 · 판단 · 메타인지', '무엇을 모르고 있나?',         '사고법'],
+    ['운명과 수용의 법칙', '한계 · 수용 · 평정',     '받아들여야 하나?',            '내적 평화']
+  ];
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  fetch('/data/wisdom.json', { cache: 'no-cache' })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      var items = (data && data.items) || [];
+      var root = document.getElementById('parts-root');
+      if (!items.length) { root.innerHTML = '<p style="color:var(--muted)">데이터를 불러오지 못했습니다.</p>'; return; }
+
+      var per = Math.ceil(items.length / 9);   // 11장
+      var html = '';
+
+      for (var p = 0; p < 9; p++) {
+        var meta = PARTS[p];
+        var chunk = items.slice(p * per, (p + 1) * per);
+        if (!chunk.length) continue;
+
+        var rows = chunk.map(function (it) {
+          var n = ('0' + it.id).slice(-2);
+          return '<a class="chap" href="/book.html#chapter-' + it.id + '">' +
+                   '<span class="chap-no">' + n + '</span>' +
+                   '<span>' +
+                     '<span class="chap-t">' + esc(it.title) + '</span>' +
+                     '<span class="chap-s">' + esc(it.subtitle) + '</span>' +
+                   '</span>' +
+                 '</a>';
+        }).join('');
+
+        html += '<section class="part t-p' + (p + 1) + '" id="part-' + (p + 1) + '">' +
+                  '<div class="part-head">' +
+                    '<span class="part-num">' + (p + 1) + '</span>' +
+                    '<span>' +
+                      '<span class="part-name">' + esc(meta[0]) + '</span>' +
+                      '<span class="part-axis">' + esc(meta[1]) + ' · &ldquo;' + esc(meta[2]) + '&rdquo;</span>' +
+                    '</span>' +
+                    '<span class="part-stat">' + chunk.length + '장 · ' + esc(meta[3]) + '</span>' +
+                  '</div>' +
+                  '<div class="chap-list">' + rows + '</div>' +
+                '</section>';
+      }
+
+      root.innerHTML = html;
+      document.getElementById('stat-line').textContent = items.length + '장';
+
+      if (location.hash) {
+        var t = document.querySelector(location.hash);
+        if (t) t.scrollIntoView();
+      }
+    })
+    .catch(function () {
+      document.getElementById('parts-root').innerHTML =
+        '<p style="color:var(--muted)">데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</p>';
+      document.getElementById('stat-line').textContent = '—';
+    });
+})();
+</script>
+
+</body>
+</html>
