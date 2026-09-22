@@ -18,9 +18,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+KR:wght@400;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/app.css?v=20260922d">
-<link rel="stylesheet" href="/assets/site.css?v=20260922d">
+<link rel="stylesheet" href="/assets/app.css?v=20260922e">
+<link rel="stylesheet" href="/assets/site.css?v=20260922e">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='80'>%F0%9F%8C%BF</text></svg>">
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -206,6 +207,25 @@
         '</ol></section>';
       }
 
+      /* 공유 카드 — quotable 로 구운 PNG (카카오/인스타) */
+      if (it.hero_image) {
+        html += '<section style="margin-bottom:44px">' +
+          '<div class="slabel"><h2>Share</h2><span class="sub">카드 이미지</span><span class="rule"></span></div>' +
+          '<div class="share-cards">' +
+            '<figure><img src="' + esc(it.hero_image) + '" alt="공유 카드 2:1" loading="lazy">' +
+              '<figcaption>2:1 · 카카오톡 / 링크 미리보기</figcaption></figure>' +
+            '<figure><img src="' + esc(it.hero_image.replace(/\.png$/, '-1x1.png')) + '" alt="공유 카드 1:1" loading="lazy">' +
+              '<figcaption>1:1 · 인스타그램 피드</figcaption></figure>' +
+          '</div>' +
+          '<div class="share-btns">' +
+            '<button class="sbtn" id="sh-kakao"><i class="ic" style="background:#FEE500"></i>카카오톡 공유</button>' +
+            '<a class="sbtn" id="sh-save" href="' + esc(it.hero_image) + '" download><i class="ic"></i>이미지 저장</a>' +
+            '<button class="sbtn" id="sh-copy"><i class="ic"></i>링크 복사</button>' +
+          '</div>' +
+          '<div id="sh-msg" class="share-msg"></div>' +
+        '</section>';
+      }
+
       /* 원문 · 같은 장 */
       html += '<section style="margin-bottom:56px;border-top:1px solid var(--line);padding-top:28px;' +
                 'display:flex;flex-wrap:wrap;gap:16px;align-items:center">' +
@@ -222,6 +242,39 @@
       /* OG/설명 갱신 */
       var dsc = document.querySelector('meta[name="description"]');
       if (dsc) dsc.setAttribute('content', it.hook || it.quotable || it.title);
+
+      /* 공유 동작 */
+      var pageUrl = location.origin + '/insight/' + encodeURIComponent(it.slug);
+      function msg(t) {
+        var el = document.getElementById('sh-msg');
+        if (!el) return;
+        el.textContent = t; el.classList.add('on');
+        setTimeout(function () { el.classList.remove('on'); }, 2200);
+      }
+      var bk = document.getElementById('sh-kakao');
+      if (bk) bk.addEventListener('click', function () {
+        try {
+          if (!window.Kakao) return msg('카카오 SDK를 불러오지 못했습니다');
+          if (!Kakao.isInitialized()) Kakao.init('8f717ec6e0665cf2dcaf585f1afa8af7');
+          Kakao.Share.sendDefault({
+            objectType: 'feed',
+            content: {
+              title: it.title,
+              description: it.quotable || it.hook || '',
+              imageUrl: it.hero_image,
+              imageWidth: 1200, imageHeight: 600,
+              link: { mobileWebUrl: pageUrl, webUrl: pageUrl }
+            },
+            buttons: [{ title: '칼럼 읽기', link: { mobileWebUrl: pageUrl, webUrl: pageUrl } }]
+          });
+        } catch (e) { msg('공유에 실패했습니다'); }
+      });
+      var bc = document.getElementById('sh-copy');
+      if (bc) bc.addEventListener('click', function () {
+        (navigator.clipboard ? navigator.clipboard.writeText(pageUrl) : Promise.reject())
+          .then(function () { msg('링크를 복사했습니다'); })
+          .catch(function () { msg(pageUrl); });
+      });
     })
     .catch(function () { notFound('칼럼을 찾을 수 없습니다'); });
 })();

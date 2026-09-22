@@ -485,3 +485,41 @@ select { cursor: pointer; }
   .main { padding: 26px 16px 60px; }
   .item-actions-sub { margin-left: 0; }
 }
+
+/* ══════════ 칼럼 공유 카드 (reader.html) ══════════ */
+.share-cards {
+  display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px; align-items: start;
+}
+.share-cards figure {
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  overflow: hidden; background: var(--surface);
+}
+.share-cards img { width: 100%; height: auto; display: block; }
+.share-cards figcaption {
+  font-family: var(--mono); font-size: .64rem; letter-spacing: .06em;
+  color: var(--muted-2); padding: 9px 11px; border-top: 1px solid var(--line);
+  text-transform: uppercase;
+}
+.share-btns { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 18px; }
+.sbtn {
+  display: inline-flex; align-items: center; gap: 8px;
+  border: 1px solid var(--line); border-radius: 999px;
+  background: var(--surface); color: var(--ink-2);
+  padding: 10px 17px; font-size: .84rem; cursor: pointer; transition: all .18s;
+}
+.sbtn:hover { border-color: var(--line-strong); background: var(--surface-2); }
+.sbtn .ic {
+  width: 14px; height: 14px; border-radius: 4px; flex: none;
+  background: color-mix(in srgb, var(--accent) 45%, #fff);
+}
+.share-msg {
+  font-family: var(--mono); font-size: .74rem; color: var(--accent);
+  margin-top: 11px; min-height: 18px; opacity: 0; transition: opacity .2s;
+  word-break: break-all;
+}
+.share-msg.on { opacity: 1; }
+
+@media (max-width: 720px) {
+  .share-cards { grid-template-columns: 1fr; }
+  .share-btns > * { flex: 1; justify-content: center; }
+}
