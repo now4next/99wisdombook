@@ -523,3 +523,59 @@ select { cursor: pointer; }
   .share-cards { grid-template-columns: 1fr; }
   .share-btns > * { flex: 1; justify-content: center; }
 }
+
+/* ══════════ 칼럼 머리 — 앵커 문장이 주인공 ══════════
+   각 장의 대표 문장(속담)이 독자에게 가장 먼저, 가장 크게 닿도록 한다.
+   칼럼 제목은 그 문장을 읽는 '각도'로서 아래에 놓인다. */
+.anchor-hero { margin: 24px 0 18px; }
+.anchor-hero-q {
+  position: relative;
+  font-family: var(--serif); font-weight: 700;
+  font-size: clamp(2rem, 5.6vw, 3.15rem);
+  line-height: 1.32; letter-spacing: -.038em;
+  color: var(--ink); word-break: keep-all;
+  padding-left: .55em; text-indent: -.55em;
+}
+.anchor-hero-q::before {
+  content: '\201C'; color: color-mix(in srgb, var(--accent) 65%, #fff);
+  font-family: var(--serif-display); margin-right: .04em;
+}
+.anchor-hero-q::after {
+  content: '\201D'; color: color-mix(in srgb, var(--accent) 65%, #fff);
+  font-family: var(--serif-display); margin-left: .02em;
+}
+
+/* 칼럼 제목 — 앵커 아래, 부 색상으로 각도를 표시 */
+.art-head .art-title {
+  font-family: var(--serif); font-weight: 700;
+  font-size: clamp(1.22rem, 2.9vw, 1.62rem);
+  line-height: 1.45; letter-spacing: -.025em;
+  color: color-mix(in srgb, var(--accent) 82%, #000);
+  margin: 0; padding-left: 17px; position: relative;
+}
+.art-head .art-title::before {
+  content: ''; position: absolute; left: 0; top: .52em;
+  width: 9px; height: 2px; background: var(--accent);
+}
+.art-head .art-hook {
+  font-family: var(--sans); font-size: 1rem; line-height: 1.85;
+  color: var(--muted); margin-top: 16px; padding-left: 17px;
+}
+
+/* 출처 1개일 때 — 목록 대신 한 줄 */
+.source-one {
+  font-size: .82rem; color: var(--muted-2); line-height: 1.85;
+  border-top: 1px solid var(--line); padding-top: 16px;
+  margin: 0 0 40px; word-break: keep-all;
+}
+.source-one .k {
+  font-family: var(--mono); font-size: .64rem; letter-spacing: .14em;
+  text-transform: uppercase; color: color-mix(in srgb, var(--accent) 75%, #000);
+  margin-right: 10px;
+}
+.source-one a { color: var(--muted); border-bottom: 1px solid var(--line); }
+
+@media (max-width: 720px) {
+  .anchor-hero { margin: 18px 0 14px; }
+  .art-head .art-title, .art-head .art-hook { padding-left: 14px; }
+}

@@ -18,8 +18,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+KR:wght@400;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/app.css?v=20260922e">
-<link rel="stylesheet" href="/assets/site.css?v=20260922e">
+<link rel="stylesheet" href="/assets/app.css?v=20260922f">
+<link rel="stylesheet" href="/assets/site.css?v=20260922f">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='80'>%F0%9F%8C%BF</text></svg>">
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js" crossorigin="anonymous"></script>
 </head>
@@ -152,26 +152,22 @@
 
       var html = '';
 
-      /* 머리 */
+      /* 머리 — 앵커 문장이 주인공, 제목은 그 아래 각도 */
       html += '<header class="art-head">' +
-        '<span class="kicker">제' + partNo + '부 ' + it.chapter_id + '장 · ' + esc(lensKo) + (lensEn ? ' ' + esc(lensEn) : '') + '</span>' +
+        '<span class="kicker">제' + partNo + '부 ' + it.chapter_id + '장 · ' + esc(lensKo) + '</span>' +
+        (it.anchor_quote
+          ? '<div class="anchor-hero">' +
+              '<p class="anchor-hero-q">' + esc(it.anchor_quote) + '</p>' +
+            '</div>'
+          : '') +
         '<h1 class="art-title">' + esc(it.title) + '</h1>' +
         (it.hook ? '<p class="art-hook">' + esc(it.hook) + '</p>' : '') +
         '<div class="art-meta">' +
-          (it.reading_time ? '<span class="pill">⏱ 읽는 시간 ' + it.reading_time + '분</span>' : '') +
+          (it.reading_time ? '<span class="pill">⏱ ' + it.reading_time + '분</span>' : '') +
           (dateStr ? '<span class="pill">' + dateStr + '</span>' : '') +
-          '<span class="pill">출처 ' + (it.sources || []).length + '</span>' +
           '<span class="tag-soft">' + esc(lensKo) + '</span>' +
         '</div>' +
       '</header>';
-
-      /* 앵커 */
-      if (it.anchor_quote) {
-        html += '<div class="anchor" style="margin:28px 0">' +
-          '<span class="k">Anchor · 제' + it.chapter_id + '장</span>' +
-          '<div class="q">“' + esc(it.anchor_quote) + '”</div>' +
-        '</div>';
-      }
 
       /* 본문 */
       html += '<div class="art-body">' + md(it.body_md) + '</div>';
@@ -193,7 +189,14 @@
       }
 
       /* 출처 */
-      if ((it.sources || []).length) {
+      if ((it.sources || []).length === 1) {
+        var s0 = it.sources[0];
+        var stxt = (typeof s0 === 'string') ? s0 : (s0.title || '');
+        html += '<p class="source-one">' +
+          '<span class="k">출처</span>' + esc(stxt) +
+          (s0 && s0.url ? ' <a href="' + esc(s0.url) + '" target="_blank" rel="noopener noreferrer">링크</a>' : '') +
+        '</p>';
+      } else if ((it.sources || []).length) {
         html += '<section class="sources" style="margin-bottom:44px"><h4>Sources · 출처</h4><ol>' +
           it.sources.map(function (s) {
             if (typeof s === 'string') return '<li>' + esc(s) + '</li>';
