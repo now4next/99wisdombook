@@ -591,3 +591,26 @@ select { cursor: pointer; }
   .anchor-hero { margin: 16px 0 12px; }
   .anchor-hero-q { line-height: 1.46; }
 }
+
+/* ══════════ 핵심 메시지 상징 문양 ══════════
+   원형 16종 × 9부 색상 조합으로 칼럼마다 고유한 마크를 갖는다. */
+.art-mark { margin-top: 22px; }
+.art-mark svg.mark-lead {
+  width: 76px; height: 76px;
+  stroke: var(--accent); fill: none;
+  stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+  opacity: .85;
+}
+/* 끝맺음 — 같은 문양을 작게, 가운데, 흐리게 */
+.mark-close { display: flex; justify-content: center; margin: 44px 0 -8px; }
+.mark-close svg.mark-end {
+  width: 34px; height: 34px;
+  stroke: var(--accent); fill: none;
+  stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round;
+  opacity: .42;
+}
+@media (max-width: 720px) {
+  .art-mark { margin-top: 18px; }
+  .art-mark svg.mark-lead { width: 62px; height: 62px; }
+  .mark-close { margin: 34px 0 -6px; }
+}

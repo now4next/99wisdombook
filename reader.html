@@ -18,8 +18,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+KR:wght@400;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/app.css?v=20260922j">
-<link rel="stylesheet" href="/assets/site.css?v=20260922j">
+<link rel="stylesheet" href="/assets/app.css?v=20260922k">
+<link rel="stylesheet" href="/assets/site.css?v=20260922k">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='80'>%F0%9F%8C%BF</text></svg>">
 <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js" crossorigin="anonymous"></script>
 </head>
@@ -70,6 +70,32 @@
 <script>
 (function () {
   'use strict';
+
+
+  /* 핵심 메시지별 상징 문양 — 원형 16종을 장에 배정하고 부 색상과 결합한다 */
+  var MARKS = {
+    'balance': '<path d="M50 18v62"/><path d="M22 32h56"/><path d="M34 84h32"/><path d="M10 32a12 12 0 0024 0"/><path d="M66 32a12 12 0 0024 0"/>',
+    'split': '<path d="M50 18v16"/><path d="M50 34c-15 0-22 9-22 18M50 34c15 0 22 9 22 18M50 34v18"/><circle cx="28" cy="64" r="10"/><circle cx="50" cy="64" r="10"/><circle cx="72" cy="64" r="10"/>',
+    'wave': '<path d="M12 50c9-26 18-26 27 0s18 26 27 0 16-24 22-10"/><path d="M12 76h76" stroke-dasharray="3 5"/>',
+    'flow': '<path d="M24 58a26 26 0 0 1 44-19"/><path d="M59 33l11 4-4 11"/><path d="M76 44a26 26 0 0 1-44 19"/><path d="M41 69l-11-4 4-11"/>',
+    'chain': '<path d="M20 50a12 12 0 0112-12h6a12 12 0 010 24h-6a12 12 0 01-12-12z"/><path d="M56 50a12 12 0 0112-12h6a12 12 0 010 24h-6a12 12 0 01-12-12z"/><path d="M46 50h12"/>',
+    'growth': '<path d="M50 86V42"/><path d="M50 62c-11 0-18-7-18-16 9 0 18 7 18 16z"/><path d="M50 52c11 0 18-7 18-16-9 0-18 7-18 16z"/><path d="M34 86h32"/>',
+    'ring': '<circle cx="50" cy="50" r="29"/><circle cx="50" cy="50" r="20" stroke-dasharray="2 7"/>',
+    'arch': '<path d="M16 76V54a10 10 0 0120 0v22"/><path d="M40 76V54a10 10 0 0120 0v22"/><path d="M64 76V54a10 10 0 0120 0v22"/><path d="M12 76h76M12 44h76"/>',
+    'mask': '<path d="M32 36c0-9 8-16 18-16s18 7 18 16v14c0 15-8 26-18 26s-18-11-18-26z"/><path d="M32 52h36" stroke-dasharray="3 4"/><path d="M41 42h4M55 42h4"/>',
+    'two-groups': '<circle cx="34" cy="40" r="11"/><circle cx="66" cy="40" r="11"/><path d="M18 78c0-11 7-19 16-19s16 8 16 19"/><path d="M50 78c0-11 7-19 16-19s16 8 16 19"/>',
+    'path': '<path d="M50 86V58"/><path d="M50 58L28 30M50 58l22-28"/><circle cx="28" cy="26" r="4"/><circle cx="72" cy="26" r="4"/>',
+    'lens': '<circle cx="44" cy="44" r="21"/><path d="M59 59l21 21"/><path d="M34 44h20" stroke-dasharray="3 3"/>',
+    'peak': '<path d="M12 72c15 0 16-42 31-42s17 42 45 42"/><path d="M12 84h76" stroke-dasharray="3 5"/>',
+    'bow': '<path d="M50 86V42c0-11 9-20 22-20"/><path d="M64 24c0 7-5 11-11 13M72 31c-2 7-9 9-15 9M76 40c-5 4-11 5-17 4"/>',
+    'branch': '<path d="M14 50h20"/><path d="M34 50c11 0 13-21 24-21h28M34 50c11 0 13 21 24 21h28"/><circle cx="88" cy="29" r="3"/><circle cx="88" cy="71" r="3"/>',
+    'thread': '<circle cx="28" cy="50" r="7"/><circle cx="50" cy="50" r="7"/><circle cx="72" cy="50" r="7"/><path d="M12 50h9M35 50h8M57 50h8M79 50h9"/>'
+  };
+  var MARK_OF = { 1:'balance', 2:'wave', 3:'split', 4:'branch', 12:'chain', 13:'growth', 14:'flow', 23:'ring', 24:'arch', 25:'wave', 34:'mask', 35:'two-groups', 36:'balance', 45:'two-groups', 46:'lens', 47:'mask', 56:'path', 57:'growth', 58:'thread', 67:'path', 68:'branch', 69:'arch', 78:'lens', 79:'peak', 80:'bow', 89:'branch', 90:'peak', 91:'lens' };
+  function markSvg(chapterId, cls) {
+    var k = MARK_OF[chapterId] || 'ring';
+    return '<svg class="' + cls + '" viewBox="0 0 100 100" aria-hidden="true">' + MARKS[k] + '</svg>';
+  }
 
   var LENS_KO = {
     origin:'원형', science:'과학', history:'역사', person:'인물', business:'비즈니스',
@@ -160,6 +186,7 @@
               '<p class="anchor-hero-q">' + esc(it.anchor_quote) + '</p>' +
             '</div>'
           : '') +
+        '<div class="art-mark">' + markSvg(it.chapter_id, 'mark-lead') + '</div>' +
       '</header>';
 
       /* 본문 — 제목·메타·리드를 본문 시작부로 내린다 */
@@ -186,6 +213,7 @@
 
       /* Quotable */
       if (it.quotable) {
+        html += '<div class="mark-close">' + markSvg(it.chapter_id, 'mark-end') + '</div>';
         html += '<div class="quotable">' +
           '<div class="k">Quotable · 오늘의 한 줄</div>' +
           '<div class="q">“' + esc(it.quotable) + '”</div>' +
