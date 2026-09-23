@@ -4,6 +4,7 @@
  * Auth endpoints:
  * - POST   /api/auth/login
  * - POST   /api/auth/register
+ * - POST   /api/auth/logout
  *
  * User endpoints:
  * - GET    /api/users                       (admin)
@@ -38,30 +39,82 @@ async function hashPassword(password) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
 
-// Token = btoa(`${user.id}:${timestamp}`)
-function getUserIdFromToken(request) {
+async function sha256hex(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/* ⚠ 인증 계약 — 아래 규칙을 깨면 관리자 사칭이 가능해진다.
+     · 토큰은 64자 hex 난수이며 그 자체에 아무 정보도 담지 않는다.
+       (예전 btoa(`id:시각`) 방식은 누구나 위조할 수 있어 폐기했다.)
+     · 서버는 원본을 저장하지 않고 SHA-256 해시만 sessions 테이블에 둔다.
+     · 사용자 판별은 반드시 await getUserIdFromToken(request, env) 로 한다.
+       토큰 문자열을 직접 해석하는 코드를 다시 만들지 말 것.
+     · 관리자 확인은 verifyAdminStrict() 하나뿐이다. 길이나 존재만 보는
+       검사를 추가하지 말 것. */
+const SESSION_TTL_MS = 90 * 24 * 60 * 60 * 1000;
+
+async function ensureSessionsTable(env) {
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS sessions (
+       token_hash TEXT PRIMARY KEY,
+       user_id    INTEGER NOT NULL,
+       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+       expires_at INTEGER NOT NULL
+     )`
+  ).run();
+}
+
+/** 로그인 성공 시 세션을 만들고 원본 토큰을 돌려준다. 원본은 어디에도 저장하지 않는다. */
+async function createSession(env, userId) {
+  await ensureSessionsTable(env);
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  const token = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+  await env.DB.prepare(
+    'INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)'
+  ).bind(await sha256hex(token), userId, Date.now() + SESSION_TTL_MS).run();
+  if (Math.random() < 0.05) {
+    try {
+      await env.DB.prepare('DELETE FROM sessions WHERE expires_at < ?').bind(Date.now()).run();
+    } catch (_) {}
+  }
+  return token;
+}
+
+async function getUserIdFromToken(request, env) {
   const auth = request.headers.get('Authorization') || '';
   if (!auth.startsWith('Bearer ')) return null;
+  const token = auth.slice(7).trim();
+  if (!/^[0-9a-f]{64}$/.test(token)) return null;
   try {
-    const decoded = atob(auth.slice(7));
-    const id = parseInt(decoded.split(':')[0], 10);
-    return isNaN(id) ? null : id;
-  } catch { return null; }
+    await ensureSessionsTable(env);
+    const hash = await sha256hex(token);
+    const row = await env.DB.prepare(
+      'SELECT user_id, expires_at FROM sessions WHERE token_hash = ?'
+    ).bind(hash).first();
+    if (!row) return null;
+    if (Number(row.expires_at) < Date.now()) {
+      await env.DB.prepare('DELETE FROM sessions WHERE token_hash = ?').bind(hash).run();
+      return null;
+    }
+    return row.user_id;
+  } catch (_) { return null; }
 }
 
-function verifyAdmin(request) {
+async function destroySession(request, env) {
   const auth = request.headers.get('Authorization') || '';
-  if (!auth.startsWith('Bearer ')) return false;
-  const token = auth.slice(7);
-  return token && token.length > 10;
+  if (!auth.startsWith('Bearer ')) return;
+  const token = auth.slice(7).trim();
+  if (!/^[0-9a-f]{64}$/.test(token)) return;
+  try {
+    await env.DB.prepare('DELETE FROM sessions WHERE token_hash = ?')
+      .bind(await sha256hex(token)).run();
+  } catch (_) {}
 }
 
-/**
- * 토큰의 사용자 ID를 DB에서 확인해 실제 admin인지 검증한다.
- * verifyAdmin()은 토큰 길이만 보므로 쓰기 엔드포인트에는 이 함수를 쓴다.
- */
+/** 관리자 확인. 토큰 → 세션 → users.role 까지 모두 DB로 확인한다. */
 async function verifyAdminStrict(request, env) {
-  const userId = getUserIdFromToken(request);
+  const userId = await getUserIdFromToken(request, env);
   if (!userId) return false;
   try {
     const row = await env.DB.prepare('SELECT role FROM users WHERE id = ?').bind(userId).first();
@@ -102,6 +155,7 @@ export async function onRequest(context) {
     if (path === '/api/auth/login'    && method === 'POST') return handleLogin(request, env);
     if (path === '/api/auth/register' && method === 'POST') return handleRegister(request, env, context);
     if (path === '/api/auth/kakao'    && method === 'POST') return handleKakaoLogin(request, env, context);
+    if (path === '/api/auth/logout'   && method === 'POST') return handleLogout(request, env);
 
     // Wisdom – saved (보관함)
     if (path === '/api/wisdom/saved' && method === 'GET')  return handleGetSaved(request, env);
@@ -182,6 +236,12 @@ export async function onRequest(context) {
 }
 
 // ── Auth ────────────────────────────────────────────────────
+/** 현재 세션을 폐기한다. 토큰이 이미 없거나 틀려도 성공으로 답한다. */
+async function handleLogout(request, env) {
+  await destroySession(request, env);
+  return jsonResponse({ success: true });
+}
+
 async function handleLogin(request, env) {
   const { email, password } = await request.json();
   if (!email || !password) return jsonResponse({ error: '이메일과 비밀번호를 입력해주세요.' }, 400);
@@ -212,7 +272,7 @@ async function handleLogin(request, env) {
   } catch (_) {}
 
   const user = { ...row, streak_count, last_wisdom_date, permissions: JSON.parse(row.permissions || '[]') };
-  const token = btoa(`${user.id}:${Date.now()}`);
+  const token = await createSession(env, user.id);
   return jsonResponse({ success: true, user, token });
 }
 
@@ -344,7 +404,7 @@ async function handleKakaoLogin(request, env, context) {
   } catch (_) {}
 
   const user = { ...row, streak_count, last_wisdom_date, permissions: JSON.parse(row.permissions || '[]') };
-  const token = btoa(`${user.id}:${Date.now()}`);
+  const token = await createSession(env, user.id);
   return jsonResponse({ success: true, user, token });
 }
 
@@ -417,7 +477,7 @@ async function ensureSavedWisdomTable(env) {
 }
 
 async function handleGetSaved(request, env) {
-  const userId = getUserIdFromToken(request);
+  const userId = await getUserIdFromToken(request, env);
   if (!userId) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   await ensureSavedWisdomTable(env);
@@ -429,7 +489,7 @@ async function handleGetSaved(request, env) {
 }
 
 async function handleSaveWisdom(request, env) {
-  const userId = getUserIdFromToken(request);
+  const userId = await getUserIdFromToken(request, env);
   if (!userId) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   const { chapter_id, title, memo } = await request.json();
@@ -457,7 +517,7 @@ async function handleSaveWisdom(request, env) {
 }
 
 async function handleUpdateMemo(chapterId, request, env) {
-  const userId = getUserIdFromToken(request);
+  const userId = await getUserIdFromToken(request, env);
   if (!userId) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   const { memo } = await request.json();
@@ -471,7 +531,7 @@ async function handleUpdateMemo(chapterId, request, env) {
 }
 
 async function handleUnsaveWisdom(chapterId, request, env) {
-  const userId = getUserIdFromToken(request);
+  const userId = await getUserIdFromToken(request, env);
   if (!userId) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   await ensureSavedWisdomTable(env);
@@ -484,7 +544,7 @@ async function handleUnsaveWisdom(chapterId, request, env) {
 
 // ── Streak (스트릭) ─────────────────────────────────────────
 async function handleStreak(request, env) {
-  const userId = getUserIdFromToken(request);
+  const userId = await getUserIdFromToken(request, env);
   if (!userId) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   const { date } = await request.json(); // 'YYYY-MM-DD'
@@ -523,7 +583,7 @@ async function handleStreak(request, env) {
 
 // ── Admin: Login Logs ────────────────────────────────────────
 async function handleGetLoginLogs(request, env) {
-  if (!verifyAdmin(request)) return jsonResponse({ error: 'Unauthorized' }, 401);
+  if (!await verifyAdminStrict(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
   try {
     await env.DB.prepare(
       `CREATE TABLE IF NOT EXISTS login_logs (
@@ -730,7 +790,7 @@ async function handleDeleteInsight(id, request, env) {
 
 // ── Users (기존) ─────────────────────────────────────────────
 async function handleGetUsers(request, env) {
-  if (!verifyAdmin(request)) return jsonResponse({ error: 'Unauthorized' }, 401);
+  if (!await verifyAdminStrict(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   // streak_count 컬럼이 없는 구버전 DB에도 동작하도록 fallback 처리
   let result;
@@ -768,7 +828,7 @@ async function handleGetUser(userId, env) {
 }
 
 async function handleUpdateUser(userId, request, env) {
-  if (!verifyAdmin(request)) return jsonResponse({ error: 'Unauthorized' }, 401);
+  if (!await verifyAdminStrict(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
   const { name, email, role, permissions } = await request.json();
   const updates = [], bindings = [];
   if (name)  { updates.push('name = ?');  bindings.push(name); }
@@ -785,7 +845,7 @@ async function handleUpdateUser(userId, request, env) {
 }
 
 async function handleDeleteUser(userId, request, env) {
-  if (!verifyAdmin(request)) return jsonResponse({ error: 'Unauthorized' }, 401);
+  if (!await verifyAdminStrict(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
   const user = await env.DB.prepare('SELECT role FROM users WHERE id = ?').bind(userId).first();
   if (!user) return jsonResponse({ error: 'User not found' }, 404);
   if (user.role === 'admin') return jsonResponse({ error: 'Cannot delete admin user' }, 403);
@@ -794,7 +854,7 @@ async function handleDeleteUser(userId, request, env) {
 }
 
 async function handleUpdatePermissions(userId, request, env) {
-  if (!verifyAdmin(request)) return jsonResponse({ error: 'Unauthorized' }, 401);
+  if (!await verifyAdminStrict(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
   const { permissions } = await request.json();
   if (!Array.isArray(permissions)) return jsonResponse({ error: 'Permissions must be an array' }, 400);
   // updated_at 컬럼이 없는 구버전 DB 호환
@@ -811,7 +871,7 @@ async function handleUpdatePermissions(userId, request, env) {
 
 // ── 카카오 알림 설정 ────────────────────────────────────────
 async function handleGetNotify(userId, request, env) {
-  const tokenUserId = getUserIdFromToken(request);
+  const tokenUserId = await getUserIdFromToken(request, env);
   if (!tokenUserId || tokenUserId !== parseInt(userId)) return jsonResponse({ error: 'Unauthorized' }, 401);
   const row = await env.DB.prepare(
     'SELECT notify_enabled, notify_days, notify_hour, notify_minute FROM users WHERE id = ?'
@@ -821,7 +881,7 @@ async function handleGetNotify(userId, request, env) {
 }
 
 async function handleUpdateNotify(userId, request, env) {
-  const tokenUserId = getUserIdFromToken(request);
+  const tokenUserId = await getUserIdFromToken(request, env);
   if (!tokenUserId || tokenUserId !== parseInt(userId)) return jsonResponse({ error: 'Unauthorized' }, 401);
   const { notify_enabled, notify_days, notify_hour, notify_minute } = await request.json();
   await env.DB.prepare(
@@ -892,7 +952,7 @@ async function sendKakaoNotifyMessage(accessToken, wisdomItem) {
 
 // ── 카카오 알림 테스트 (어드민 전용) ────────────────────────
 async function handleKakaoTest(request, env) {
-  const userId = getUserIdFromToken(request);
+  const userId = await getUserIdFromToken(request, env);
   if (!userId) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   const user = await env.DB.prepare(
@@ -941,7 +1001,7 @@ function genReferralCode() {
 }
 
 async function handleGetReferralCode(request, env) {
-  const userId = getUserIdFromToken(request);
+  const userId = await getUserIdFromToken(request, env);
   if (!userId) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   let user = await env.DB.prepare('SELECT id, name, referral_code, referral_count FROM users WHERE id = ?').bind(userId).first();
@@ -972,7 +1032,7 @@ async function handleGetReferralCode(request, env) {
 }
 
 async function handleGetReferralStats(request, env) {
-  const userId = getUserIdFromToken(request);
+  const userId = await getUserIdFromToken(request, env);
   if (!userId) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   const user = await env.DB.prepare('SELECT referral_count FROM users WHERE id = ?').bind(userId).first();
@@ -1450,7 +1510,7 @@ async function sendWebPush(endpoint, p256dhB64u, authB64u, payload, vapidPriv, v
 // ── Web Push 구독 관리 ──────────────────────────────────────────
 
 async function handlePushSubscribe(request, env) {
-  const tokenUserId = getUserIdFromToken(request);
+  const tokenUserId = await getUserIdFromToken(request, env);
   if (!tokenUserId) return jsonResponse({ error: 'Unauthorized' }, 401);
   const body = await request.json();
   const { endpoint } = body;
@@ -1468,7 +1528,7 @@ async function handlePushSubscribe(request, env) {
 }
 
 async function handlePushUnsubscribe(request, env) {
-  const tokenUserId = getUserIdFromToken(request);
+  const tokenUserId = await getUserIdFromToken(request, env);
   if (!tokenUserId) return jsonResponse({ error: 'Unauthorized' }, 401);
   try {
     await env.DB.prepare(
@@ -1479,7 +1539,7 @@ async function handlePushUnsubscribe(request, env) {
 }
 
 async function handlePushTest(request, env) {
-  const tokenUserId = getUserIdFromToken(request);
+  const tokenUserId = await getUserIdFromToken(request, env);
   if (!tokenUserId) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   let row;
@@ -1550,7 +1610,7 @@ async function handlePushTest(request, env) {
 }
 
 async function handlePushStatus(request, env) {
-  const tokenUserId = getUserIdFromToken(request);
+  const tokenUserId = await getUserIdFromToken(request, env);
   if (!tokenUserId) return jsonResponse({ error: 'Unauthorized' }, 401);
   try {
     const row = await env.DB.prepare(

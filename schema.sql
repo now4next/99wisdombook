@@ -63,6 +63,18 @@ CREATE TABLE IF NOT EXISTS insights (
     updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 로그인 세션. API가 필요 시 자동 생성하므로 별도 마이그레이션은 필요 없다.
+-- token_hash 는 클라이언트가 가진 64자 hex 토큰의 SHA-256 이며, 원본은 저장하지 않는다.
+CREATE TABLE IF NOT EXISTS sessions (
+    token_hash TEXT PRIMARY KEY,
+    user_id    INTEGER NOT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    expires_at INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_user    ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
+
 CREATE INDEX IF NOT EXISTS idx_insights_status  ON insights(status, published_at DESC);
 CREATE INDEX IF NOT EXISTS idx_insights_chapter ON insights(chapter_id);
 
