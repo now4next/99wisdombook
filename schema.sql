@@ -84,10 +84,16 @@ CREATE INDEX IF NOT EXISTS idx_saved_user ON saved_wisdom(user_id);
 CREATE INDEX IF NOT EXISTS idx_login_logs_at ON login_logs(logged_in_at DESC);
 CREATE INDEX IF NOT EXISTS idx_login_logs_user ON login_logs(user_id);
 
+-- ⚠ 초기 관리자 계정.
+-- password 는 비밀번호의 SHA-256 16진 문자열이다.
+-- 예전에는 흔한 기본 비밀번호의 해시가 이 파일에 그대로 적혀 있었고, schema.sql 이
+-- 사이트에서 그대로 내려받히고 있어 사실상 공개된 자격증명이었다.
+-- 실제 값은 저장소에 두지 말고, 아래처럼 직접 만들어 넣을 것.
+--   node -e "crypto.subtle.digest('SHA-256',new TextEncoder().encode(process.argv[1])).then(b=>console.log(Buffer.from(b).toString('hex')))" '새비밀번호'
 INSERT INTO users (username, password, name, email, role, permissions)
 VALUES (
     'admin',
-    '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9',
+    'CHANGE_ME_SHA256_HASH',  -- ⚠ 실제 해시를 이 파일에 적지 말 것 (아래 주석 참고)
     'Administrator',
     'admin@99wisdombook.org',
     'admin',

@@ -1,0 +1,36 @@
+# Cloudflare Pages 배포에서 제외할 파일. .gitignore 와 같은 문법이다.
+# 파일을 지우지는 않는다 — 저장소에는 그대로 두고 공개만 막는다.
+#
+# 이 목록이 없던 동안 schema.sql 이 공개돼 관리자 계정의 비밀번호 해시가,
+# wrangler.toml 에서 D1 database_id 가 밖에서 읽혔다.
+#
+# ⚠ 패턴 앞의 / 를 빼지 말 것. `*.md` 로 쓰면 data/chapters/*.md 까지 막혀
+#   장 페이지(functions/chapter/[id].js 가 ASSETS 로 읽는다)가 통째로 깨진다.
+#   마찬가지로 data/ 와 og/ 는 런타임에 필요하므로 절대 제외하지 않는다.
+
+# 설정·스키마 (루트)
+/wrangler.toml
+/schema.sql
+/*.sql
+
+# 개발 메모 (루트의 *.md)
+/*.md
+
+# 백업·구버전 페이지 — 공개되면 안 되고, 내용도 건드리지 않는다
+/*_backup_*.html
+/*_backup.html
+/book_old.html
+/book_simple*.html
+/*_old.html
+
+# 테스트·점검 산출물
+/test_*.html
+/test_*.py
+/check_*.sh
+/test_*.sh
+/wait_and_check.sh
+/tools/
+
+# 편집기·OS 부산물
+.DS_Store
+Thumbs.db
