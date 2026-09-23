@@ -312,6 +312,26 @@
       });
     })
     .catch(function () { notFound('칼럼을 찾을 수 없습니다'); });
+
+  /* 로그인한 독자가 칼럼을 열면 연속 독서를 기록한다.
+     알림이 daily.html 이 아니라 이 페이지로 오게 됐으므로, 여기서도 스트릭을 올려야
+     읽고 있는데 스트릭이 끊기는 일이 생기지 않는다. 화면에는 아무것도 바꾸지 않는다. */
+  (function markStreak() {
+    var token = '';
+    try {
+      token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken') || '';
+    } catch (_) { return; }
+    if (!token) return;
+    var d = new Date();
+    var date = d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
+    fetch('/api/wisdom/streak', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ date: date })
+    }).catch(function () {});
+  })();
 })();
 </script>
 

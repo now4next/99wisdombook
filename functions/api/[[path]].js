@@ -910,27 +910,34 @@ async function refreshKakaoAccessToken(refreshToken, env) {
 
 // ── 카카오 나에게 보내기 ────────────────────────────────────
 async function sendKakaoNotifyMessage(accessToken, wisdomItem) {
-  // wisdomItem: { title, id } 또는 문자열(하위 호환)
-  const sentence = (typeof wisdomItem === 'object' ? wisdomItem?.title : wisdomItem) || '오늘의 한 문장이 기다리고 있어요';
-  const chId     = typeof wisdomItem === 'object' ? wisdomItem?.id : null;
-  const url      = chId
-    ? `https://99wisdombook.org/daily.html?autoopen=1&ch=${chId}`
-    : 'https://99wisdombook.org/daily.html?autoopen=1';
+  // wisdomItem: { title, id, column } 또는 문자열(하위 호환)
+  const obj      = typeof wisdomItem === 'object' ? wisdomItem : null;
+  const sentence = (obj ? obj.title : wisdomItem) || '오늘의 한 문장이 기다리고 있어요';
+  const chId     = obj?.id ?? null;
+  const column   = obj?.column ?? null;
+
+  // 칼럼이 있으면 칼럼으로, 없으면 예전 딥링크로 보낸다.
+  const url = column
+    ? `https://99wisdombook.org/insight/${column.slug}`
+    : chId
+      ? `https://99wisdombook.org/daily.html?autoopen=1&ch=${chId}`
+      : 'https://99wisdombook.org/daily.html?autoopen=1';
   const link = { web_url: url, mobile_web_url: url };
-  // 헤더 이미지(정적) + 문장은 title 텍스트로 표시
-  const imageUrl = 'https://99wisdombook.org/og-image.png';
+
+  // 카카오는 SVG를 못 읽으므로 미리 만들어 둔 PNG 공유 카드(2:1)를 쓴다.
+  const imageUrl = column?.hero_image || 'https://99wisdombook.org/og-image.png';
   const template = {
     object_type: 'feed',
     content: {
       title: `"${sentence}"`,
-      description: '',
+      description: column ? (column.title || '') : '',
       image_url: imageUrl,
-      image_width: 1200, image_height: 630,
+      image_width: 1200, image_height: column?.hero_image ? 600 : 630,
       link,
     },
     buttons: [
       {
-        title: '지혜의 문장 본문 읽기',
+        title: column ? '오늘의 칼럼 읽기' : '지혜의 문장 본문 읽기',
         link,
       },
     ],
@@ -1215,6 +1222,15 @@ async function handleNotifyCron(request, env) {
     wisdomItems = wData.items || [];
   } catch (_) {}
 
+  // 장별 칼럼 (99장 전편 발행 완료). 알림은 책 본문이 아니라 이 칼럼으로 보낸다.
+  const columnByChapter = {};
+  try {
+    const cRes = await env.DB.prepare(
+      "SELECT chapter_id, slug, title, quotable, hero_image FROM insights WHERE status = 'published'"
+    ).all();
+    for (const row of (cRes.results || [])) columnByChapter[row.chapter_id] = row;
+  } catch (_) {}
+
   // index.html과 동일한 FNV32 해시 함수
   function fnv32(s) {
     let h = 2166136261 >>> 0;
@@ -1231,7 +1247,12 @@ async function handleNotifyCron(request, env) {
     const actor = 'u-' + userId;
     const idx = fnv32(`${kstDateKey}|${actor}`) % wisdomItems.length;
     const item = wisdomItems[idx];
-    return { title: item?.title || '오늘의 한 문장이 기다리고 있어요', id: item?.id ?? null };
+    const id = item?.id ?? null;
+    return {
+      title: item?.title || '오늘의 한 문장이 기다리고 있어요',
+      id,
+      column: (id != null && columnByChapter[id]) || null,
+    };
   }
 
   const results = { sent: 0, push_sent: 0, skipped: 0, errors: [] };
@@ -1245,9 +1266,11 @@ async function handleNotifyCron(request, env) {
 
     // 사용자별 개인화된 오늘의 문장 (챕터 ID 포함)
     const wisdomItem = getUserWisdomItem(user.id);
-    const pushUrl = wisdomItem.id
-      ? `/daily.html?autoopen=1&ch=${wisdomItem.id}`
-      : '/daily.html?autoopen=1';
+    const pushUrl = wisdomItem.column
+      ? `/insight/${wisdomItem.column.slug}`
+      : wisdomItem.id
+        ? `/daily.html?autoopen=1&ch=${wisdomItem.id}`
+        : '/daily.html?autoopen=1';
 
     // ── 카카오 알림 ──
     try {
@@ -1271,7 +1294,11 @@ async function handleNotifyCron(request, env) {
       try {
         await sendWebPush(
           user.push_endpoint, user.push_p256dh, user.push_auth,
-          { title: '📚 오늘의 Daily Wisdom', body: wisdomItem.title, url: pushUrl },
+          {
+            title: wisdomItem.column ? wisdomItem.title : '📚 오늘의 Daily Wisdom',
+            body:  wisdomItem.column ? wisdomItem.column.title : wisdomItem.title,
+            url:   pushUrl,
+          },
           env.VAPID_PRIVATE_KEY.trim(), env.VAPID_PUBLIC_KEY.trim(),
           (env.VAPID_SUBJECT || 'mailto:info@99wisdombook.org').trim()
         );
