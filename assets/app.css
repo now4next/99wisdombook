@@ -485,7 +485,20 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .foot-nav { margin-left: auto; display: flex; gap: 24px; }
 .foot-nav a { font-size: .82rem; color: var(--muted); }
 .foot-nav a:hover { color: var(--ink); }
-.foot-c { margin-top: 28px; font-family: var(--mono); font-size: .67rem; color: var(--muted-2); }
+.foot-c {
+  margin-top: 28px; font-family: var(--mono); font-size: .67rem; color: var(--muted-2);
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+
+/* 관리자 진입 — 눈에 띄지 않되 찾으면 보이는 정도로 둔다.
+   admin.html 이 알아서 비관리자를 돌려보내므로 노출 자체는 문제되지 않는다. */
+.foot-admin {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; margin: -10px -10px -10px 0;  /* 모바일 터치 영역만 넓히고 여백은 그대로 */
+  color: var(--muted-2); opacity: .55; transition: opacity .18s ease, color .18s ease;
+}
+.foot-admin svg { width: 17px; height: 17px; }
+.foot-admin:hover, .foot-admin:focus-visible { opacity: 1; color: var(--ink-2); }
 
 /* ---------- Mockup bar ---------- */
 .mock-bar {
