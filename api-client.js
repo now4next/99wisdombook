@@ -122,10 +122,20 @@ class WisdomBookAPI {
     return data;
   }
 
-  logout() {
+  /* 토큰은 서버 sessions 테이블에 있는 세션이므로, 로컬만 지우면
+     그 세션이 만료(90일)까지 살아남는다. 서버에도 폐기를 알린다. */
+  async logout() {
+    const token = this.token;
     this.clearToken();
     localStorage.removeItem('currentUser');
     sessionStorage.removeItem('currentUser');
+    if (!token) return;
+    try {
+      await fetch(`${this.baseURL}/api/auth/logout`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+    } catch (_) {}
   }
 
   // User Management Methods (Admin)
