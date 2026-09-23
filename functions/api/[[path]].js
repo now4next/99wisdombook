@@ -156,6 +156,7 @@ export async function onRequest(context) {
     if (path === '/api/auth/register' && method === 'POST') return handleRegister(request, env, context);
     if (path === '/api/auth/kakao'    && method === 'POST') return handleKakaoLogin(request, env, context);
     if (path === '/api/auth/logout'   && method === 'POST') return handleLogout(request, env);
+    if (path === '/api/email/unsubscribe' && method === 'GET') return handleEmailUnsubscribe(request, env);
 
     // Wisdom – saved (보관함)
     if (path === '/api/wisdom/saved' && method === 'GET')  return handleGetSaved(request, env);
@@ -406,6 +407,113 @@ async function handleKakaoLogin(request, env, context) {
   const user = { ...row, streak_count, last_wisdom_date, permissions: JSON.parse(row.permissions || '[]') };
   const token = await createSession(env, user.id);
   return jsonResponse({ success: true, user, token });
+}
+
+/* 이메일 뉴스레터용 컬럼. D1 에는 ADD COLUMN IF NOT EXISTS 가 없어
+   이미 있으면 에러가 나므로 삼켜 넘긴다. */
+async function ensureEmailColumns(env) {
+  for (const sql of [
+    'ALTER TABLE users ADD COLUMN email_enabled INTEGER DEFAULT 0',
+    'ALTER TABLE users ADD COLUMN unsubscribe_token TEXT',
+  ]) {
+    try { await env.DB.prepare(sql).run(); } catch (_) {}
+  }
+}
+
+/** 수신 거부 링크에 쓸 토큰. 로그인 없이 동작해야 하므로 사용자마다 하나씩 둔다. */
+async function ensureUnsubscribeToken(env, userId) {
+  const row = await env.DB.prepare('SELECT unsubscribe_token FROM users WHERE id = ?').bind(userId).first();
+  if (row && row.unsubscribe_token) return row.unsubscribe_token;
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  const t = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+  await env.DB.prepare('UPDATE users SET unsubscribe_token = ? WHERE id = ?').bind(t, userId).run();
+  return t;
+}
+
+function newsletterHtml({ name, sentence, column, url, unsubUrl }) {
+  const esc = (t) => String(t == null ? '' : t)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return `
+  <div style="font-family:-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#faf9f7;padding:28px 16px;">
+    <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:14px;overflow:hidden;border:1px solid #ece8e2;">
+      ${column && column.hero_image
+        ? `<a href="${esc(url)}"><img src="${esc(column.hero_image)}" width="560" alt="" style="display:block;width:100%;height:auto;border:0;"></a>`
+        : ''}
+      <div style="padding:28px 26px 24px;">
+        <div style="font-size:12px;letter-spacing:.08em;color:#9c9489;text-transform:uppercase;">99 Wisdom Insight</div>
+        <p style="margin:14px 0 0;font-family:Georgia,'Gowun Batang',serif;font-size:20px;line-height:1.5;color:#2c2722;">
+          &ldquo;${esc(sentence)}&rdquo;
+        </p>
+        ${column ? `<p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#4a443d;font-weight:600;">${esc(column.title)}</p>` : ''}
+        ${column && column.quotable ? `<p style="margin:10px 0 0;font-size:14px;line-height:1.7;color:#6b645c;">${esc(column.quotable)}</p>` : ''}
+        <div style="margin:26px 0 4px;">
+          <a href="${esc(url)}" style="display:inline-block;background:#5FA97E;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-size:14px;font-weight:600;">
+            오늘의 칼럼 읽기
+          </a>
+        </div>
+      </div>
+    </div>
+    <div style="max-width:560px;margin:16px auto 0;text-align:center;font-size:12px;line-height:1.8;color:#a29a90;">
+      ${esc(name || '독자')}님께 보내 드립니다 · <a href="https://99wisdombook.org" style="color:#a29a90;">99wisdombook.org</a><br>
+      <a href="${esc(unsubUrl)}" style="color:#a29a90;text-decoration:underline;">이메일 받지 않기</a>
+    </div>
+  </div>`;
+}
+
+async function sendNewsletterEmail(env, user, wisdomItem) {
+  if (!env.RESEND_API_KEY) throw new Error('RESEND_API_KEY 미설정');
+  if (!user.email) throw new Error('이메일 주소 없음');
+
+  const column = wisdomItem.column;
+  const url = column
+    ? `https://99wisdombook.org/insight/${column.slug}`
+    : 'https://99wisdombook.org/daily.html?autoopen=1';
+  const t = await ensureUnsubscribeToken(env, user.id);
+  const unsubUrl = `https://99wisdombook.org/api/email/unsubscribe?t=${t}`;
+
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: '99 Wisdom Insight <daily@99wisdombook.org>',
+      to: [user.email],
+      subject: column ? `${wisdomItem.title} — ${column.title}` : wisdomItem.title,
+      html: newsletterHtml({ name: user.name, sentence: wisdomItem.title, column, url, unsubUrl }),
+      headers: { 'List-Unsubscribe': `<${unsubUrl}>` },
+    }),
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(e.message || `Resend ${res.status}`);
+  }
+}
+
+/** 수신 거부. 로그인 없이 링크만으로 동작해야 한다. */
+async function handleEmailUnsubscribe(request, env) {
+  const t = new URL(request.url).searchParams.get('t') || '';
+  const page = (msg) => new Response(
+    `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+     <div style="font-family:-apple-system,'Apple SD Gothic Neo',sans-serif;max-width:420px;margin:18vh auto;padding:0 20px;text-align:center;color:#2c2722;">
+       <div style="font-size:12px;letter-spacing:.08em;color:#9c9489;">99 WISDOM INSIGHT</div>
+       <p style="margin:18px 0 24px;font-size:17px;line-height:1.7;">${msg}</p>
+       <a href="https://99wisdombook.org" style="color:#5FA97E;font-size:14px;">사이트로 가기</a>
+     </div>`,
+    { headers: { 'Content-Type': 'text/html; charset=utf-8', ...corsHeaders } }
+  );
+
+  if (!/^[0-9a-f]{32}$/.test(t)) return page('잘못된 링크입니다.');
+  try {
+    await ensureEmailColumns(env);
+    const row = await env.DB.prepare('SELECT id FROM users WHERE unsubscribe_token = ?').bind(t).first();
+    if (!row) return page('이미 해지되었거나 유효하지 않은 링크입니다.');
+    await env.DB.prepare('UPDATE users SET email_enabled = 0 WHERE id = ?').bind(row.id).run();
+    return page('이메일 수신을 해지했습니다.<br>설정에서 언제든 다시 켤 수 있습니다.');
+  } catch (_) {
+    return page('처리 중 문제가 생겼습니다. 잠시 후 다시 시도해 주세요.');
+  }
 }
 
 async function sendNewUserNotification(env, { username, name, email }) {
@@ -873,20 +981,23 @@ async function handleUpdatePermissions(userId, request, env) {
 async function handleGetNotify(userId, request, env) {
   const tokenUserId = await getUserIdFromToken(request, env);
   if (!tokenUserId || tokenUserId !== parseInt(userId)) return jsonResponse({ error: 'Unauthorized' }, 401);
+  await ensureEmailColumns(env);
   const row = await env.DB.prepare(
-    'SELECT notify_enabled, notify_days, notify_hour, notify_minute FROM users WHERE id = ?'
+    'SELECT notify_enabled, notify_days, notify_hour, notify_minute, email_enabled FROM users WHERE id = ?'
   ).bind(userId).first();
   if (!row) return jsonResponse({ error: 'User not found' }, 404);
-  return jsonResponse({ success: true, notify_enabled: row.notify_enabled || 0, notify_days: row.notify_days, notify_hour: row.notify_hour, notify_minute: row.notify_minute || 0 });
+  return jsonResponse({ success: true, notify_enabled: row.notify_enabled || 0, notify_days: row.notify_days, notify_hour: row.notify_hour, notify_minute: row.notify_minute || 0, email_enabled: row.email_enabled || 0 });
 }
 
 async function handleUpdateNotify(userId, request, env) {
   const tokenUserId = await getUserIdFromToken(request, env);
   if (!tokenUserId || tokenUserId !== parseInt(userId)) return jsonResponse({ error: 'Unauthorized' }, 401);
-  const { notify_enabled, notify_days, notify_hour, notify_minute } = await request.json();
+  const { notify_enabled, notify_days, notify_hour, notify_minute, email_enabled } = await request.json();
+  await ensureEmailColumns(env);
   await env.DB.prepare(
-    'UPDATE users SET notify_enabled = ?, notify_days = ?, notify_hour = ?, notify_minute = ? WHERE id = ?'
-  ).bind(notify_enabled ? 1 : 0, notify_days || null, notify_hour ?? null, notify_minute ?? 0, userId).run();
+    'UPDATE users SET notify_enabled = ?, notify_days = ?, notify_hour = ?, notify_minute = ?, email_enabled = ? WHERE id = ?'
+  ).bind(notify_enabled ? 1 : 0, notify_days || null, notify_hour ?? null, notify_minute ?? 0,
+         email_enabled ? 1 : 0, userId).run();
   return jsonResponse({ success: true, message: '알림 설정이 저장되었습니다.' });
 }
 
@@ -1201,7 +1312,8 @@ async function handleNotifyCron(request, env) {
   let users;
   try {
     const result = await env.DB.prepare(`
-      SELECT id, name, kakao_refresh_token, notify_days, push_endpoint, push_p256dh, push_auth
+      SELECT id, name, email, email_enabled, kakao_refresh_token, notify_days,
+             push_endpoint, push_p256dh, push_auth
       FROM users
       WHERE notify_enabled = 1
         AND notify_hour = ?
@@ -1221,6 +1333,8 @@ async function handleNotifyCron(request, env) {
     const wData = await wRes.json();
     wisdomItems = wData.items || [];
   } catch (_) {}
+
+  await ensureEmailColumns(env);
 
   // 장별 칼럼 (99장 전편 발행 완료). 알림은 책 본문이 아니라 이 칼럼으로 보낸다.
   const columnByChapter = {};
@@ -1255,7 +1369,7 @@ async function handleNotifyCron(request, env) {
     };
   }
 
-  const results = { sent: 0, push_sent: 0, skipped: 0, errors: [] };
+  const results = { sent: 0, push_sent: 0, email_sent: 0, skipped: 0, errors: [] };
 
   for (const user of users) {
     // 요일 체크 (notify_days: "1,3,5" 형태)
@@ -1305,6 +1419,16 @@ async function handleNotifyCron(request, env) {
         results.push_sent++;
       } catch (pushErr) {
         results.errors.push({ userId: user.id, error: `WebPush: ${pushErr.message}` });
+      }
+    }
+
+    // ── 이메일 뉴스레터 (독립적) ──
+    if (user.email_enabled && user.email) {
+      try {
+        await sendNewsletterEmail(env, user, wisdomItem);
+        results.email_sent++;
+      } catch (mailErr) {
+        results.errors.push({ userId: user.id, error: `Email: ${mailErr.message}` });
       }
     }
   }

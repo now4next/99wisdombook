@@ -63,6 +63,12 @@ CREATE TABLE IF NOT EXISTS insights (
     updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 이메일 뉴스레터. API 가 필요 시 ALTER TABLE 로 자동 추가하므로 별도 마이그레이션은 없다.
+--   email_enabled     : 1 이면 알림 시각에 오늘의 칼럼을 메일로도 보낸다
+--   unsubscribe_token : 로그인 없이 해지할 수 있어야 해서 사용자마다 두는 32자 hex
+-- ALTER TABLE users ADD COLUMN email_enabled INTEGER DEFAULT 0;
+-- ALTER TABLE users ADD COLUMN unsubscribe_token TEXT;
+
 -- 로그인 세션. API가 필요 시 자동 생성하므로 별도 마이그레이션은 필요 없다.
 -- token_hash 는 클라이언트가 가진 64자 hex 토큰의 SHA-256 이며, 원본은 저장하지 않는다.
 CREATE TABLE IF NOT EXISTS sessions (

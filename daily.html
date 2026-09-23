@@ -230,6 +230,13 @@
       <label class="toggle-switch"><input type="checkbox" id="notify-enabled"><span class="toggle-slider"></span></label>
     </div>
 
+    <div id="email-toggle-row" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding:13px 15px;border:1px solid var(--line);border-radius:11px;background:var(--surface-2);">
+      <span style="font-size:.9rem;font-weight:600;">이메일로도 받기
+        <span style="display:block;font-weight:400;font-size:.78rem;color:var(--ink-2);margin-top:2px;">같은 시각에 오늘의 칼럼을 메일로 보내 드립니다</span>
+      </span>
+      <label class="toggle-switch"><input type="checkbox" id="email-enabled"><span class="toggle-slider"></span></label>
+    </div>
+
     <div class="modal-btn-row">
       <button class="btn-ghost" onclick="closeNotifyModal()" style="flex:1;">취소</button>
       <button class="btn-submit" onclick="saveNotifySettings()" id="btn-notify-save" style="flex:2;margin-top:0;">저장하기</button>
@@ -1043,6 +1050,7 @@
           if (!timeSel.value) timeSel.value = '8:0';
         }
         document.getElementById('notify-enabled').checked = !!data.notify_enabled;
+        document.getElementById('email-enabled').checked = !!data.email_enabled;
       } catch(_) {}
     }
 
@@ -1059,7 +1067,9 @@
         const enabled = document.getElementById('notify-enabled').checked;
         const res = await wisdomAPI.request(`/api/users/${u.id}/notify`, {
           method: 'PUT',
-          body: JSON.stringify({ notify_days: days, notify_hour: hour, notify_minute: minute, notify_enabled: enabled ? 1 : 0 }),
+          body: JSON.stringify({ notify_days: days, notify_hour: hour, notify_minute: minute,
+            notify_enabled: enabled ? 1 : 0,
+            email_enabled: document.getElementById('email-enabled').checked ? 1 : 0 }),
         });
         if (res.success) {
           msg.style.color = '#2e7d32';
