@@ -24,15 +24,19 @@
 전부 공개된다. 실제로 `schema.sql` 이 공개되어 관리자 비밀번호 해시가 노출된 적이 있다.
 
 ```bash
-python tools/build_public.py
+node tools/build_public.mjs
 npx wrangler pages deploy dist --project-name 99wisdombook --branch main
 ```
 
 `.assetsignore` 는 `wrangler pages deploy` 에서 동작하지 않고, `_redirects` 의 404 규칙도
 이미 존재하는 정적 파일은 덮지 못한다. 확인된 방법은 위의 `dist/` 방식뿐이다.
 
-GitHub 자동 배포가 저장소 루트를 빌드 출력으로 쓰고 있다면 이 차단이 되돌려진다.
-Cloudflare 대시보드의 빌드 출력 디렉터리 설정을 함께 확인할 것.
+**GitHub 자동 배포도 같은 설정이어야 한다.** 루트를 빌드 출력으로 쓰면 푸시할 때마다
+차단이 되돌려진다(실제로 확인함). Cloudflare 대시보드 → Pages → 99wisdombook →
+Settings → Builds & deployments 에서:
+
+- 빌드 명령(Build command): `node tools/build_public.mjs`
+- 빌드 출력 디렉터리(Build output directory): `dist`
 
 예외: `wrangler.toml`의 D1 binding 변경, schema 마이그레이션, 시크릿 추가 등 Cloudflare 대시보드/CLI 작업이 필요한 경우는 사용자에게 먼저 확인.
 
