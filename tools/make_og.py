@@ -170,12 +170,16 @@ def build(item, ratio='2x1'):
 
 def main():
     os.makedirs(OUT, exist_ok=True)
-    token = base64.b64encode(('1:%d' % (time.time() * 1000)).encode()).decode()
+    # 공개 목록 API 를 쓴다. 관리자 API 는 실제 관리자 세션이 필요해졌고,
+    # 카드에 들어가는 값(제목·quotable·장 번호)은 공개 목록에 전부 들어 있다.
     tmp = os.path.join(OUT, '_list.json')
-    subprocess.run(['curl', '-s', 'https://99wisdombook.org/api/admin/insights',
-                    '-H', 'Authorization: Bearer %s' % token, '-o', tmp], check=True)
-    items = json.load(io.open(tmp, encoding='utf-8'))['items']
+    subprocess.run(['curl', '-s', 'https://99wisdombook.org/api/insights?limit=200',
+                    '-o', tmp], check=True)
+    payload = json.load(io.open(tmp, encoding='utf-8'))
+    items = payload.get('items')
     os.remove(tmp)
+    if not items:
+        raise SystemExit('칼럼 목록을 받지 못했습니다: %s' % str(payload)[:200])
 
     want = set(sys.argv[1:])
     if want:
