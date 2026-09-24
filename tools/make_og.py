@@ -100,13 +100,13 @@ def build(item, ratio='2x1'):
         W, H = 1200, 600
         pad, bar = 88, 12
         k_size, a_size, q_size, f_size = 26, 84, 33, 24
-        a_min, a_max_lines = 44, 3
+        a_min, a_max_lines, q_max_lines = 44, 3, 2
         ghost_size = 300
     else:
         W, H = 1080, 1080
         pad, bar = 96, 14
         k_size, a_size, q_size, f_size = 30, 116, 39, 28
-        a_min, a_max_lines = 52, 4
+        a_min, a_max_lines, q_max_lines = 52, 4, 3
         ghost_size = 380
 
     part = int(item.get('part_id') or 1)
@@ -149,7 +149,7 @@ def build(item, ratio='2x1'):
         a_ls = wrap(d, anchor, af, text_w)
 
         qf = font(SANS, q_px, 'Medium')
-        q_ls = wrap(d, sub, qf, text_w)[:2] if sub else []
+        q_ls = wrap(d, sub, qf, text_w) if sub else []
 
         a_lh = int(af.size * 1.34)
         q_lh = int(qf.size * 1.62)
@@ -171,15 +171,20 @@ def build(item, ratio='2x1'):
 
     # 2) 그래도 넘치면 받침을 줄인다. 문장을 자르는 것보다 작아지는 편이 낫다.
     q_cur = q_size
-    q_floor = int(q_size * 0.78)
-    while L['h'] > avail and q_cur > q_floor:
+    q_floor = int(q_size * 0.72)
+    while (L['h'] > avail or len(L['q_ls']) > q_max_lines) and q_cur > q_floor:
         q_cur = int(q_cur * 0.94)
         L = layout(a_cur, q_cur)
 
-    # 3) 마지막 수단으로만 줄임표를 붙인다. 문장이 통째로 잘려 보이는 것을 막는다.
-    if L['h'] > avail and len(L['q_ls']) > 1:
-        L['q_ls'] = [L['q_ls'][0].rstrip() + '…']
-        L['h'] -= L['q_lh']
+    # 3) 마지막 수단으로만 줄임표를 붙인다. 문장 끝이 소리 없이 사라지는 일을 막는다.
+    if len(L['q_ls']) > q_max_lines or L['h'] > avail:
+        keep = max(1, min(q_max_lines, len(L['q_ls'])))
+        if L['h'] > avail and keep > 1:
+            keep -= 1
+        if keep < len(L['q_ls']):
+            L['q_ls'] = L['q_ls'][:keep]
+            L['q_ls'][-1] = L['q_ls'][-1].rstrip() + '…'
+        L['h'] = k_size + gap + L['a_lh'] * len(L['a_ls'])                  + L['mid'] + L['rgap'] + L['q_lh'] * len(L['q_ls'])
 
     af, a_lines, a_line_h = L['af'], L['a_ls'], L['a_lh']
     qf, q_lines, q_line_h = L['qf'], L['q_ls'], L['q_lh']
