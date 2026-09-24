@@ -99,13 +99,13 @@ def build(item, ratio='2x1'):
     if ratio == '2x1':
         W, H = 1200, 600
         pad, bar = 88, 12
-        k_size, a_size, q_size, f_size = 26, 84, 29, 24
+        k_size, a_size, q_size, f_size = 26, 84, 33, 24
         a_min, a_max_lines = 44, 3
         ghost_size = 300
     else:
         W, H = 1080, 1080
         pad, bar = 96, 14
-        k_size, a_size, q_size, f_size = 30, 116, 34, 28
+        k_size, a_size, q_size, f_size = 30, 116, 39, 28
         a_min, a_max_lines = 52, 4
         ghost_size = 380
 
@@ -139,41 +139,53 @@ def build(item, ratio='2x1'):
     anchor = (item.get('anchor_quote') or item.get('title') or '').strip()
     sub    = (item.get('quotable') or '').strip()
 
-    # 받침 = 칼럼의 인사이트 한 줄. 속담보다 확실히 작고 옅게 둔다.
-    qf = font(SANS, q_size, 'Regular')
-    q_lines = wrap(d, sub, qf, text_w)[:2] if sub else []
-
-    q_line_h = int(qf.size * 1.62)
     gap      = int(k_size * 1.6)      # 키커 ↔ 속담
-    mid      = int(q_size * 1.3)      # 속담 ↔ 구분선
-    rule_gap = int(q_size * 1.0)      # 구분선 ↔ 받침
-
-    # 하단 브랜드 영역을 뺀 공간
     foot_top = H - pad - f_size * 2 - 34
     avail    = foot_top - pad
 
-    def measure(size, qn):
-        f = font(SERIF, size, 'Bold')
-        ls = wrap(d, anchor, f, text_w)
-        h = k_size + gap + int(f.size * 1.34) * len(ls)
-        if qn:
-            h += mid + rule_gap + q_line_h * qn
-        return f, ls, h
+    def layout(a_px, q_px):
+        """주어진 두 크기로 배치했을 때의 줄과 전체 높이를 돌려준다."""
+        af = font(SERIF, a_px, 'Bold')
+        a_ls = wrap(d, anchor, af, text_w)
 
-    # 헤드라인 = 속담. 4자짜리부터 38자짜리까지 있어, 줄 수와 전체 높이가
-    # 모두 들어갈 때까지 줄인다. 높이를 보지 않으면 긴 속담에서 푸터를 넘는다.
+        qf = font(SANS, q_px, 'Medium')
+        q_ls = wrap(d, sub, qf, text_w)[:2] if sub else []
+
+        a_lh = int(af.size * 1.34)
+        q_lh = int(qf.size * 1.62)
+        mid_ = int(q_px * 1.3)        # 속담 ↔ 구분선
+        rgap = int(q_px * 1.0)        # 구분선 ↔ 받침
+
+        h = k_size + gap + a_lh * len(a_ls)
+        if q_ls:
+            h += mid_ + rgap + q_lh * len(q_ls)
+        return dict(af=af, a_ls=a_ls, a_lh=a_lh, qf=qf, q_ls=q_ls, q_lh=q_lh,
+                    mid=mid_, rgap=rgap, h=h)
+
+    # 1) 헤드라인부터 줄인다. 속담이 4자에서 38자까지 있어 줄 수와 높이를 함께 본다.
     a_cur = a_size
-    af, a_lines, block_h = measure(a_cur, len(q_lines))
-    while (len(a_lines) > a_max_lines or block_h > avail) and a_cur > a_min:
+    L = layout(a_cur, q_size)
+    while (len(L['a_ls']) > a_max_lines or L['h'] > avail) and a_cur > a_min:
         a_cur = int(a_cur * 0.9)
-        af, a_lines, block_h = measure(a_cur, len(q_lines))
+        L = layout(a_cur, q_size)
 
-    # 그래도 넘치면 받침을 한 줄로 줄인다. 주인공은 속담이다.
-    if block_h > avail and len(q_lines) > 1:
-        q_lines = q_lines[:1]
-        af, a_lines, block_h = measure(a_cur, 1)
+    # 2) 그래도 넘치면 받침을 줄인다. 문장을 자르는 것보다 작아지는 편이 낫다.
+    q_cur = q_size
+    q_floor = int(q_size * 0.78)
+    while L['h'] > avail and q_cur > q_floor:
+        q_cur = int(q_cur * 0.94)
+        L = layout(a_cur, q_cur)
 
-    a_line_h = int(af.size * 1.34)
+    # 3) 마지막 수단으로만 줄임표를 붙인다. 문장이 통째로 잘려 보이는 것을 막는다.
+    if L['h'] > avail and len(L['q_ls']) > 1:
+        L['q_ls'] = [L['q_ls'][0].rstrip() + '…']
+        L['h'] -= L['q_lh']
+
+    af, a_lines, a_line_h = L['af'], L['a_ls'], L['a_lh']
+    qf, q_lines, q_line_h = L['qf'], L['q_ls'], L['q_lh']
+    mid, rule_gap, block_h = L['mid'], L['rgap'], L['h']
+    q_size = qf.size
+
     top = max(pad, int((foot_top - block_h) * 0.46))
 
     d.ellipse([left, top + k_size * 0.28, left + 12, top + k_size * 0.28 + 12], fill=col)
@@ -190,7 +202,7 @@ def build(item, ratio='2x1'):
         d.line([left, ty, left + int(q_size * 2.4), ty], fill=col, width=3)
         ty += rule_gap
         for ln in q_lines:
-            d.text((left, ty), ln, font=qf, fill=mix(INK, BG, 0.40))
+            d.text((left, ty), ln, font=qf, fill=INK_2)
             ty += q_line_h
 
     # ── 하단 ──
@@ -202,7 +214,7 @@ def build(item, ratio='2x1'):
 
     pf = font(SANS, f_size - 3, 'Regular')
     d.text((W - pad, fy + 4), PART_NAME.get(part, '') + '의 법칙',
-           font=pf, fill=MUTED_2, anchor='ra')
+           font=pf, fill=MUTED, anchor='ra')
 
     return im
 
