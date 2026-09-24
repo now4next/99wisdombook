@@ -44,6 +44,15 @@ const EXCLUDE_ROOT = [
   /^test_/i,
   /^check_.*\.sh$/i,
   /^wait_and_check\.sh$/i,
+  // 구버전 통짜 도서 페이지. 장별 페이지(/chapter/N)가 원문이 됐고 내용도 어긋난다.
+  // 파일은 저장소에 남겨 둔다 — data/chapters/*.md 를 뽑아낸 원본이기 때문이다.
+  /^book\.html$/i,
+  // 개발용 잔재. simulate_login 은 가짜 로그인 상태를 심고, preview 는 사라진
+  // 샌드박스 주소를 가리키며, test/translation_guide 는 내부 문서다.
+  /^preview\.html$/i,
+  /^simulate_login\.html$/i,
+  /^test\.html$/i,
+  /^translation_guide\.html$/i,
   /^\.DS_Store$/i,
   /^Thumbs\.db$/i,
 ];

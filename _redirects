@@ -20,3 +20,8 @@
 /book-hi           /  301
 /translations/*    /  301
 /js/i18n.js        /  301
+
+# 구버전 통짜 도서 페이지는 배포에서 내렸다. 장별 페이지(/chapter/N)가 원문이다.
+# 주소에 붙은 #chapter-N 조각은 서버로 오지 않으므로 목록으로 보낸다.
+/book.html         /parts.html  301
+/book              /parts.html  301

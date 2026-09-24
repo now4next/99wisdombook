@@ -160,7 +160,7 @@
         <span class="item-date">${formatSavedDate(item.saved_at)}</span>
         ${hasMemo ? `<div class="item-memo">${item.memo.trim()}</div>` : ''}
         <div class="item-actions">
-          <a class="btn-item-read" href="book.html#chapter-${item.chapter_id}">챕터 읽기 →</a>
+          <a class="btn-item-read" href="/chapter/${item.chapter_id}">챕터 읽기 →</a>
           <button class="btn-item-share" type="button">📤 공유</button>
         </div>
         <div class="item-actions-sub">
