@@ -53,7 +53,7 @@
         const ref = sessionStorage.getItem('pendingRef') || '';
         const result = await wisdomAPI.kakaoLogin(code, REDIRECT_URI, ref);
         if (!result.success) throw new Error(result.error || '로그인 실패');
-        window.location.href = result.user.role === 'admin' ? '/admin.html' : '/book.html';
+        window.location.href = result.user.role === 'admin' ? '/admin.html' : '/daily.html';
       } catch (err) {
         document.querySelector('.spinner').style.display = 'none';
         document.querySelector('p').textContent = '';

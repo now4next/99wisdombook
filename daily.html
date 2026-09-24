@@ -364,6 +364,25 @@
 
     // ── 모달 ──
     let pendingChapterHref = 'book.html';
+    /* admin.html 이 미로그인 방문자를 ?login=1 로 보낸다. 로그인에 성공하면
+       handleLogin 이 관리자를 admin.html 로 돌려보낸다. */
+    (function autoOpenLogin() {
+      if (!/[?&]login=1/.test(location.search)) return;
+      function go() {
+        if (window.wisdomAPI && wisdomAPI.isLoggedIn()) {
+          location.replace('admin.html');
+          return;
+        }
+        openModal();
+      }
+      // 이 스크립트가 DOMContentLoaded 뒤에 실행될 수도 있다. 그때는 바로 연다.
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', go);
+      } else {
+        go();
+      }
+    })();
+
     function openModal() {
       document.getElementById('modal').classList.add('visible');
       setTimeout(() => document.getElementById('login-email').focus(), 200);
