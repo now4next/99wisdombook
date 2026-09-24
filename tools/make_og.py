@@ -94,15 +94,19 @@ def radial_tint(size, color, strength=0.20):
 
 
 def build(item, ratio='2x1'):
+    # 카드의 주인공은 속담(anchor_quote)이다. 공감이 가장 빨리 일어나는 문장이라
+    # 가장 크게 놓고, 칼럼의 인사이트 한 줄(quotable)은 그 아래에 작게 받친다.
     if ratio == '2x1':
         W, H = 1200, 600
         pad, bar = 88, 12
-        k_size, t_size, f_size = 26, 62, 24
+        k_size, a_size, q_size, f_size = 26, 84, 29, 24
+        a_min, a_max_lines = 44, 3
         ghost_size = 300
     else:
         W, H = 1080, 1080
         pad, bar = 96, 14
-        k_size, t_size, f_size = 30, 74, 28
+        k_size, a_size, q_size, f_size = 30, 116, 34, 28
+        a_min, a_max_lines = 52, 4
         ghost_size = 380
 
     part = int(item.get('part_id') or 1)
@@ -130,29 +134,64 @@ def build(item, ratio='2x1'):
     kicker = '제%d부 %d장 · %s' % (part, int(item.get('chapter_id') or 0), lens)
     kf = font(SANS, k_size, 'Medium')
 
-    head = (item.get('quotable') or item.get('title') or '').strip()
     text_w = int((W - left - pad) * (0.78 if ratio == '2x1' else 0.95))
-    tf = font(SERIF, t_size, 'Bold')
-    lines = wrap(d, head, tf, text_w)
-    while len(lines) > (3 if ratio == '2x1' else 4) and tf.size > 34:
-        tf = font(SERIF, int(tf.size * 0.88), 'Bold')
-        lines = wrap(d, head, tf, text_w)
 
-    line_h = int(tf.size * 1.40)
-    gap    = int(k_size * 1.7)
-    block_h = k_size + gap + line_h * len(lines)
+    anchor = (item.get('anchor_quote') or item.get('title') or '').strip()
+    sub    = (item.get('quotable') or '').strip()
 
-    # 하단 브랜드 영역을 뺀 공간의 중앙
+    # 받침 = 칼럼의 인사이트 한 줄. 속담보다 확실히 작고 옅게 둔다.
+    qf = font(SANS, q_size, 'Regular')
+    q_lines = wrap(d, sub, qf, text_w)[:2] if sub else []
+
+    q_line_h = int(qf.size * 1.62)
+    gap      = int(k_size * 1.6)      # 키커 ↔ 속담
+    mid      = int(q_size * 1.3)      # 속담 ↔ 구분선
+    rule_gap = int(q_size * 1.0)      # 구분선 ↔ 받침
+
+    # 하단 브랜드 영역을 뺀 공간
     foot_top = H - pad - f_size * 2 - 34
-    top = max(pad, int((foot_top - block_h) / 2))
+    avail    = foot_top - pad
+
+    def measure(size, qn):
+        f = font(SERIF, size, 'Bold')
+        ls = wrap(d, anchor, f, text_w)
+        h = k_size + gap + int(f.size * 1.34) * len(ls)
+        if qn:
+            h += mid + rule_gap + q_line_h * qn
+        return f, ls, h
+
+    # 헤드라인 = 속담. 4자짜리부터 38자짜리까지 있어, 줄 수와 전체 높이가
+    # 모두 들어갈 때까지 줄인다. 높이를 보지 않으면 긴 속담에서 푸터를 넘는다.
+    a_cur = a_size
+    af, a_lines, block_h = measure(a_cur, len(q_lines))
+    while (len(a_lines) > a_max_lines or block_h > avail) and a_cur > a_min:
+        a_cur = int(a_cur * 0.9)
+        af, a_lines, block_h = measure(a_cur, len(q_lines))
+
+    # 그래도 넘치면 받침을 한 줄로 줄인다. 주인공은 속담이다.
+    if block_h > avail and len(q_lines) > 1:
+        q_lines = q_lines[:1]
+        af, a_lines, block_h = measure(a_cur, 1)
+
+    a_line_h = int(af.size * 1.34)
+    top = max(pad, int((foot_top - block_h) * 0.46))
 
     d.ellipse([left, top + k_size * 0.28, left + 12, top + k_size * 0.28 + 12], fill=col)
     d.text((left + 24, top), kicker, font=kf, fill=mix(col, (0, 0, 0), 0.75))
 
     ty = top + k_size + gap
-    for ln in lines:
-        d.text((left, ty), ln, font=tf, fill=INK)
-        ty += line_h
+    for ln in a_lines:
+        d.text((left, ty), ln, font=af, fill=INK)
+        ty += a_line_h
+
+    if q_lines:
+        # 속담과 받침을 가르는 짧은 선. 부 색을 써서 좌측 액센트 바와 호응시킨다.
+        ty += mid
+        d.line([left, ty, left + int(q_size * 2.4), ty], fill=col, width=3)
+        ty += rule_gap
+        for ln in q_lines:
+            d.text((left, ty), ln, font=qf, fill=mix(INK, BG, 0.40))
+            ty += q_line_h
 
     # ── 하단 ──
     fy = H - pad - f_size

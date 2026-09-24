@@ -777,7 +777,7 @@ async function handleListInsights(request, env) {
   const lens    = url.searchParams.get('lens');
   const chapter = url.searchParams.get('chapter');
 
-  let sql = "SELECT id, chapter_id, part_id, lens, slug, title, hook, quotable, hero_image, reading_time, tags, published_at FROM insights WHERE status = 'published'";
+  let sql = "SELECT id, chapter_id, part_id, lens, slug, title, hook, anchor_quote, quotable, hero_image, reading_time, tags, published_at FROM insights WHERE status = 'published'";
   const binds = [];
   if (partId)  { sql += ' AND part_id = ?';    binds.push(parseInt(partId, 10)); }
   if (lens)    { sql += ' AND lens = ?';       binds.push(lens); }
