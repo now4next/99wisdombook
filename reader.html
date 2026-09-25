@@ -242,19 +242,26 @@
         '</ol></section>';
       }
 
-      /* 공유 카드 — quotable 로 구운 PNG (카카오/인스타) */
+      /* 공유 카드 — quotable 로 구운 PNG (카카오/인스타)
+         ⚠ 카드 PNG 는 슬러그당 경로가 고정이고 Cache-Control 이 4시간이다.
+            앵커 문구를 고쳐 카드를 다시 구우면 URL 이 그대로라 브라우저가
+            옛 카드를 계속 쓴다. 그래서 updated_at 을 ?v= 로 붙여 둔다.
+            칼럼을 고칠 때 updated_at 을 반드시 함께 갱신할 것. */
       if (it.hero_image) {
+        var cardVer = String(it.updated_at || it.published_at || '').replace(/\D/g, '').slice(0, 14) || '1';
+        var card2x1 = it.hero_image + (it.hero_image.indexOf('?') >= 0 ? '&' : '?') + 'v=' + cardVer;
+        var card1x1 = it.hero_image.replace(/\.png$/, '-1x1.png') + '?v=' + cardVer;
         html += '<section style="margin-bottom:44px">' +
           '<div class="slabel"><h2>Share</h2><span class="sub">카드 이미지</span><span class="rule"></span></div>' +
           '<div class="share-cards">' +
-            '<figure><img src="' + esc(it.hero_image) + '" alt="공유 카드 2:1" loading="lazy">' +
+            '<figure><img src="' + esc(card2x1) + '" alt="공유 카드 2:1" loading="lazy">' +
               '<figcaption>2:1 · 카카오톡 / 링크 미리보기</figcaption></figure>' +
-            '<figure><img src="' + esc(it.hero_image.replace(/\.png$/, '-1x1.png')) + '" alt="공유 카드 1:1" loading="lazy">' +
+            '<figure><img src="' + esc(card1x1) + '" alt="공유 카드 1:1" loading="lazy">' +
               '<figcaption>1:1 · 인스타그램 피드</figcaption></figure>' +
           '</div>' +
           '<div class="share-btns">' +
             '<button class="sbtn" id="sh-kakao"><i class="ic" style="background:#FEE500"></i>카카오톡 공유</button>' +
-            '<a class="sbtn" id="sh-save" href="' + esc(it.hero_image) + '" download><i class="ic"></i>이미지 저장</a>' +
+            '<a class="sbtn" id="sh-save" href="' + esc(card2x1) + '" download><i class="ic"></i>이미지 저장</a>' +
             '<button class="sbtn" id="sh-copy"><i class="ic"></i>링크 복사</button>' +
           '</div>' +
           '<div id="sh-msg" class="share-msg"></div>' +
