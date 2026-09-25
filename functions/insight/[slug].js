@@ -2,7 +2,7 @@
  * /insight/{slug} — 칼럼 상세
  *
  * 정적 reader.html을 가져와 OG 메타를 서버에서 주입해 돌려준다.
- * (카카오톡·SNS 미리보기는 JS 실행 전 HTML만 읽으므로 서버 주입이 필요하다)
+ * (SNS 미리보기는 JS 실행 전 HTML만 읽으므로 서버 주입이 필요하다)
  */
 
 function esc(s) {
@@ -36,7 +36,7 @@ export async function onRequestGet(context) {
   if (it) {
     const title = it.title + ' · 99 Wisdom Insight';
     const desc  = it.hook || it.quotable || '9부 99장의 지혜를 사례와 출처가 있는 칼럼으로.';
-    const img   = it.hero_image || (origin + '/og-kakao.png');
+    const img   = it.hero_image || (origin + '/og-share.png');
     const url   = origin + '/insight/' + encodeURIComponent(it.slug);
 
     html = html

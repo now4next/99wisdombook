@@ -9,7 +9,7 @@
 
 <meta property="og:type"        content="article">
 <meta property="og:site_name"   content="99 Wisdom Insight">
-<meta property="og:image"       content="https://99wisdombook.org/og-kakao.png">
+<meta property="og:image"       content="https://99wisdombook.org/og-share.png">
 <meta property="og:image:width"  content="1200">
 <meta property="og:image:height" content="600">
 <meta property="og:locale"      content="ko_KR">
@@ -21,7 +21,6 @@
 <link rel="stylesheet" href="/assets/app.css?v=20260924a">
 <link rel="stylesheet" href="/assets/site.css?v=20260924a">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='80'>%F0%9F%8C%BF</text></svg>">
-<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -242,7 +241,7 @@
         '</ol></section>';
       }
 
-      /* 공유 카드 — quotable 로 구운 PNG (카카오/인스타)
+      /* 공유 카드 — quotable 로 구운 PNG (링크 미리보기/인스타)
          ⚠ 카드 PNG 는 슬러그당 경로가 고정이고 Cache-Control 이 4시간이다.
             앵커 문구를 고쳐 카드를 다시 구우면 URL 이 그대로라 브라우저가
             옛 카드를 계속 쓴다. 그래서 updated_at 을 ?v= 로 붙여 둔다.
@@ -255,12 +254,11 @@
           '<div class="slabel"><h2>Share</h2><span class="sub">카드 이미지</span><span class="rule"></span></div>' +
           '<div class="share-cards">' +
             '<figure><img src="' + esc(card2x1) + '" alt="공유 카드 2:1" loading="lazy">' +
-              '<figcaption>2:1 · 카카오톡 / 링크 미리보기</figcaption></figure>' +
+              '<figcaption>2:1 · 링크 미리보기</figcaption></figure>' +
             '<figure><img src="' + esc(card1x1) + '" alt="공유 카드 1:1" loading="lazy">' +
               '<figcaption>1:1 · 인스타그램 피드</figcaption></figure>' +
           '</div>' +
           '<div class="share-btns">' +
-            '<button class="sbtn" id="sh-kakao"><i class="ic" style="background:#FEE500"></i>카카오톡 공유</button>' +
             '<a class="sbtn" id="sh-save" href="' + esc(card2x1) + '" download><i class="ic"></i>이미지 저장</a>' +
             '<button class="sbtn" id="sh-copy"><i class="ic"></i>링크 복사</button>' +
           '</div>' +
@@ -293,24 +291,6 @@
         el.textContent = t; el.classList.add('on');
         setTimeout(function () { el.classList.remove('on'); }, 2200);
       }
-      var bk = document.getElementById('sh-kakao');
-      if (bk) bk.addEventListener('click', function () {
-        try {
-          if (!window.Kakao) return msg('카카오 SDK를 불러오지 못했습니다');
-          if (!Kakao.isInitialized()) Kakao.init('8f717ec6e0665cf2dcaf585f1afa8af7');
-          Kakao.Share.sendDefault({
-            objectType: 'feed',
-            content: {
-              title: it.title,
-              description: it.quotable || it.hook || '',
-              imageUrl: it.hero_image,
-              imageWidth: 1200, imageHeight: 600,
-              link: { mobileWebUrl: pageUrl, webUrl: pageUrl }
-            },
-            buttons: [{ title: '칼럼 읽기', link: { mobileWebUrl: pageUrl, webUrl: pageUrl } }]
-          });
-        } catch (e) { msg('공유에 실패했습니다'); }
-      });
       var bc = document.getElementById('sh-copy');
       if (bc) bc.addEventListener('click', function () {
         (navigator.clipboard ? navigator.clipboard.writeText(pageUrl) : Promise.reject())

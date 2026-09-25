@@ -154,7 +154,6 @@ export async function onRequest(context) {
     // Auth
     if (path === '/api/auth/login'    && method === 'POST') return handleLogin(request, env);
     if (path === '/api/auth/register' && method === 'POST') return handleRegister(request, env, context);
-    if (path === '/api/auth/kakao'    && method === 'POST') return handleKakaoLogin(request, env, context);
     if (path === '/api/auth/logout'   && method === 'POST') return handleLogout(request, env);
     if (path === '/api/email/unsubscribe' && method === 'GET') return handleEmailUnsubscribe(request, env);
 
@@ -171,7 +170,7 @@ export async function onRequest(context) {
     // Wisdom – streak (스트릭)
     if (path === '/api/wisdom/streak' && method === 'POST') return handleStreak(request, env);
 
-    // Notify (카톡 알림)
+    // Notify (이메일 + Web Push)
     if (path.match(/^\/api\/users\/\d+\/notify$/) && method === 'GET')
       return handleGetNotify(path.split('/')[3], request, env);
     if (path.match(/^\/api\/users\/\d+\/notify$/) && method === 'PUT')
@@ -182,8 +181,14 @@ export async function onRequest(context) {
       return handleReminderCron(request, env);
     if (path === '/api/notify/weekly' && method === 'POST')
       return handleWeeklyCron(request, env);
-    if (path === '/api/notify/kakao-test' && method === 'POST')
-      return handleKakaoTest(request, env);
+    if (path === '/api/notify/email-test' && method === 'POST')
+      return handleEmailTest(request, env);
+    if (path === '/api/email/preview' && method === 'GET')
+      return handleEmailPreview(request, env);
+    if (path === '/api/email/diag' && method === 'GET')
+      return handleEmailDiag(request, env);
+    if (path === '/api/notify/status' && method === 'GET')
+      return handleNotifyStatus(request, env);
 
     // 추천인 시스템
     if (path === '/api/referral/code' && method === 'GET')
@@ -191,7 +196,7 @@ export async function onRequest(context) {
     if (path === '/api/referral/stats' && method === 'GET')
       return handleGetReferralStats(request, env);
 
-    // 카카오 알림용 동적 이미지 (문장 합성)
+    // 공유용 동적 이미지 (문장 합성)
     if (path === '/api/wisdom/card' && method === 'GET')
       return handleWisdomCard(request);
 
@@ -317,98 +322,6 @@ async function handleRegister(request, env, context) {
   return jsonResponse({ success: true, user: { ...row, permissions: JSON.parse(row.permissions || '[]') }, message: 'User registered successfully' }, 201);
 }
 
-async function handleKakaoLogin(request, env, context) {
-  const { code, redirectUri, ref } = await request.json();
-  if (!code || !redirectUri) return jsonResponse({ error: 'code and redirectUri required' }, 400);
-  if (!env.KAKAO_REST_API_KEY) return jsonResponse({ error: 'Kakao REST API key not configured' }, 500);
-
-  // authorization code → access_token 교환
-  const tokenRes = await fetch('https://kauth.kakao.com/oauth/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'authorization_code',
-      client_id: env.KAKAO_REST_API_KEY.trim(),
-      client_secret: (env.KAKAO_CLIENT_SECRET || '').trim(),
-      redirect_uri: redirectUri,
-      code,
-    }),
-  });
-  if (!tokenRes.ok) {
-    const err = await tokenRes.json().catch(() => ({}));
-    return jsonResponse({ error: err.error_description || '카카오 토큰 발급에 실패했습니다.' }, 401);
-  }
-  const tokenData = await tokenRes.json();
-  const access_token = tokenData.access_token;
-  const refresh_token = tokenData.refresh_token || null;
-
-  // 카카오 사용자 정보 조회
-  const kakaoRes = await fetch('https://kapi.kakao.com/v2/user/me', {
-    headers: { 'Authorization': `Bearer ${access_token}` }
-  });
-  if (!kakaoRes.ok) return jsonResponse({ error: '카카오 인증에 실패했습니다.' }, 401);
-
-  const kakaoUser = await kakaoRes.json();
-  const kakaoId = String(kakaoUser.id);
-  const kakaoName = kakaoUser.kakao_account?.profile?.nickname || kakaoUser.properties?.nickname || '카카오 사용자';
-  const kakaoEmail = kakaoUser.kakao_account?.email || null;
-
-  // 기존 카카오 사용자 조회
-  let row = await env.DB.prepare(
-    'SELECT id, username, name, email, role, permissions, auth_provider FROM users WHERE auth_provider = ? AND provider_id = ?'
-  ).bind('kakao', kakaoId).first();
-
-  if (!row) {
-    // 추천인 코드 검증
-    let referrerId = null;
-    if (ref) {
-      try {
-        const referrer = await env.DB.prepare('SELECT id FROM users WHERE referral_code = ?').bind(ref.toUpperCase()).first();
-        if (referrer) referrerId = referrer.id;
-      } catch (_) {}
-    }
-
-    // 신규 카카오 사용자 생성
-    const username = `kakao_${kakaoId}`;
-    row = await env.DB.prepare(
-      'INSERT INTO users (username, password, name, email, role, permissions, auth_provider, provider_id, referred_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id, username, name, email, role, permissions, auth_provider, created_at'
-    ).bind(username, '', kakaoName, kakaoEmail, 'user', '["korean"]', 'kakao', kakaoId, referrerId).first();
-
-    if (!row) return jsonResponse({ error: '사용자 생성에 실패했습니다.' }, 500);
-
-    // 추천인 카운트 증가
-    if (referrerId) {
-      try {
-        await env.DB.prepare('UPDATE users SET referral_count = COALESCE(referral_count, 0) + 1 WHERE id = ?').bind(referrerId).run();
-      } catch (_) {}
-    }
-
-    // 관리자 알림
-    if (context?.waitUntil) {
-      context.waitUntil(sendNewUserNotification(env, { username: kakaoName, name: kakaoName, email: kakaoEmail }).catch(() => {}));
-    }
-  }
-
-  // refresh_token 저장 (있을 때만 업데이트)
-  if (refresh_token) {
-    await env.DB.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP, kakao_refresh_token = ? WHERE id = ?')
-      .bind(refresh_token, row.id).run();
-  } else {
-    await env.DB.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?').bind(row.id).run();
-  }
-  await recordLoginLog(env, request, { user_id: row.id, user_name: row.name || row.username, user_email: row.email, login_type: 'kakao' });
-
-  let streak_count = 0, last_wisdom_date = null;
-  try {
-    const s = await env.DB.prepare('SELECT streak_count, last_wisdom_date FROM users WHERE id = ?').bind(row.id).first();
-    if (s) { streak_count = s.streak_count || 0; last_wisdom_date = s.last_wisdom_date; }
-  } catch (_) {}
-
-  const user = { ...row, streak_count, last_wisdom_date, permissions: JSON.parse(row.permissions || '[]') };
-  const token = await createSession(env, user.id);
-  return jsonResponse({ success: true, user, token });
-}
-
 /* 이메일 뉴스레터용 컬럼. D1 에는 ADD COLUMN IF NOT EXISTS 가 없어
    이미 있으면 에러가 나므로 삼켜 넘긴다. */
 async function ensureEmailColumns(env) {
@@ -430,68 +343,337 @@ async function ensureUnsubscribeToken(env, userId) {
   return t;
 }
 
-function newsletterHtml({ name, sentence, column, url, unsubUrl }) {
-  const esc = (t) => String(t == null ? '' : t)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  return `
-  <div style="font-family:-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#faf9f7;padding:28px 16px;">
-    <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:14px;overflow:hidden;border:1px solid #ece8e2;">
-      ${column && column.hero_image
-        ? `<a href="${esc(url)}"><img src="${esc(column.hero_image)}" width="560" alt="" style="display:block;width:100%;height:auto;border:0;"></a>`
-        : ''}
-      <div style="padding:28px 26px 24px;">
-        <div style="font-size:12px;letter-spacing:.08em;color:#9c9489;text-transform:uppercase;">99 Wisdom Insight</div>
-        <p style="margin:14px 0 0;font-family:Georgia,'Gowun Batang',serif;font-size:20px;line-height:1.5;color:#2c2722;">
-          &ldquo;${esc(sentence)}&rdquo;
-        </p>
-        ${column ? `<p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#4a443d;font-weight:600;">${esc(column.title)}</p>` : ''}
-        ${column && column.quotable ? `<p style="margin:10px 0 0;font-size:14px;line-height:1.7;color:#6b645c;">${esc(column.quotable)}</p>` : ''}
-        <div style="margin:26px 0 4px;">
-          <a href="${esc(url)}" style="display:inline-block;background:#5FA97E;color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-size:14px;font-weight:600;">
-            오늘의 칼럼 읽기
-          </a>
-        </div>
-      </div>
-    </div>
-    <div style="max-width:560px;margin:16px auto 0;text-align:center;font-size:12px;line-height:1.8;color:#a29a90;">
-      ${esc(name || '독자')}님께 보내 드립니다 · <a href="https://99wisdombook.org" style="color:#a29a90;">99wisdombook.org</a><br>
-      <a href="${esc(unsubUrl)}" style="color:#a29a90;text-decoration:underline;">이메일 받지 않기</a>
-    </div>
-  </div>`;
-}
+/* ── 이메일 발송 공통 ────────────────────────────────────────
+   ⚠ 발신 도메인(MAIL_FROM)이 Resend 에서 검증되기 전에는 발송이 거부된다.
+      거부되면 MAIL_FROM_FALLBACK → Resend 테스트 발신자 순으로 한 단계씩 내려간다.
+      테스트 발신자(onboarding@resend.dev)는 Resend 계정 소유자에게만 배달되므로
+      첫 확인용으로만 쓰인다. 실제 운영은 MAIL_FROM 도메인 검증이 끝나야 한다. */
+/* ⚠ 이 기본값들이 실제로 쓰인다.
+     wrangler.jsonc 가 wrangler.toml 보다 먼저 인식되는데 pages_build_output_dir 이 없어
+     설정 파일 전체가 무시되고 있어서, wrangler.toml 의 [vars] 는 반영되지 않는다.
+     발신 주소를 바꾸려면 여기를 고치거나 Pages 대시보드의 환경 변수에 넣어야 한다. */
+const MAIL_FROM_DEFAULT     = '99 Wisdom Insight <daily@99wisdombook.org>';
+const MAIL_REPLY_TO_DEFAULT = 'info@99wisdombook.org';
+const MAIL_TEST_SENDER      = '99 Wisdom Insight <onboarding@resend.dev>';
 
-async function sendNewsletterEmail(env, user, wisdomItem) {
+/** Resend 로 한 통 보낸다. 실제 사용된 발신자를 함께 돌려준다. */
+async function sendEmail(env, m, from) {
   if (!env.RESEND_API_KEY) throw new Error('RESEND_API_KEY 미설정');
-  if (!user.email) throw new Error('이메일 주소 없음');
+  if (!m.to) throw new Error('수신 주소 없음');
+  const sender = from || (env.MAIL_FROM || '').trim() || MAIL_FROM_DEFAULT;
 
-  const column = wisdomItem.column;
-  const url = column
-    ? `https://99wisdombook.org/insight/${column.slug}`
-    : 'https://99wisdombook.org/daily.html?autoopen=1';
-  const t = await ensureUnsubscribeToken(env, user.id);
-  const unsubUrl = `https://99wisdombook.org/api/email/unsubscribe?t=${t}`;
+  const headers = {};
+  if (m.unsub) {
+    headers['List-Unsubscribe'] = '<' + m.unsub + '>';
+    headers['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click';
+  }
 
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${env.RESEND_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Authorization': 'Bearer ' + env.RESEND_API_KEY, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: '99 Wisdom Insight <daily@99wisdombook.org>',
-      to: [user.email],
-      subject: column ? `${wisdomItem.title} — ${column.title}` : wisdomItem.title,
-      html: newsletterHtml({ name: user.name, sentence: wisdomItem.title, column, url, unsubUrl }),
-      headers: { 'List-Unsubscribe': `<${unsubUrl}>` },
+      from: sender,
+      to: [m.to],
+      subject: m.subject,
+      html: m.html,
+      ...(m.text ? { text: m.text } : {}),
+      reply_to: (env.MAIL_REPLY_TO || '').trim() || MAIL_REPLY_TO_DEFAULT,
+      headers,
     }),
   });
+
+  const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const e = await res.json().catch(() => ({}));
-    throw new Error(e.message || `Resend ${res.status}`);
+    // 도메인 미검증이면 다음 발신자로 한 단계 내려간다
+    if (/not verified|domain is not verified/i.test(data.message || '')) {
+      const chain = [
+        (env.MAIL_FROM || '').trim() || MAIL_FROM_DEFAULT,
+        (env.MAIL_FROM_FALLBACK || '').trim(),
+        MAIL_TEST_SENDER,
+      ].filter(Boolean);
+      const next = chain[chain.indexOf(sender) + 1];
+      if (next) return sendEmail(env, m, next);
+    }
+    const err = new Error(data.message || ('Resend ' + res.status));
+    err.code = data.name || res.status;
+    throw err;
+  }
+  return { ...data, from: sender };
+}
+
+/** MAIL_FROM 이 아닌 발신자로 나갔으면 남길 문구 (폴백이 쓰였다는 신호) */
+function mailVia(env, r) {
+  const want = (env.MAIL_FROM || '').trim() || MAIL_FROM_DEFAULT;
+  return r && r.from && r.from !== want ? 'via ' + r.from : null;
+}
+
+const mailEsc = (t) => String(t == null ? '' : t)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+/** 모든 메일이 쓰는 공통 뼈대. preheader 는 받은편지함 미리보기 줄. */
+function emailLayout({ preheader, body, footer }) {
+  return '<!doctype html><html lang="ko"><head><meta charset="utf-8">'
+    + '<meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<meta name="color-scheme" content="light"><title>99 Wisdom Insight</title></head>'
+    + '<body style="margin:0;padding:0;background:#faf9f7;">'
+    + '<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">' + mailEsc(preheader || '') + '</div>'
+    + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#faf9f7;">'
+    + '<tr><td align="center" style="padding:28px 16px;">'
+    + '<table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0"'
+    + ' style="max-width:560px;width:100%;background:#ffffff;border-radius:14px;border:1px solid #ece8e2;">'
+    + body
+    + '</table>'
+    + '<table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;width:100%;">'
+    + '<tr><td align="center" style="padding:16px 8px 0;font-family:-apple-system,\'Apple SD Gothic Neo\',\'Malgun Gothic\',sans-serif;font-size:12px;line-height:1.8;color:#a29a90;">'
+    + footer
+    + '</td></tr></table></td></tr></table></body></html>';
+}
+
+const MAIL_SANS = "-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif";
+
+/** 오늘의 한 문장 + 칼럼 */
+function issueEmail(env, user, wisdomItem, unsubUrl) {
+  const c = wisdomItem.column;
+  const url = c
+    ? 'https://99wisdombook.org/insight/' + c.slug
+    : 'https://99wisdombook.org/daily.html?autoopen=1';
+  const name = user.name || '독자';
+
+  const hero = (c && c.hero_image)
+    ? '<tr><td style="padding:0;"><a href="' + mailEsc(url) + '"><img src="' + mailEsc(c.hero_image)
+      + '" width="560" alt="" style="display:block;width:100%;height:auto;border:0;border-radius:14px 14px 0 0;"></a></td></tr>'
+    : '';
+
+  const body = hero
+    + '<tr><td style="padding:28px 26px 24px;font-family:' + MAIL_SANS + ';">'
+    + '<div style="font-size:12px;letter-spacing:.08em;color:#9c9489;text-transform:uppercase;">99 Wisdom Insight</div>'
+    + '<p style="margin:14px 0 0;font-family:Georgia,\'Gowun Batang\',serif;font-size:20px;line-height:1.5;color:#2c2722;">'
+    + '&ldquo;' + mailEsc(wisdomItem.title) + '&rdquo;</p>'
+    + (c ? '<p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#4a443d;font-weight:600;">' + mailEsc(c.title) + '</p>' : '')
+    + (c && c.quotable ? '<p style="margin:10px 0 0;font-size:14px;line-height:1.7;color:#6b645c;">' + mailEsc(c.quotable) + '</p>' : '')
+    + '<div style="margin:26px 0 4px;"><a href="' + mailEsc(url)
+    + '" style="display:inline-block;background:#5FA97E;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:999px;font-size:14px;font-weight:600;">오늘의 칼럼 읽기</a></div>'
+    + '</td></tr>';
+
+  const footer = mailEsc(name) + '님께 보내 드립니다 · <a href="https://99wisdombook.org" style="color:#a29a90;">99wisdombook.org</a><br>'
+    + '<a href="' + mailEsc(unsubUrl) + '" style="color:#a29a90;text-decoration:underline;">이메일 받지 않기</a>';
+
+  const text = [
+    '"' + wisdomItem.title + '"',
+    c ? '\n' + c.title : '',
+    (c && c.quotable) ? c.quotable : '',
+    '\n오늘의 칼럼 읽기: ' + url,
+    '\n---\n' + name + '님께 보내 드립니다 · 99wisdombook.org',
+    '이메일 받지 않기: ' + unsubUrl,
+  ].filter(Boolean).join('\n');
+
+  return {
+    to: user.email,
+    subject: c ? wisdomItem.title + ' — ' + c.title : wisdomItem.title,
+    html: emailLayout({ preheader: c ? c.title : wisdomItem.title, body, footer }),
+    text,
+    unsub: unsubUrl,
+  };
+}
+
+/** 안내 메일 (환영 · 테스트 · 리마인더 · 주간 리포트 공용) */
+function noticeEmail(env, user, o) {
+  const name = user.name || '독자';
+  const body = '<tr><td style="padding:30px 26px 26px;font-family:' + MAIL_SANS + ';">'
+    + '<div style="font-size:12px;letter-spacing:.08em;color:#9c9489;text-transform:uppercase;">99 Wisdom Insight</div>'
+    + '<p style="margin:16px 0 0;font-size:18px;line-height:1.55;color:#2c2722;font-weight:600;">' + mailEsc(o.heading) + '</p>'
+    + '<p style="margin:12px 0 0;font-size:14px;line-height:1.8;color:#6b645c;">' + o.lead + '</p>'
+    + (o.cta ? '<div style="margin:26px 0 4px;"><a href="' + mailEsc(o.ctaUrl)
+        + '" style="display:inline-block;background:#5FA97E;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:999px;font-size:14px;font-weight:600;">'
+        + mailEsc(o.cta) + '</a></div>' : '')
+    + '</td></tr>';
+
+  const footer = mailEsc(name) + '님께 보내 드립니다 · <a href="https://99wisdombook.org" style="color:#a29a90;">99wisdombook.org</a>'
+    + (o.unsubUrl ? '<br><a href="' + mailEsc(o.unsubUrl) + '" style="color:#a29a90;text-decoration:underline;">이메일 받지 않기</a>' : '');
+
+  const text = [
+    o.heading,
+    String(o.lead).replace(/<[^>]+>/g, ''),
+    o.cta ? '\n' + o.cta + ': ' + o.ctaUrl : '',
+    '\n---\n' + name + '님께 보내 드립니다 · 99wisdombook.org',
+    o.unsubUrl ? '이메일 받지 않기: ' + o.unsubUrl : '',
+  ].filter(Boolean).join('\n');
+
+  return { to: user.email, subject: o.subject, html: emailLayout({ preheader: o.heading, body, footer }), text, unsub: o.unsubUrl };
+}
+
+/** 오늘의 문장 뉴스레터 발송 */
+async function sendNewsletterEmail(env, user, wisdomItem) {
+  const t = await ensureUnsubscribeToken(env, user.id);
+  const unsubUrl = 'https://99wisdombook.org/api/email/unsubscribe?t=' + t;
+  return sendEmail(env, issueEmail(env, user, wisdomItem, unsubUrl));
+}
+/** 수신 거부. 로그인 없이 링크만으로 동작해야 한다. */
+// ── 이메일 테스트 발송 (관리자 전용) ────────────────────────
+/* 발신 도메인 검증 여부를 실제로 확인하는 가장 빠른 방법이다.
+   응답의 from 이 MAIL_FROM 과 다르면 폴백으로 나간 것이고,
+   그건 곧 MAIL_FROM 도메인이 아직 Resend 에서 검증되지 않았다는 뜻이다. */
+// ── 이메일 설정 진단 (CRON_SECRET 필요) ─────────────────────
+/* Resend 에 등록된 도메인의 검증 상태와 현재 발신 설정을 함께 보여 준다.
+   MAIL_FROM 의 도메인이 verified 가 아니면 실제 발송은 폴백 주소로 나간다. */
+async function handleEmailDiag(request, env) {
+  const auth = request.headers.get('Authorization') || '';
+  const secret = (env.CRON_SECRET || '').trim();
+  if (!secret || auth !== `Bearer ${secret}`) return jsonResponse({ error: 'Unauthorized' }, 401);
+
+  const mailFrom = (env.MAIL_FROM || '').trim() || MAIL_FROM_DEFAULT;
+  const m = mailFrom.match(/<([^>]+)>/);
+  const fromAddr = (m ? m[1] : mailFrom).trim();
+  const fromDomain = fromAddr.split('@')[1] || null;
+
+  const out = {
+    mail_from: mailFrom,
+    from_domain: fromDomain,
+    mail_from_fallback: (env.MAIL_FROM_FALLBACK || '').trim() || null,
+    reply_to: (env.MAIL_REPLY_TO || '').trim() || MAIL_REPLY_TO_DEFAULT,
+    has_resend_key: !!env.RESEND_API_KEY,
+    has_vapid: !!(env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY),
+  };
+
+  if (!env.RESEND_API_KEY) {
+    out.verified = false;
+    out.note = 'RESEND_API_KEY 가 없어 발송 자체가 불가능합니다.';
+    return jsonResponse(out);
+  }
+
+  try {
+    const r = await fetch('https://api.resend.com/domains', {
+      headers: { 'Authorization': `Bearer ${env.RESEND_API_KEY}` },
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      out.error = d.message || `Resend ${r.status}`;
+      return jsonResponse(out, 200);
+    }
+    const list = d.data || [];
+    out.domains = list.map(x => ({ name: x.name, status: x.status, region: x.region }));
+    const hit = list.find(x => x.name === fromDomain);
+    out.verified = !!(hit && hit.status === 'verified');
+    out.note = out.verified
+      ? `${fromDomain} 검증 완료 — MAIL_FROM 그대로 발송됩니다.`
+      : hit
+        ? `${fromDomain} 상태가 ${hit.status} 입니다. 검증이 끝나야 MAIL_FROM 으로 발송됩니다.`
+        : `${fromDomain} 이 Resend 에 등록돼 있지 않습니다. 도메인을 추가하고 DNS 레코드를 넣어 주세요.`;
+  } catch (err) {
+    out.error = err.message;
+  }
+
+  // ?send=주소 → 실제로 한 통 보내 발송 경로까지 확인한다
+  const sendTo = new URL(request.url).searchParams.get('send');
+  if (sendTo) {
+    try {
+      const r = await sendEmail(env, noticeEmail(env, { name: '관리자', email: sendTo }, {
+        subject: '[점검] 99 Wisdom Insight 이메일 발송 확인',
+        heading: '이메일 발송 경로가 정상입니다',
+        lead: '이 메일이 보이면 Resend 연동·발신 도메인·템플릿이 모두 동작하는 것입니다.<br>실제 알림은 설정한 요일과 시각에 발송됩니다.',
+        cta: '오늘의 문장 보기', ctaUrl: 'https://99wisdombook.org/daily.html?autoopen=1',
+      }));
+      out.send = { ok: true, to: sendTo, id: r.id || null, from: r.from, used_fallback: !!mailVia(env, r) };
+    } catch (err) {
+      out.send = { ok: false, to: sendTo, error: err.message, code: err.code || null };
+    }
+  }
+  return jsonResponse(out);
+}
+
+// ── 알림 대상 현황 (CRON_SECRET 필요) ───────────────────────
+async function handleNotifyStatus(request, env) {
+  const auth = request.headers.get('Authorization') || '';
+  const secret = (env.CRON_SECRET || '').trim();
+  if (!secret || auth !== `Bearer ${secret}`) return jsonResponse({ error: 'Unauthorized' }, 401);
+  await ensureEmailColumns(env);
+  const row = await env.DB.prepare(`
+    SELECT COUNT(*) AS total,
+           SUM(CASE WHEN notify_enabled = 1 THEN 1 ELSE 0 END) AS notify_on,
+           SUM(CASE WHEN notify_enabled = 1 AND email_enabled = 1 AND email IS NOT NULL AND email <> '' THEN 1 ELSE 0 END) AS email_ready,
+           SUM(CASE WHEN notify_enabled = 1 AND push_endpoint IS NOT NULL THEN 1 ELSE 0 END) AS push_ready,
+           SUM(CASE WHEN email_enabled = 1 AND (email IS NULL OR email = '') THEN 1 ELSE 0 END) AS email_on_without_address
+    FROM users
+  `).first();
+  return jsonResponse({ success: true, ...row });
+}
+
+async function handleEmailTest(request, env) {
+  const userId = await getUserIdFromToken(request, env);
+  if (!userId) return jsonResponse({ error: 'Unauthorized' }, 401);
+
+  const me = await env.DB.prepare('SELECT id, name, email, role FROM users WHERE id = ?').bind(userId).first();
+  if (!me || me.role !== 'admin') return jsonResponse({ error: 'Forbidden' }, 403);
+
+  const body = await request.json().catch(() => ({}));
+  const to = String(body.to || me.email || '').trim();
+  if (!to) return jsonResponse({ success: false, error: '보낼 주소가 없습니다. 관리자 계정에 이메일을 등록하거나 to 를 지정하세요.' }, 400);
+
+  await ensureEmailColumns(env);
+  const t = await ensureUnsubscribeToken(env, me.id);
+  const unsubUrl = `https://99wisdombook.org/api/email/unsubscribe?t=${t}`;
+
+  try {
+    const r = await sendEmail(env, noticeEmail(env, { name: me.name, email: to }, {
+      subject: '[테스트] 99 Wisdom Insight 이메일 발송 확인',
+      heading: '이메일 발송이 정상입니다',
+      lead: '이 메일이 보이면 Resend 연동과 템플릿이 모두 동작하는 것입니다.<br>실제 알림은 설정한 요일과 시각에 발송됩니다.',
+      cta: '오늘의 문장 보기', ctaUrl: 'https://99wisdombook.org/daily.html?autoopen=1',
+      unsubUrl,
+    }));
+    const want = (env.MAIL_FROM || '').trim() || MAIL_FROM_DEFAULT;
+    return jsonResponse({
+      success: true, to, id: r.id || null, from: r.from,
+      verified: r.from === want,
+      note: r.from === want
+        ? '설정한 발신 주소로 나갔습니다.'
+        : `발신 도메인이 아직 검증되지 않아 ${r.from} 로 대체 발송했습니다. Resend 에서 도메인을 검증해 주세요.`,
+    });
+  } catch (err) {
+    return jsonResponse({ success: false, error: err.message, code: err.code || null }, 500);
   }
 }
 
-/** 수신 거부. 로그인 없이 링크만으로 동작해야 한다. */
+// ── 메일 템플릿 미리보기 (관리자 전용) ──────────────────────
+/* /api/email/preview?kind=issue|notice  ·  ?text=1 이면 평문 버전 */
+async function handleEmailPreview(request, env) {
+  const userId = await getUserIdFromToken(request, env);
+  if (!userId) return jsonResponse({ error: 'Unauthorized' }, 401);
+  const me = await env.DB.prepare('SELECT role FROM users WHERE id = ?').bind(userId).first();
+  if (!me || me.role !== 'admin') return jsonResponse({ error: 'Forbidden' }, 403);
+
+  const url = new URL(request.url);
+  const kind = url.searchParams.get('kind') || 'issue';
+  const user = { id: 0, name: '독자', email: 'you@example.com' };
+  const unsubUrl = 'https://99wisdombook.org/api/email/unsubscribe?t=' + '0'.repeat(32);
+
+  let column = null;
+  try {
+    const row = await env.DB.prepare(
+      "SELECT chapter_id, slug, title, quotable, hero_image FROM insights WHERE status = 'published' ORDER BY chapter_id LIMIT 1"
+    ).first();
+    if (row) column = row;
+  } catch (_) {}
+
+  const m = kind === 'notice'
+    ? noticeEmail(env, user, {
+        subject: '[미리보기] 안내 메일',
+        heading: '안내 메일 미리보기',
+        lead: '리마인더·주간 리포트·테스트 메일이 이 형태를 씁니다.',
+        cta: '오늘의 문장 보기', ctaUrl: 'https://99wisdombook.org/daily.html?autoopen=1',
+        unsubUrl,
+      })
+    : issueEmail(env, user, { title: column ? '오늘의 한 문장 미리보기' : '세상에 공짜는 없다', column }, unsubUrl);
+
+  if (url.searchParams.get('text')) {
+    return new Response(m.text, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', ...corsHeaders } });
+  }
+  return new Response(m.html, {
+    headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Subject': encodeURIComponent(m.subject), ...corsHeaders },
+  });
+}
+
 async function handleEmailUnsubscribe(request, env) {
   const t = new URL(request.url).searchParams.get('t') || '';
   const page = (msg) => new Response(
@@ -977,7 +1159,7 @@ async function handleUpdatePermissions(userId, request, env) {
   return jsonResponse({ success: true, user: { ...row, permissions: JSON.parse(row.permissions || '[]') }, message: 'Permissions updated' });
 }
 
-// ── 카카오 알림 설정 ────────────────────────────────────────
+// ── 알림 설정 (이메일 + Web Push) ───────────────────────────
 async function handleGetNotify(userId, request, env) {
   const tokenUserId = await getUserIdFromToken(request, env);
   if (!tokenUserId || tokenUserId !== parseInt(userId)) return jsonResponse({ error: 'Unauthorized' }, 401);
@@ -999,113 +1181,6 @@ async function handleUpdateNotify(userId, request, env) {
   ).bind(notify_enabled ? 1 : 0, notify_days || null, notify_hour ?? null, notify_minute ?? 0,
          email_enabled ? 1 : 0, userId).run();
   return jsonResponse({ success: true, message: '알림 설정이 저장되었습니다.' });
-}
-
-// ── 카카오 토큰 갱신 ────────────────────────────────────────
-async function refreshKakaoAccessToken(refreshToken, env) {
-  const res = await fetch('https://kauth.kakao.com/oauth/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'refresh_token',
-      client_id: env.KAKAO_REST_API_KEY.trim(),
-      client_secret: (env.KAKAO_CLIENT_SECRET || '').trim(),
-      refresh_token: refreshToken,
-    }),
-  });
-  if (!res.ok) throw new Error('카카오 토큰 갱신 실패');
-  const data = await res.json();
-  if (!data.access_token) throw new Error(data.error_description || '토큰 갱신 실패');
-  return { access_token: data.access_token, new_refresh_token: data.refresh_token || null };
-}
-
-// ── 카카오 나에게 보내기 ────────────────────────────────────
-async function sendKakaoNotifyMessage(accessToken, wisdomItem) {
-  // wisdomItem: { title, id, column } 또는 문자열(하위 호환)
-  const obj      = typeof wisdomItem === 'object' ? wisdomItem : null;
-  const sentence = (obj ? obj.title : wisdomItem) || '오늘의 한 문장이 기다리고 있어요';
-  const chId     = obj?.id ?? null;
-  const column   = obj?.column ?? null;
-
-  // 칼럼이 있으면 칼럼으로, 없으면 예전 딥링크로 보낸다.
-  const url = column
-    ? `https://99wisdombook.org/insight/${column.slug}`
-    : chId
-      ? `https://99wisdombook.org/daily.html?autoopen=1&ch=${chId}`
-      : 'https://99wisdombook.org/daily.html?autoopen=1';
-  const link = { web_url: url, mobile_web_url: url };
-
-  // 카카오는 SVG를 못 읽으므로 미리 만들어 둔 PNG 공유 카드(2:1)를 쓴다.
-  const imageUrl = column?.hero_image || 'https://99wisdombook.org/og-image.png';
-  const template = {
-    object_type: 'feed',
-    content: {
-      title: `"${sentence}"`,
-      description: column ? (column.title || '') : '',
-      image_url: imageUrl,
-      image_width: 1200, image_height: column?.hero_image ? 600 : 630,
-      link,
-    },
-    buttons: [
-      {
-        title: column ? '오늘의 칼럼 읽기' : '지혜의 문장 본문 읽기',
-        link,
-      },
-    ],
-  };
-  const res = await fetch('https://kapi.kakao.com/v2/api/talk/memo/default/send', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({ template_object: JSON.stringify(template) }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.msg || '카카오 메시지 발송 실패');
-  }
-  return await res.json();
-}
-
-// ── 카카오 알림 테스트 (어드민 전용) ────────────────────────
-async function handleKakaoTest(request, env) {
-  const userId = await getUserIdFromToken(request, env);
-  if (!userId) return jsonResponse({ error: 'Unauthorized' }, 401);
-
-  const user = await env.DB.prepare(
-    'SELECT id, role, kakao_refresh_token FROM users WHERE id = ?'
-  ).bind(userId).first();
-  if (!user || user.role !== 'admin') return jsonResponse({ error: 'Admin only' }, 403);
-  if (!user.kakao_refresh_token) return jsonResponse({ error: '카카오 재로그인 필요' }, 400);
-
-  // 오늘의 지혜 조회 (앱과 동일한 FNV32 로직으로 사용자별 개인화) → { title, id }
-  let wisdomItem = { title: '오늘의 한 문장이 기다리고 있어요', id: null };
-  try {
-    const wRes = await fetch('https://99wisdombook.org/data/wisdom.json');
-    const wData = await wRes.json();
-    const items = wData.items || [];
-    if (items.length) {
-      const dk = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
-      const actor = 'u-' + user.id;
-      let h = 2166136261 >>> 0;
-      for (const c of `${dk}|${actor}`) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; }
-      const item = items[h % items.length];
-      wisdomItem = { title: item?.title || wisdomItem.title, id: item?.id ?? null };
-    }
-  } catch (_) {}
-
-  try {
-    const { access_token, new_refresh_token } = await refreshKakaoAccessToken(user.kakao_refresh_token, env);
-    if (new_refresh_token) {
-      await env.DB.prepare('UPDATE users SET kakao_refresh_token = ? WHERE id = ?')
-        .bind(new_refresh_token, userId).run();
-    }
-    const result = await sendKakaoNotifyMessage(access_token, wisdomItem);
-    return jsonResponse({ success: true, wisdom: wisdomItem.title, kakao: result });
-  } catch (err) {
-    return jsonResponse({ success: false, error: err.message }, 500);
-  }
 }
 
 // ── 추천인 코드 발급/조회 ────────────────────────────────────
@@ -1170,15 +1245,16 @@ async function handleReminderCron(request, env) {
     return jsonResponse({ error: 'Unauthorized' }, 401);
 
   const today = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+  await ensureEmailColumns(env);
 
-  // 오늘 읽지 않았고, 스트릭이 있고, 카카오 연동된 사용자
+  // 오늘 아직 읽지 않았고, 스트릭이 걸려 있는 사용자
   let users = [];
   try {
     const r = await env.DB.prepare(`
-      SELECT id, kakao_refresh_token, streak_count
+      SELECT id, name, email, email_enabled, streak_count,
+             push_endpoint, push_p256dh, push_auth
       FROM users
       WHERE notify_enabled = 1
-        AND kakao_refresh_token IS NOT NULL
         AND streak_count >= 1
         AND (last_wisdom_date IS NULL OR last_wisdom_date != ?)
     `).bind(today).all();
@@ -1187,37 +1263,45 @@ async function handleReminderCron(request, env) {
     return jsonResponse({ error: err.message }, 500);
   }
 
-  const results = { sent: 0, errors: [] };
-  for (const user of users) {
-    try {
-      const { access_token, new_refresh_token } = await refreshKakaoAccessToken(user.kakao_refresh_token, env);
-      if (new_refresh_token)
-        await env.DB.prepare('UPDATE users SET kakao_refresh_token = ? WHERE id = ?').bind(new_refresh_token, user.id).run();
+  const url = 'https://99wisdombook.org/daily.html?autoopen=1';
+  const results = { email_sent: 0, push_sent: 0, skipped: 0, errors: [] };
 
-      const streak = user.streak_count || 1;
-      const url = 'https://99wisdombook.org/daily.html?autoopen=1';
-      const link = { web_url: url, mobile_web_url: url };
-      const template = {
-        object_type: 'feed',
-        content: {
-          title: `🔥 ${streak}일 연속 독서 스트릭이 끊길 뻔했어요!`,
-          description: '오늘의 한 문장, 아직 읽지 않으셨네요. 지금 바로 확인해보세요.',
-          image_url: 'https://99wisdombook.org/og-image.png',
-          image_width: 1200, image_height: 630,
-          link,
-        },
-        buttons: [{ title: '오늘의 문장 읽기', link }],
-      };
-      const res = await fetch('https://kapi.kakao.com/v2/api/talk/memo/default/send', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${access_token}`, 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ template_object: JSON.stringify(template) }),
-      });
-      if (res.ok) results.sent++;
-      else results.errors.push({ userId: user.id, error: await res.text() });
-    } catch (err) {
-      results.errors.push({ userId: user.id, error: err.message });
+  for (const user of users) {
+    const streak = user.streak_count || 1;
+    const heading = `${streak}일 연속 기록이 오늘 끊길 수 있어요`;
+    let touched = false;
+
+    if (user.email_enabled && user.email) {
+      try {
+        const t = await ensureUnsubscribeToken(env, user.id);
+        const unsubUrl = `https://99wisdombook.org/api/email/unsubscribe?t=${t}`;
+        await sendEmail(env, noticeEmail(env, user, {
+          subject: `오늘의 한 문장이 아직 남아 있어요`,
+          heading,
+          lead: '오늘의 문장을 아직 읽지 않으셨어요.<br>한 문장이면 충분합니다.',
+          cta: '오늘의 문장 읽기', ctaUrl: url, unsubUrl,
+        }));
+        results.email_sent++; touched = true;
+      } catch (err) {
+        results.errors.push({ userId: user.id, error: `Email: ${err.message}` });
+      }
     }
+
+    if (user.push_endpoint && env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY) {
+      try {
+        await sendWebPush(
+          user.push_endpoint, user.push_p256dh, user.push_auth,
+          { title: heading, body: '오늘의 한 문장이 기다리고 있어요', url: '/daily.html?autoopen=1' },
+          env.VAPID_PRIVATE_KEY.trim(), env.VAPID_PUBLIC_KEY.trim(),
+          (env.VAPID_SUBJECT || 'mailto:info@99wisdombook.org').trim()
+        );
+        results.push_sent++; touched = true;
+      } catch (err) {
+        results.errors.push({ userId: user.id, error: `WebPush: ${err.message}` });
+      }
+    }
+
+    if (!touched) results.skipped++;
   }
   return jsonResponse({ success: true, date: today, total: users.length, ...results });
 }
@@ -1229,56 +1313,65 @@ async function handleWeeklyCron(request, env) {
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`)
     return jsonResponse({ error: 'Unauthorized' }, 401);
 
-  // 카카오 연동 + 스트릭 있는 사용자
+  await ensureEmailColumns(env);
+
+  // 스트릭이 있는 사용자 (채널은 아래에서 각자 확인)
   let users = [];
   try {
     const r = await env.DB.prepare(`
-      SELECT id, name, kakao_refresh_token, streak_count
+      SELECT id, name, email, email_enabled, streak_count,
+             push_endpoint, push_p256dh, push_auth
       FROM users
-      WHERE kakao_refresh_token IS NOT NULL AND streak_count >= 1
+      WHERE streak_count >= 1
     `).all();
     users = r.results || [];
   } catch (err) {
     return jsonResponse({ error: err.message }, 500);
   }
 
-  const results = { sent: 0, errors: [] };
-  for (const user of users) {
-    try {
-      const { access_token, new_refresh_token } = await refreshKakaoAccessToken(user.kakao_refresh_token, env);
-      if (new_refresh_token)
-        await env.DB.prepare('UPDATE users SET kakao_refresh_token = ? WHERE id = ?').bind(new_refresh_token, user.id).run();
+  const url = 'https://99wisdombook.org/daily.html?autoopen=1';
+  const results = { email_sent: 0, push_sent: 0, skipped: 0, errors: [] };
 
-      const streak = user.streak_count || 0;
-      const name = user.name || '독자';
-      const url = 'https://99wisdombook.org/daily.html?autoopen=1';
-      const link = { web_url: url, mobile_web_url: url };
-      const emoji = streak >= 30 ? '🏆' : streak >= 14 ? '🌟' : streak >= 7 ? '🔥' : '📖';
-      const template = {
-        object_type: 'feed',
-        content: {
-          title: `${emoji} ${name}님, 이번 주도 수고하셨어요!`,
-          description: `현재 ${streak}일 연속 독서 중 · 꾸준함이 지혜가 됩니다.`,
-          image_url: 'https://99wisdombook.org/og-image.png',
-          image_width: 1200, image_height: 630,
-          link,
-        },
-        buttons: [{ title: '내일의 문장 미리 보기', link }],
-      };
-      const res = await fetch('https://kapi.kakao.com/v2/api/talk/memo/default/send', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${access_token}`, 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ template_object: JSON.stringify(template) }),
-      });
-      if (res.ok) results.sent++;
-      else results.errors.push({ userId: user.id, error: await res.text() });
-    } catch (err) {
-      results.errors.push({ userId: user.id, error: err.message });
+  for (const user of users) {
+    const streak = user.streak_count || 0;
+    const name = user.name || '독자';
+    const heading = `${name}님, 이번 주도 수고하셨어요`;
+    const lead = `현재 ${streak}일 연속 읽고 계십니다.<br>꾸준함이 지혜가 됩니다.`;
+    let touched = false;
+
+    if (user.email_enabled && user.email) {
+      try {
+        const t = await ensureUnsubscribeToken(env, user.id);
+        const unsubUrl = `https://99wisdombook.org/api/email/unsubscribe?t=${t}`;
+        await sendEmail(env, noticeEmail(env, user, {
+          subject: `이번 주 기록 · ${streak}일 연속`,
+          heading, lead,
+          cta: '다음 문장 보기', ctaUrl: url, unsubUrl,
+        }));
+        results.email_sent++; touched = true;
+      } catch (err) {
+        results.errors.push({ userId: user.id, error: `Email: ${err.message}` });
+      }
     }
+
+    if (user.push_endpoint && env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY) {
+      try {
+        await sendWebPush(
+          user.push_endpoint, user.push_p256dh, user.push_auth,
+          { title: heading, body: `${streak}일 연속 읽고 계십니다`, url: '/daily.html?autoopen=1' },
+          env.VAPID_PRIVATE_KEY.trim(), env.VAPID_PUBLIC_KEY.trim(),
+          (env.VAPID_SUBJECT || 'mailto:info@99wisdombook.org').trim()
+        );
+        results.push_sent++; touched = true;
+      } catch (err) {
+        results.errors.push({ userId: user.id, error: `WebPush: ${err.message}` });
+      }
+    }
+
+    if (!touched) results.skipped++;
   }
   return jsonResponse({ success: true, total: users.length, ...results });
 }
-
 // ── Cron 엔드포인트 ─────────────────────────────────────────
 async function handleNotifyCron(request, env) {
   // CRON_SECRET 인증
@@ -1301,8 +1394,7 @@ async function handleNotifyCron(request, env) {
   let debugUsers = [];
   try {
     const dbg = await env.DB.prepare(`
-      SELECT id, name, notify_enabled, notify_hour, notify_days,
-             CASE WHEN kakao_refresh_token IS NOT NULL THEN 1 ELSE 0 END as has_refresh_token
+      SELECT id, name, notify_enabled, notify_hour, notify_days
       FROM users WHERE notify_enabled = 1
     `).all();
     debugUsers = dbg.results || [];
@@ -1312,7 +1404,7 @@ async function handleNotifyCron(request, env) {
   let users;
   try {
     const result = await env.DB.prepare(`
-      SELECT id, name, email, email_enabled, kakao_refresh_token, notify_days,
+      SELECT id, name, email, email_enabled, notify_days,
              push_endpoint, push_p256dh, push_auth
       FROM users
       WHERE notify_enabled = 1
@@ -1369,7 +1461,7 @@ async function handleNotifyCron(request, env) {
     };
   }
 
-  const results = { sent: 0, push_sent: 0, email_sent: 0, skipped: 0, errors: [] };
+  const results = { push_sent: 0, email_sent: 0, skipped: 0, errors: [] };
 
   for (const user of users) {
     // 요일 체크 (notify_days: "1,3,5" 형태)
@@ -1385,23 +1477,6 @@ async function handleNotifyCron(request, env) {
       : wisdomItem.id
         ? `/daily.html?autoopen=1&ch=${wisdomItem.id}`
         : '/daily.html?autoopen=1';
-
-    // ── 카카오 알림 ──
-    try {
-      if (!user.kakao_refresh_token) {
-        results.errors.push({ userId: user.id, error: 'refresh_token 없음 - 카카오 재로그인 필요' });
-      } else {
-        const { access_token, new_refresh_token } = await refreshKakaoAccessToken(user.kakao_refresh_token, env);
-        if (new_refresh_token) {
-          await env.DB.prepare('UPDATE users SET kakao_refresh_token = ? WHERE id = ?')
-            .bind(new_refresh_token, user.id).run();
-        }
-        await sendKakaoNotifyMessage(access_token, wisdomItem);
-        results.sent++;
-      }
-    } catch (err) {
-      results.errors.push({ userId: user.id, error: err.message });
-    }
 
     // ── Web Push 알림 (독립적) ──
     if (user.push_endpoint && env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY) {
@@ -1436,19 +1511,19 @@ async function handleNotifyCron(request, env) {
   return jsonResponse({ success: true, kstHour: kstHourAdj, kstMinute: kstMinuteSlot, kstDay, total: users.length, ...results, debug_notify_users: debugUsers });
 }
 
-// ── 카카오/인스타 공유용 동적 이미지 (SVG 직접 반환) ────
+// ── 공유용 동적 이미지 (SVG 직접 반환) ────
 function handleWisdomCard(request) {
   const url = new URL(request.url);
   const text = (url.searchParams.get('t') || '오늘의 한 문장').slice(0, 60);
   const square = url.searchParams.get('sq') === '1'; // 인스타용 정사각형
-  const kakao  = url.searchParams.get('kakao') === '1'; // 카카오 공유용 800×400
+  const wide   = url.searchParams.get('wide') === '1';  // 링크 미리보기용 800×400
 
-  const W = square ? 1080 : (kakao ? 800 : 1200);
-  const H = square ? 1080 : (kakao ? 400 : 630);
+  const W = square ? 1080 : (wide ? 800 : 1200);
+  const H = square ? 1080 : (wide ? 400 : 630);
   const cx = W / 2;
 
   // 어절(공백) 단위 줄바꿈 — 한 줄에 들어가면 1줄, 길면 단어 경계에서 분리
-  const maxLineLen = square ? 10 : (kakao ? 14 : 15);
+  const maxLineLen = square ? 10 : (wide ? 14 : 15);
   const words = text.split(' ');
   const lines = [];
   let cur = '';
@@ -1475,34 +1550,34 @@ function handleWisdomCard(request) {
   // 폰트 크기 조정
   const fontSize = square
     ? (lines.length <= 2 ? 72 : lines.length <= 3 ? 60 : 50)
-    : kakao
+    : wide
       ? (lines.length <= 2 ? 38 : lines.length <= 3 ? 32 : 28)
       : (lines.length <= 2 ? 58 : lines.length <= 3 ? 50 : 42);
   const lineH = fontSize * 1.55;
   const totalTextH = lines.length * lineH;
 
   // 헤더 높이 비율 조정
-  const headerH = square ? 340 : (kakao ? 110 : 200);
-  const areaTop = headerH + (kakao ? 20 : 30);
-  const areaBot = H - (kakao ? 44 : 60);
+  const headerH = square ? 340 : (wide ? 110 : 200);
+  const areaTop = headerH + (wide ? 20 : 30);
+  const areaBot = H - (wide ? 44 : 60);
   const textStartY = areaTop + (areaBot - areaTop - totalTextH) / 2 + fontSize * 0.85;
 
   // 헤더 텍스트 크기
-  const titleSize    = square ? 88 : (kakao ? 44 : 68);
-  const subtitleSize = square ? 34 : (kakao ? 17 : 26);
-  const titleY       = square ? 160 : (kakao ? 62 : 105);
-  const subtitleY    = square ? 230 : (kakao ? 92 : 152);
-  const lineY        = square ? 280 : (kakao ? 110 : 185);
-  const lineX1       = square ? 120 : (kakao ? 60 : 100);
-  const lineX2       = square ? 960 : (kakao ? 740 : 1100);
+  const titleSize    = square ? 88 : (wide ? 44 : 68);
+  const subtitleSize = square ? 34 : (wide ? 17 : 26);
+  const titleY       = square ? 160 : (wide ? 62 : 105);
+  const subtitleY    = square ? 230 : (wide ? 92 : 152);
+  const lineY        = square ? 280 : (wide ? 110 : 185);
+  const lineX1       = square ? 120 : (wide ? 60 : 100);
+  const lineX2       = square ? 960 : (wide ? 740 : 1100);
 
   const tspans = lines.map((l, i) =>
     `<tspan x="${cx}" dy="${i === 0 ? 0 : lineH}">${escSvg(l)}</tspan>`
   ).join('');
 
-  // 인스타/카카오용: 하단 URL 표시
-  const urlText = (square || kakao)
-    ? `<text x="${cx}" y="${H - (kakao ? 14 : 60)}" font-family="Georgia,serif" font-size="${kakao ? 16 : 30}" fill="#c9a96e" text-anchor="middle" opacity="0.7">99wisdombook.org</text>`
+  // 정사각/와이드용: 하단 URL 표시
+  const urlText = (square || wide)
+    ? `<text x="${cx}" y="${H - (wide ? 14 : 60)}" font-family="Georgia,serif" font-size="${wide ? 16 : 30}" fill="#c9a96e" text-anchor="middle" opacity="0.7">99wisdombook.org</text>`
     : '';
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>

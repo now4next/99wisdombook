@@ -512,7 +512,7 @@
       background: #e8f5e9;
       color: #2e7d32;
     }
-    .log-type-kakao {
+    .log-type-social {
       display: inline-block;
       padding: 2px 8px;
       border-radius: 4px;
@@ -582,10 +582,14 @@
     <div class="table-container" style="margin-bottom: 24px; padding: 20px 24px;">
       <h2 style="margin: 0 0 16px; font-size: 1.1rem;">📣 알림 테스트</h2>
       <div style="display: flex; gap: 12px; align-items: stretch; flex-wrap: wrap; margin-bottom: 10px;">
-        <button class="btn" onclick="testKakaoNotify()" id="btn-kakao-test"
+        <button class="btn" onclick="testEmailNotify()" id="btn-email-test"
           style="background:#2e7d32;color:#fff;padding:10px 20px;">
-          💬 카카오 알림 테스트
+          ✉️ 이메일 발송 테스트
         </button>
+        <a class="btn" href="/api/email/preview?kind=issue" target="_blank" rel="noopener"
+          style="background:#455a64;color:#fff;padding:10px 20px;text-decoration:none;display:inline-flex;align-items:center;">
+          👁 메일 미리보기
+        </a>
         <button class="btn" onclick="testCron('reminder')" id="btn-reminder-test"
           style="background:#e65100;color:#fff;padding:10px 20px;">
           🔥 리마인더 테스트
@@ -595,7 +599,7 @@
           📊 주간 리포트 테스트
         </button>
       </div>
-      <div id="kakao-test-result" style="font-size: 0.9rem; color: #666;"></div>
+      <div id="notify-test-result" style="font-size: 0.9rem; color: #666;"></div>
     </div>
 
     <!-- 칼럼(인사이트) 관리 -->
@@ -1155,22 +1159,24 @@
       }
     }
 
-    // 카카오 알림 테스트 발송
-    async function testKakaoNotify() {
-      const btn = document.getElementById('btn-kakao-test');
-      const result = document.getElementById('kakao-test-result');
+    // 이메일 발송 테스트 (발신 도메인 검증 여부까지 확인된다)
+    async function testEmailNotify() {
+      const btn = document.getElementById('btn-email-test');
+      const result = document.getElementById('notify-test-result');
+      const to = prompt('테스트 메일을 받을 주소 (비우면 관리자 계정 이메일):', '') || '';
       btn.disabled = true;
       result.textContent = '발송 중...';
       result.style.color = '#666';
       try {
-        const res = await fetch('/api/notify/kakao-test', {
+        const res = await fetch('/api/notify/email-test', {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${wisdomAPI.token}` },
+          headers: { 'Authorization': `Bearer ${wisdomAPI.token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(to.trim() ? { to: to.trim() } : {}),
         });
         const data = await res.json();
         if (data.success) {
-          result.textContent = `✅ 발송 완료! "${data.wisdom}"`;
-          result.style.color = '#2e7d32';
+          result.innerHTML = `✅ ${data.to} 로 발송<br><small>발신: ${data.from}${data.verified ? '' : ' — ' + data.note}</small>`;
+          result.style.color = data.verified ? '#2e7d32' : '#e65100';
         } else {
           result.textContent = `❌ 실패: ${data.error}`;
           result.style.color = '#c62828';
@@ -1185,7 +1191,7 @@
 
     // Cron 직접 실행 테스트
     async function testCron(type) {
-      const result = document.getElementById('kakao-test-result');
+      const result = document.getElementById('notify-test-result');
       result.textContent = `${type} 실행 중...`;
       result.style.color = '#666';
       try {
@@ -1224,8 +1230,8 @@
         tbody.innerHTML = '';
         logs.forEach(log => {
           const tr = document.createElement('tr');
-          const typeClass = log.login_type === 'kakao' ? 'log-type-kakao' : 'log-type-local';
-          const typeLabel = log.login_type === 'kakao' ? '카카오' : '이메일';
+          const typeClass = log.login_type === 'local' ? 'log-type-local' : 'log-type-social';
+          const typeLabel = log.login_type === 'local' ? '이메일' : (log.login_type || '기타');
           let dateStr = '-';
           try {
             const d = new Date(log.logged_in_at);

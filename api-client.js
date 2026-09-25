@@ -102,25 +102,6 @@ class WisdomBookAPI {
     return data;
   }
 
-  async kakaoLogin(code, redirectUri = 'https://99wisdombook.org/', ref = '', rememberMe = true) {
-    const data = await this.request('/api/auth/kakao', {
-      method: 'POST',
-      body: JSON.stringify({ code, redirectUri, ref }),
-      skipAuth: true,
-    });
-
-    if (data.success && data.token) {
-      this.setToken(data.token, rememberMe);
-      const userData = { ...data.user, _fromAPI: true };
-      if (rememberMe) {
-        localStorage.setItem('currentUser', JSON.stringify(userData));
-      } else {
-        sessionStorage.setItem('currentUser', JSON.stringify(userData));
-      }
-    }
-
-    return data;
-  }
 
   /* 토큰은 서버 sessions 테이블에 있는 세션이므로, 로컬만 지우면
      그 세션이 만료(90일)까지 살아남는다. 서버에도 폐기를 알린다. */
