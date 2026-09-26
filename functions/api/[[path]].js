@@ -12,6 +12,7 @@
  * - PUT    /api/users/:id                   (admin)
  * - DELETE /api/users/:id                   (admin)
  * - PUT    /api/users/:id/permissions       (admin)
+ * - PUT    /api/users/:id/profile           (본인만)
  *
  * Wisdom / Phase 2+3:
  * - GET    /api/wisdom/saved                (auth)
@@ -233,6 +234,8 @@ export async function onRequest(context) {
     if (path.match(/^\/api\/users\/\d+$/) && method === 'DELETE') return handleDeleteUser(path.split('/').pop(), request, env);
     if (path.match(/^\/api\/users\/\d+\/permissions$/) && method === 'PUT')
       return handleUpdatePermissions(path.split('/')[3], request, env);
+    if (path.match(/^\/api\/users\/\d+\/profile$/) && method === 'PUT')
+      return handleUpdateProfile(path.split('/')[3], request, env);
 
     return jsonResponse({ error: 'Not found' }, 404);
   } catch (err) {
@@ -1115,6 +1118,44 @@ async function handleGetUser(userId, env) {
   }
   if (!row) return jsonResponse({ error: 'User not found' }, 404);
   return jsonResponse({ success: true, user: { ...row, streak_count: row.streak_count ?? 0, permissions: JSON.parse(row.permissions || '[]') } });
+}
+
+/* 본인 프로필 수정. PUT /api/users/:id 는 관리자 전용이라
+   사용자가 자기 이름·이메일을 고칠 수단이 없었다. role 과 permissions 는
+   여기서 받지 않는다 — 받으면 사용자가 스스로 관리자가 될 수 있다. */
+async function handleUpdateProfile(userId, request, env) {
+  const tokenUserId = await getUserIdFromToken(request, env);
+  if (!tokenUserId || tokenUserId !== parseInt(userId)) return jsonResponse({ error: 'Unauthorized' }, 401);
+
+  const body = await request.json().catch(() => ({}));
+  const updates = [], bindings = [];
+
+  if (body.name !== undefined) {
+    const name = String(body.name).trim();
+    if (!name) return jsonResponse({ error: '이름을 비워 둘 수 없습니다.' }, 400);
+    if (name.length > 40) return jsonResponse({ error: '이름은 40자까지 입력할 수 있습니다.' }, 400);
+    updates.push('name = ?'); bindings.push(name);
+  }
+
+  if (body.email !== undefined) {
+    const email = String(body.email).trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      return jsonResponse({ error: '이메일 형식이 올바르지 않습니다.' }, 400);
+    }
+    /* 이메일은 로그인 아이디라 중복되면 나중에 둔 사람이 못 들어온다. */
+    const dup = await env.DB.prepare('SELECT id FROM users WHERE lower(email) = ? AND id <> ?')
+      .bind(email, tokenUserId).first();
+    if (dup) return jsonResponse({ error: '이미 사용 중인 이메일입니다.' }, 409);
+    updates.push('email = ?'); bindings.push(email);
+  }
+
+  if (!updates.length) return jsonResponse({ error: '변경할 내용이 없습니다.' }, 400);
+
+  bindings.push(tokenUserId);
+  await env.DB.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).bind(...bindings).run();
+  const row = await env.DB.prepare('SELECT id, username, name, email, role FROM users WHERE id = ?')
+    .bind(tokenUserId).first();
+  return jsonResponse({ success: true, user: row });
 }
 
 async function handleUpdateUser(userId, request, env) {
