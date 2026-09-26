@@ -255,6 +255,7 @@
     <div class="modal-handle"></div>
     <h2 class="modal-title">99 Wisdom Insight</h2>
     <p class="modal-subtitle">로그인하면 보관함 · 소감 · 연속 읽기 기록을 쓸 수 있어요.</p>
+    <p class="alert alert-error" id="modal-denied" style="display:none;">관리자 페이지는 관리자 계정으로만 열 수 있습니다.<br>관리자 계정으로 다시 로그인해 주세요.</p>
 
     <div class="tab-row">
       <button class="tab-btn active" type="button" onclick="switchTab('login')">로그인</button>
@@ -355,8 +356,18 @@
     /* admin.html 이 미로그인 방문자를 ?login=1 로 보낸다. 로그인에 성공하면
        handleLogin 이 관리자를 admin.html 로 돌려보낸다. */
     (function autoOpenLogin() {
-      if (!/[?&]login=1/.test(location.search)) return;
+      var denied = /[?&]denied=admin/.test(location.search);
+      if (!/[?&]login=1/.test(location.search) && !denied) return;
       function go() {
+        /* 관리자가 아니라서 되돌아온 경우다. 로그인돼 있다고
+           admin.html 로 다시 보내면 거기서 또 튀겨나 왕복한다.
+           계정을 바꾸라고 알려 주고 로그인 창만 열어 둔다. */
+        if (denied) {
+          var note = document.getElementById('modal-denied');
+          if (note) note.style.display = 'block';
+          openModal();
+          return;
+        }
         if (window.wisdomAPI && wisdomAPI.isLoggedIn()) {
           location.replace('admin.html');
           return;

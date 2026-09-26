@@ -42,21 +42,27 @@
       }
       
       if (currentUser.role !== 'admin') {
-        console.log('[ADMIN HEAD] ❌ Not admin, redirecting home');
-        window.location.replace('/');
+        /* 전에는 말없이 '/' 로 보냈다. 관리자가 아닌 계정으로 로그인해
+           둔 사람은 톱니바퀴를 눌러도 그냥 홈으로 튀길 뿐이라 이유를 알 수 없었다.
+           계정을 바꿔 로그인할 수 있게 로그인 화면으로 보낸다. */
+        console.log('[ADMIN HEAD] ❌ Not admin:', currentUser.role);
+        window.location.replace('daily.html?denied=admin');
         return;
       }
       
       console.log('[ADMIN HEAD] ✅ Admin confirmed, proceeding with page load');
+
+      /* 캐시 무효화. 이 블록은 반드시 가드 안에 있어야 한다.
+         밖에 두면 위의 replace() 로 이미 떠나는 중에도 그대로 실행돼
+         location.href 가 그 이동을 덮어쓰고, admin 으로 되돌아와
+         가드가 다시 도는 왕복이 생긴다(콘솔에 가드 로그가 두 번 찍혔다). */
+      var currentVersion = '1770989497';
+      var urlVersion = new URLSearchParams(window.location.search).get('v');
+      if (urlVersion !== currentVersion) {
+        console.log('[ADMIN HEAD] Updating version to', currentVersion);
+        window.location.replace(window.location.pathname + '?v=' + currentVersion);
+      }
     })();
-    
-    // Step 2: Cache busting (only if auth passed)
-    const currentVersion = '1770989497';
-    const urlVersion = new URLSearchParams(window.location.search).get('v');
-    if (urlVersion !== currentVersion) {
-      console.log('[ADMIN HEAD] Updating version to', currentVersion);
-      window.location.href = window.location.pathname + '?v=' + currentVersion;
-    }
   </script>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -876,8 +882,7 @@
       // Check if admin
       if (currentUser.role !== 'admin') {
         console.log('[ADMIN] ❌ User role is not admin:', currentUser.role);
-        alert('관리자 권한이 필요합니다.');
-        window.location.replace('/');
+        window.location.replace('daily.html?denied=admin');
         return null;
       }
       
