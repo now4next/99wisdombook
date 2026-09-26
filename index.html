@@ -48,7 +48,7 @@
         return '<a class="col-card t-p' + (it.part_id || 1) + '" href="/insight/' + encodeURIComponent(it.slug) + '">' +
           '<div class="col-art">' +
             /* 속담은 카드 상단 이미지 위에 둔다 */
-            (it.anchor_quote ? '<p class="col-anchor">「' + escH(it.anchor_quote) + '」</p>' : '') +
+            (it.anchor_quote ? '<p class="col-anchor">' + escH(it.anchor_quote) + '</p>' : '') +
             '<span class="num">' + ('0' + it.chapter_id).slice(-2) + '</span>' +
             '<svg class="art" viewBox="0 0 100 100">' + (LENS_ART[it.lens] || LENS_ART.origin) + '</svg>' +
           '</div>' +
@@ -89,7 +89,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+KR:wght@400;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/app.css?v=20260924a">
+<link rel="stylesheet" href="/assets/app.css?v=20260926a">
 <link rel="stylesheet" href="/assets/site.css?v=20260924a">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='80'>%F0%9F%8C%BF</text></svg>">
 </head>
