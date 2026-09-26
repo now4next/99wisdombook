@@ -11,3 +11,7 @@ desktop.ini
 
 # 로컬 임시
 *.log
+
+# 시크릿 메모 (커밋 금지)
+CRON_SECRET.txt
+*.secret.txt

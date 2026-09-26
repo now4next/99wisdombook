@@ -181,6 +181,13 @@ export async function onRequest(context) {
       return handleUpdateNotify(path.split('/')[3], request, env);
     if (path === '/api/notify/cron' && method === 'POST')
       return handleNotifyCron(request, env);
+    /* 스케줄러는 대개 GET 이 기본값이다. 그대로 두면 404 라 "주소가 틀렸나"
+       하고 엉뚱한 곳을 보게 되므로, 무엇이 필요한지 알려 준다. */
+    if (path === '/api/notify/cron' && method === 'GET')
+      return jsonResponse({
+        error: 'Method Not Allowed',
+        hint: 'POST 로 호출하고 Authorization: Bearer <CRON_SECRET> 헤더를 함께 보내세요.',
+      }, 405);
     if (path === '/api/notify/reminder' && method === 'POST')
       return handleReminderCron(request, env);
     if (path === '/api/notify/weekly' && method === 'POST')
@@ -1716,11 +1723,41 @@ async function handleWeeklyCron(request, env) {
 }
 // ── Cron 엔드포인트 ─────────────────────────────────────────
 async function handleNotifyCron(request, env) {
-  // CRON_SECRET 인증
+  /* CRON_SECRET 인증.
+     전에는 어느 경우든 똑같이 Unauthorized 만 돌려줘서, 외부 스케줄러가
+     401 로 계속 실패해도 "헤더를 안 보낸 건지 값이 틀린 건지"를 알 수 없었다.
+     실제로 cron-job.org 가 26번 연속 실패한 뒤 자동 중지된 일이 있었다.
+     비밀은 드러내지 않으면서 어느 쪽인지만 구분해 준다. */
   const authHeader = request.headers.get('Authorization') || '';
   const cronSecret = (env.CRON_SECRET || '').trim();
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-    return jsonResponse({ error: 'Unauthorized' }, 401);
+
+  if (!cronSecret) {
+    return jsonResponse({
+      error: 'Unauthorized', reason: 'server_secret_missing',
+      hint: 'Cloudflare Pages 에 CRON_SECRET 이 설정되지 않았습니다. 설정 후 재배포가 필요합니다.',
+    }, 401);
+  }
+  if (!authHeader) {
+    return jsonResponse({
+      error: 'Unauthorized', reason: 'missing_authorization_header',
+      hint: '요청에 Authorization 헤더가 없습니다. Authorization: Bearer <CRON_SECRET> 를 보내세요.',
+    }, 401);
+  }
+  if (!authHeader.startsWith('Bearer ')) {
+    return jsonResponse({
+      error: 'Unauthorized', reason: 'missing_bearer_prefix',
+      hint: 'Authorization 값은 Bearer 로 시작해야 합니다. 예: Bearer abc123',
+    }, 401);
+  }
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    /* 길이만 알려 준다. 값을 비교해 줄 수는 없지만, 붙여넣기가 잘렸는지
+       공백이 섞였는지는 이것만으로도 대개 드러난다. */
+    return jsonResponse({
+      error: 'Unauthorized', reason: 'secret_mismatch',
+      sent_length: authHeader.slice(7).trim().length,
+      expected_length: cronSecret.length,
+      hint: '보낸 값이 서버의 CRON_SECRET 과 다릅니다. 길이가 같다면 앞뒤 공백이나 줄바꿈을 확인하세요.',
+    }, 401);
   }
 
   // 현재 KST 시각 계산

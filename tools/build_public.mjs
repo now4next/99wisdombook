@@ -38,6 +38,11 @@ const EXCLUDE_ROOT = [
   /\.py$/i,
   /^wrangler\.(toml|jsonc?)$/i,
   /^\.assetsignore$/i,
+  /* ⚠ 시크릿 메모를 루트에 둔 적이 있다. .txt 는 제외 목록에 없어서
+     그대로 dist 에 들어갔다. .gitignore 만으로는 배포를 막지 못한다. */
+  /secret/i,
+  /^\.env/i,
+  /^CRON_/i,
   /_backup.*\.html$/i,
   /_old\.html$/i,
   /^book_simple.*\.html$/i,
