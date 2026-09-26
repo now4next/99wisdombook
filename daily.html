@@ -292,6 +292,21 @@
     <div id="account-msg" style="margin-top:13px;font-size:.83rem;text-align:center;min-height:18px;color:var(--muted);"></div>
 
     <hr class="modal-hr">
+
+    <button class="btn-ghost" style="width:100%;" id="btn-pw-toggle" onclick="togglePwForm()">비밀번호 바꾸기</button>
+    <div id="pw-form" style="display:none;margin-top:14px;">
+      <div class="alert alert-error" id="pw-error"></div>
+      <div class="field"><label for="pw-current">현재 비밀번호</label>
+        <input id="pw-current" type="password" autocomplete="current-password"></div>
+      <div class="field"><label for="pw-new">새 비밀번호 <span style="color:var(--muted-2);font-weight:400;">· 8자 이상</span></label>
+        <input id="pw-new" type="password" autocomplete="new-password"></div>
+      <div class="field"><label for="pw-new2">새 비밀번호 확인</label>
+        <input id="pw-new2" type="password" autocomplete="new-password"></div>
+      <button class="btn-submit" id="btn-pw-save" onclick="changePassword()" style="margin-top:4px;">비밀번호 바꾸기</button>
+      <div id="pw-msg" style="margin-top:11px;font-size:.83rem;text-align:center;min-height:18px;color:var(--muted);"></div>
+    </div>
+
+    <hr class="modal-hr">
     <button class="btn-ghost" style="width:100%;" onclick="handleLogout()">로그아웃</button>
   </div>
 </div>
@@ -1103,6 +1118,10 @@
       document.getElementById('account-email').value = u.email || '';
       document.getElementById('account-msg').textContent = '';
       document.getElementById('account-error').className = 'alert alert-error';
+      /* 비밀번호 칸은 늘 접힌 채로 연다. 입력해 둔 값이 남아 있으면 안 된다. */
+      document.getElementById('pw-form').style.display = 'none';
+      document.getElementById('btn-pw-toggle').textContent = '비밀번호 바꾸기';
+      clearPwForm();
       document.getElementById('account-modal').classList.add('visible');
     }
     function closeAccountModal() {
@@ -1144,6 +1163,54 @@
         showAlert('account-error', err.message || '저장에 실패했습니다.');
       } finally {
         btn.disabled = false; btn.textContent = '저장하기';
+      }
+    }
+
+    function togglePwForm() {
+      var box = document.getElementById('pw-form');
+      var open = box.style.display !== 'none';
+      box.style.display = open ? 'none' : 'block';
+      document.getElementById('btn-pw-toggle').textContent = open ? '비밀번호 바꾸기' : '닫기';
+      if (!open) document.getElementById('pw-current').focus();
+      else clearPwForm();
+    }
+    function clearPwForm() {
+      ['pw-current', 'pw-new', 'pw-new2'].forEach(function (id) {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('pw-msg').textContent = '';
+    }
+
+    async function changePassword() {
+      var u = wisdomAPI.getCurrentUser();
+      if (!u) return;
+      var cur = document.getElementById('pw-current').value;
+      var next = document.getElementById('pw-new').value;
+      var again = document.getElementById('pw-new2').value;
+      var msg = document.getElementById('pw-msg');
+      msg.textContent = '';
+
+      if (next.length < 8) { showAlert('pw-error', '새 비밀번호는 8자 이상이어야 합니다.'); return; }
+      if (next !== again) { showAlert('pw-error', '새 비밀번호가 서로 다릅니다.'); return; }
+
+      var btn = document.getElementById('btn-pw-save');
+      btn.disabled = true; btn.textContent = '바꾸는 중…';
+      try {
+        var res = await wisdomAPI.request('/api/users/' + u.id + '/password', {
+          method: 'PUT',
+          body: JSON.stringify({ current_password: cur, new_password: next }),
+        });
+        if (!res.success) throw new Error(res.error || '바꾸지 못했습니다.');
+        clearPwForm();
+        msg.style.color = 'var(--accent)';
+        /* 다른 기기 세션은 서버에서 끊는다. 쓰고 있는 이 화면은 그대로 둔다. */
+        msg.textContent = '바꿨습니다. 다른 기기는 다시 로그인해야 합니다.';
+        setTimeout(function () { togglePwForm(); }, 1600);
+      } catch (e) {
+        msg.style.color = '';
+        showAlert('pw-error', e.message || '바꾸지 못했습니다.');
+      } finally {
+        btn.disabled = false; btn.textContent = '비밀번호 바꾸기';
       }
     }
 

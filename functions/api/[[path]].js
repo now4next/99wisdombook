@@ -14,6 +14,8 @@
  * - DELETE /api/users/:id                   (admin)
  * - PUT    /api/users/:id/permissions       (admin)
  * - PUT    /api/users/:id/profile           (본인만)
+ * - PUT    /api/users/:id/password          (본인만 · 현재 비밀번호 확인)
+ * - POST   /api/users/:id/password/reset    (admin · 임시 비밀번호 재발급)
  *
  * Wisdom / Phase 2+3:
  * - GET    /api/wisdom/saved                (auth)
@@ -238,6 +240,10 @@ export async function onRequest(context) {
       return handleUpdatePermissions(path.split('/')[3], request, env);
     if (path.match(/^\/api\/users\/\d+\/profile$/) && method === 'PUT')
       return handleUpdateProfile(path.split('/')[3], request, env);
+    if (path.match(/^\/api\/users\/\d+\/password$/) && method === 'PUT')
+      return handleChangePassword(path.split('/')[3], request, env);
+    if (path.match(/^\/api\/users\/\d+\/password\/reset$/) && method === 'POST')
+      return handleResetPassword(path.split('/')[3], request, env);
 
     return jsonResponse({ error: 'Not found' }, 404);
   } catch (err) {
@@ -1362,6 +1368,76 @@ async function handleUpdateProfile(userId, request, env) {
   const row = await env.DB.prepare('SELECT id, username, name, email, role FROM users WHERE id = ?')
     .bind(tokenUserId).first();
   return jsonResponse({ success: true, user: row });
+}
+
+/* 다른 기기의 세션을 끊는다. 비밀번호를 바꾼 뒤에도 옛 세션이 90일 동안
+   살아 있으면 바꾼 의미가 없다. keepTokenHash 를 주면 그 세션만 남긴다. */
+async function revokeSessions(env, userId, keepTokenHash) {
+  try {
+    await ensureSessionsTable(env);
+    if (keepTokenHash) {
+      await env.DB.prepare('DELETE FROM sessions WHERE user_id = ? AND token_hash <> ?')
+        .bind(userId, keepTokenHash).run();
+    } else {
+      await env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(userId).run();
+    }
+  } catch (_) {}
+}
+
+function passwordProblem(pw) {
+  if (!pw || pw.length < 8) return '새 비밀번호는 8자 이상이어야 합니다.';
+  if (pw.length > 72) return '새 비밀번호가 너무 깁니다.';
+  return null;
+}
+
+/* 본인 비밀번호 변경. 현재 비밀번호를 확인한다 —
+   로그인한 채 자리를 비운 화면에서 남이 바꿔 버리는 것을 막는다. */
+async function handleChangePassword(userId, request, env) {
+  const tokenUserId = await getUserIdFromToken(request, env);
+  if (!tokenUserId || tokenUserId !== parseInt(userId)) return jsonResponse({ error: 'Unauthorized' }, 401);
+
+  const b = await request.json().catch(() => ({}));
+  const current = String(b.current_password || '');
+  const next = String(b.new_password || '');
+
+  const bad = passwordProblem(next);
+  if (bad) return jsonResponse({ error: bad }, 400);
+  if (current === next) return jsonResponse({ error: '지금 쓰는 비밀번호와 같습니다.' }, 400);
+
+  const row = await env.DB.prepare('SELECT password FROM users WHERE id = ?').bind(tokenUserId).first();
+  if (!row) return jsonResponse({ error: 'User not found' }, 404);
+  if (row.password !== await hashPassword(current)) {
+    return jsonResponse({ error: '현재 비밀번호가 맞지 않습니다.' }, 403);
+  }
+
+  await env.DB.prepare('UPDATE users SET password = ? WHERE id = ?')
+    .bind(await hashPassword(next), tokenUserId).run();
+
+  // 쓰고 있는 이 세션만 남기고 나머지는 끊는다
+  const auth = request.headers.get('Authorization') || '';
+  const tok = auth.startsWith('Bearer ') ? auth.slice(7).trim() : '';
+  await revokeSessions(env, tokenUserId, tok ? await sha256hex(tok) : null);
+
+  return jsonResponse({ success: true, message: '비밀번호를 바꿨습니다.' });
+}
+
+/* 관리자가 임시 비밀번호를 재발급한다. 이 사이트에는 재설정 메일 흐름이
+   없어서, 회원이 비밀번호를 잊으면 이 경로밖에 없다.
+   관리자에게도 해시만 있고 원래 비밀번호는 알 수 없으므로 새로 만든다. */
+async function handleResetPassword(userId, request, env) {
+  if (!await verifyAdminStrict(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
+
+  const row = await env.DB.prepare('SELECT id, name, email FROM users WHERE id = ?').bind(userId).first();
+  if (!row) return jsonResponse({ error: 'User not found' }, 404);
+
+  const password = genTempPassword();
+  await env.DB.prepare('UPDATE users SET password = ? WHERE id = ?')
+    .bind(await hashPassword(password), userId).run();
+
+  // 재발급했으면 기존 세션은 전부 끊는다
+  await revokeSessions(env, parseInt(userId), null);
+
+  return jsonResponse({ success: true, user: row, password });
 }
 
 async function handleUpdateUser(userId, request, env) {

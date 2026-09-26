@@ -22,7 +22,7 @@
       }
       /* 캐시 무효화는 반드시 이 가드 안에 있어야 한다. 밖에 두면 위의 replace()
          로 떠나는 중에도 실행돼 그 이동을 덮어쓰고 왕복이 생긴다. */
-      var V = '20260926d';
+      var V = '20260926e';
       if (new URLSearchParams(location.search).get('v') !== V) {
         window.location.replace(location.pathname + '?v=' + V);
       }
@@ -403,6 +403,23 @@
         </div>
         <p class="note" style="margin-top:9px;">한국 시간 기준입니다.</p>
       </div>
+
+      <hr style="border:0;border-top:1px solid var(--line);margin:20px 0 16px;">
+
+      <label class="fld" style="margin-top:0;">비밀번호</label>
+      <div id="pw-reset-idle">
+        <p class="note" style="margin-top:6px;">이 사이트에는 재설정 메일이 없습니다. 회원이 비밀번호를 잊었다면
+          새로 발급해 전달해 주세요. 발급하면 그 회원의 기존 로그인은 모두 끊깁니다.</p>
+        <button class="btn ghost" style="margin-top:10px;" onclick="resetPassword()" id="btn-pw-reset">임시 비밀번호 발급</button>
+      </div>
+      <div id="pw-reset-done" style="display:none;">
+        <p class="note" style="margin-top:6px;">발급했습니다. 본인에게 전달해 주세요.
+          <b style="color:var(--ink);">이 창을 닫으면 다시 볼 수 없습니다.</b></p>
+        <div class="row" style="margin-top:10px;gap:8px;flex-wrap:nowrap;">
+          <input id="pw-reset-value" type="text" readonly style="font-family:var(--mono);font-size:15px;">
+          <button class="btn ghost" style="flex:none;" onclick="copyResetPw()" id="btn-pw-copy">복사</button>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn ghost" onclick="closeModal()">취소</button>
@@ -646,10 +663,17 @@
     document.getElementById('nt-minute').value = (user.notify_minute === 30) ? 30 : 0;
     syncNotifyDetail();
 
+    // 비밀번호 구역은 늘 접힌 상태로 연다
+    document.getElementById('pw-reset-idle').style.display = 'block';
+    document.getElementById('pw-reset-done').style.display = 'none';
+    document.getElementById('pw-reset-value').value = '';
+
     document.getElementById('edit-modal').classList.add('active');
   }
   function closeModal() {
     document.getElementById('edit-modal').classList.remove('active');
+    /* 발급한 비밀번호가 화면에 남지 않게 지운다. */
+    document.getElementById('pw-reset-value').value = '';
     currentEditUser = null;
   }
   document.getElementById('edit-modal').addEventListener('click', function (e) {
@@ -695,6 +719,42 @@
     } finally {
       btn.disabled = false; btn.textContent = '저장';
     }
+  }
+
+  // ── 비밀번호 재발급 ──
+  async function resetPassword() {
+    var u = currentEditUser;
+    if (!u) return;
+    if (!confirm('"' + (u.name || u.username) + '" 의 비밀번호를 새로 발급합니다.\n\n'
+      + '기존 비밀번호는 쓸 수 없게 되고, 이 회원의 로그인은 모두 끊깁니다. 계속할까요?')) return;
+
+    var btn = document.getElementById('btn-pw-reset');
+    btn.disabled = true; btn.textContent = '발급 중…';
+    try {
+      var res = await fetch('/api/users/' + u.id + '/password/reset', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + wisdomAPI.token },
+      });
+      var d = await res.json();
+      if (!d.success) throw new Error(d.error || '발급하지 못했습니다');
+      document.getElementById('pw-reset-value').value = d.password;
+      document.getElementById('pw-reset-idle').style.display = 'none';
+      document.getElementById('pw-reset-done').style.display = 'block';
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      btn.disabled = false; btn.textContent = '임시 비밀번호 발급';
+    }
+  }
+
+  function copyResetPw() {
+    var el = document.getElementById('pw-reset-value');
+    var btn = document.getElementById('btn-pw-copy');
+    el.select();
+    navigator.clipboard.writeText(el.value).then(function () {
+      btn.textContent = '복사됨';
+      setTimeout(function () { btn.textContent = '복사'; }, 1500);
+    }).catch(function () { document.execCommand('copy'); });
   }
 
   // ── 회원 추가 ──
