@@ -8,6 +8,7 @@
  *
  * User endpoints:
  * - GET    /api/users                       (admin)
+ * - POST   /api/users                       (admin)
  * - GET    /api/users/:id
  * - PUT    /api/users/:id                   (admin)
  * - DELETE /api/users/:id                   (admin)
@@ -229,6 +230,7 @@ export async function onRequest(context) {
 
     // Users
     if (path === '/api/users' && method === 'GET') return handleGetUsers(request, env);
+    if (path === '/api/users' && method === 'POST') return handleCreateUser(request, env);
     if (path.match(/^\/api\/users\/\d+$/) && method === 'GET')    return handleGetUser(path.split('/').pop(), env);
     if (path.match(/^\/api\/users\/\d+$/) && method === 'PUT')    return handleUpdateUser(path.split('/').pop(), request, env);
     if (path.match(/^\/api\/users\/\d+$/) && method === 'DELETE') return handleDeleteUser(path.split('/').pop(), request, env);
@@ -1250,6 +1252,63 @@ async function handleGetUsers(request, env) {
     permissions: JSON.parse(u.permissions || '[]'),
   }));
   return jsonResponse({ success: true, users, count: users.length });
+}
+
+/* 관리자가 회원을 대신 만든다.
+   비밀번호를 받지 않으면 여기서 만들어 한 번만 돌려준다. 이 사이트에는
+   비밀번호 재설정 흐름이 없고 로그인 화면도 "관리자에게 문의하세요" 로
+   안내하므로, 관리자가 만들어 전달하는 것이 지금의 유일한 경로다.
+   해시는 서버에서 건다 — 평문은 저장하지 않는다. */
+function genTempPassword() {
+  // 헷갈리는 글자(0/O, 1/l/I)는 뺐다. 받아 적어 전달해야 하는 값이다.
+  const chars = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes = new Uint8Array(14);
+  crypto.getRandomValues(bytes);
+  let out = '';
+  for (const b of bytes) out += chars[b % chars.length];
+  return out;
+}
+
+async function handleCreateUser(request, env) {
+  if (!await verifyAdminStrict(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
+
+  const b = await request.json().catch(() => ({}));
+  const name = String(b.name || '').trim();
+  const email = String(b.email || '').trim().toLowerCase();
+
+  if (!name) return jsonResponse({ error: '이름을 입력해 주세요.' }, 400);
+  if (name.length > 40) return jsonResponse({ error: '이름은 40자까지 입력할 수 있습니다.' }, 400);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    return jsonResponse({ error: '이메일 형식이 올바르지 않습니다.' }, 400);
+  }
+
+  const dup = await env.DB.prepare('SELECT id FROM users WHERE lower(email) = ?').bind(email).first();
+  if (dup) return jsonResponse({ error: '이미 사용 중인 이메일입니다.' }, 409);
+
+  const supplied = String(b.password || '');
+  if (supplied && supplied.length < 8) {
+    return jsonResponse({ error: '비밀번호는 8자 이상이어야 합니다.' }, 400);
+  }
+  const password = supplied || genTempPassword();
+  const role = b.role === 'admin' ? 'admin' : 'user';
+
+  const row = await env.DB.prepare(
+    'INSERT INTO users (username, password, name, email, role, permissions, auth_provider)'
+    + ' VALUES (?, ?, ?, ?, ?, ?, ?)'
+    + ' RETURNING id, username, name, email, role, created_at'
+  ).bind(email, await hashPassword(password), name, email, role, '[]', 'local').first();
+
+  if (!row) return jsonResponse({ error: '회원을 만들지 못했습니다.' }, 500);
+
+  /* 관리자가 직접 만든 계정이니 신규 가입 알림 메일은 보내지 않는다.
+     generated 가 true 일 때만 비밀번호를 돌려준다 — 관리자가 정한
+     비밀번호를 되돌려 줄 이유는 없다. */
+  return jsonResponse({
+    success: true,
+    user: row,
+    generated: !supplied,
+    password: supplied ? null : password,
+  }, 201);
 }
 
 async function handleGetUser(userId, env) {
