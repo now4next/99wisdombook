@@ -434,31 +434,53 @@ select { cursor: pointer; }
 }
 .btn-go-home:hover { filter: brightness(1.06); }
 
-.wisdom-list { display: grid; gap: 16px; }
-.wisdom-list > article, .wisdom-list > div.item {
+/* ⚠ 이 선택자는 오랫동안 .wisdom-list > div.item 이었는데, buildCard 가
+   만드는 요소는 div.wisdom-item 이라 단 한 번도 적용된 적이 없었다.
+   배경·테두리·여백이 전부 0 이라 카드가 아니라 글 덩어리로 보였다. */
+.wisdom-list { display: grid; gap: 15px; }
+.wisdom-item {
+  position: relative; overflow: hidden;
   border: 1px solid var(--line); border-radius: var(--radius);
-  background: var(--surface); padding: 22px 24px 20px; transition: all .2s;
+  background: var(--surface); padding: 20px 22px 18px;
+  transition: transform .2s, box-shadow .2s, border-color .2s;
 }
-.wisdom-list > article:hover, .wisdom-list > div.item:hover { border-color: var(--line-strong); box-shadow: var(--shadow); }
+/* 왼쪽 세로 띄 — 카드마다 그 장이 속한 부의 색을 입는다 */
+.wisdom-item::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--accent);
+}
+.wisdom-item:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); border-color: var(--line-strong); }
+/* 배경에 깔리는 장 번호 */
+.item-ghost {
+  position: absolute; right: 14px; top: 2px; pointer-events: none;
+  font-family: var(--serif-display); font-weight: 900; font-size: 3.4rem; line-height: 1;
+  letter-spacing: -.04em; color: color-mix(in srgb, var(--accent) 13%, transparent);
+}
+.item-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .item-chapter {
-  font-family: var(--mono); font-size: .68rem; letter-spacing: .11em; text-transform: uppercase;
-  color: color-mix(in srgb, var(--accent) 82%, #000);
+  font-family: var(--mono); font-size: .67rem; letter-spacing: .11em; text-transform: uppercase;
+  color: color-mix(in srgb, var(--accent) 60%, var(--ink));
   display: inline-flex; align-items: center; gap: 7px;
 }
 .item-chapter::before { content:''; width:6px;height:6px;border-radius:50%;background:var(--accent);flex:none; }
-.item-title { font-family: var(--serif); font-weight: 700; font-size: 1.2rem; margin-top: 9px; line-height: 1.4; letter-spacing: -.025em; word-break: keep-all; }
-.item-date { font-family: var(--mono); font-size: .68rem; color: var(--muted-2); margin-top: 7px; }
+.item-title {
+  font-family: var(--serif); font-weight: 700; font-size: 1.22rem; margin: 10px 0 0;
+  line-height: 1.42; letter-spacing: -.025em; word-break: keep-all; position: relative;
+}
+.item-date { font-family: var(--mono); font-size: .67rem; color: var(--muted-2); margin-left: auto; }
 .item-memo {
-  border-left: 3px solid var(--accent);
-  background: color-mix(in srgb, var(--accent) 8%, #fff);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 13px 16px; margin-top: 15px;
+  border-left: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+  border-radius: var(--radius-sm); padding: 12px 15px; margin-top: 14px;
   font-size: .89rem; color: var(--ink-2); line-height: 1.8; white-space: pre-wrap; word-break: keep-all;
 }
 .item-actions {
   display: flex; flex-wrap: wrap; gap: 9px; align-items: center;
   margin-top: 17px; padding-top: 15px; border-top: 1px solid var(--line);
 }
-.item-actions-sub { display: flex; gap: 9px; margin-left: auto; }
+/* 읽기·공유는 왼쪽, 소감·삭제는 오른쪽. 전에는 두 묶음이 형제
+   요소라 margin-left:auto 가 무시되고 줄만 갈라졌다. 이제 같은 행에 있다. */
+.item-actions-sub { display: flex; gap: 8px; margin-left: auto; }
 .btn-item-read, .btn-item-share, .btn-item-remove, .btn-memo, .btn-memo-cancel, .btn-memo-save {
   border: 1px solid var(--line); background: var(--surface); color: var(--ink-2);
   border-radius: 999px; padding: 8px 16px; font-size: .8rem; cursor: pointer; transition: all .2s;
@@ -486,6 +508,9 @@ select { cursor: pointer; }
   .user-actions > * { flex: 1 1 auto; justify-content: center; }
   .main { padding: 26px 16px 60px; }
   .item-actions-sub { margin-left: 0; }
+  .wisdom-item { padding: 17px 18px 16px; }
+  .item-ghost { font-size: 2.8rem; right: 11px; }
+  .item-date { margin-left: 0; }
 }
 
 /* ══════════ 칼럼 공유 카드 (reader.html) ══════════ */

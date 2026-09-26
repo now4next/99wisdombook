@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+KR:wght@400;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/app.css?v=20260926b">
-  <link rel="stylesheet" href="/assets/site.css?v=20260926a">
+  <link rel="stylesheet" href="/assets/site.css?v=20260926b">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='80'>%F0%9F%93%9C</text></svg>">
 </head>
 <body class="t-p1">
@@ -127,7 +127,7 @@
             if (!memoEl) {
               memoEl = document.createElement('div');
               memoEl.className = 'item-memo';
-              cardEl.querySelector('.item-date').after(memoEl);
+              cardEl.querySelector('.item-title').after(memoEl);
             }
             memoEl.textContent = memoText;
           } else if (memoEl) {
@@ -147,20 +147,26 @@
 
     function buildCard(item) {
       const el = document.createElement('div');
-      el.className = 'wisdom-item';
+      /* 장 번호로 부를 구한다(11장씩 9부). t-pN 이 --accent 를 바꿔 주므로
+         띄·점·메모 선·읽기 버튼이 한꺼번에 그 부의 색을 입는다. */
+      const partNo = Math.min(9, Math.max(1, Math.ceil(item.chapter_id / 11)));
+      el.className = 'wisdom-item t-p' + partNo;
       const hasMemo = item.memo && item.memo.trim();
       el.innerHTML = `
-        <span class="item-chapter">제 ${item.chapter_id} 장</span>
+        <span class="item-ghost" aria-hidden="true">${String(item.chapter_id).padStart(2, '0')}</span>
+        <div class="item-head">
+          <span class="item-chapter">제${partNo}부 ${item.chapter_id}장</span>
+          <span class="item-date">${formatSavedDate(item.saved_at)}</span>
+        </div>
         <h3 class="item-title">${item.title}</h3>
-        <span class="item-date">${formatSavedDate(item.saved_at)}</span>
         ${hasMemo ? `<div class="item-memo">${item.memo.trim()}</div>` : ''}
         <div class="item-actions">
           <a class="btn-item-read" href="/chapter/${item.chapter_id}">챕터 읽기 →</a>
-          <button class="btn-item-share" type="button">📤 공유</button>
-        </div>
-        <div class="item-actions-sub">
-          <button class="btn-memo" type="button">${hasMemo ? '💬 소감 수정' : '💬 소감 남기기'}</button>
-          <button class="btn-item-remove" type="button">삭제</button>
+          <button class="btn-item-share" type="button">공유</button>
+          <div class="item-actions-sub">
+            <button class="btn-memo" type="button">${hasMemo ? '소감 수정' : '소감 남기기'}</button>
+            <button class="btn-item-remove" type="button">삭제</button>
+          </div>
         </div>
         <div class="memo-edit-area" hidden>
           <textarea class="memo-textarea" maxlength="300" placeholder="이 문장과 관련된 나만의 생각이나 경험을 기록해보세요…">${hasMemo ? item.memo.trim() : ''}</textarea>
