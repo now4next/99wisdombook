@@ -478,11 +478,31 @@ function issueEmail(env, user, wisdomItem, unsubUrl) {
   const name = user.name || '독자';
   const proverb = (c && c.anchor_quote) || wisdomItem.title;
 
-  /* OG 카드를 머리에 넣지 않는다. 그 카드에는 머리글·속담·인용구가
-     그대로 들어 있어 바로 아래 본문과 세 줄이 겹친다. 게다가 메일은
-     이미지가 차단된 상태에서도 다 읽혀야 하므로 속담은 어차피 텍스트여야
-     한다. 그러면 카드는 같은 것을 두 번 보여 주는 일밖에 하지 않는다. */
-  const hero = '';
+  /* 부별 색. 사이트의 --p1..--p9 와 같은 값이다.
+     메일에서는 CSS 변수를 쓸 수 없어 직접 적어 둔다. */
+  const PART_COLOR = ['#5FA97E', '#C9954A', '#5FA97E', '#5E9BC6', '#9B87C6',
+                      '#E0906E', '#4FA0A0', '#D4706E', '#B08A66', '#8B95A6'];
+  const tone = PART_COLOR[(c && c.part_id) || 0] || '#5FA97E';
+
+  /* OG 카드를 머리에 올린다. 다만 카드 안에 이미 머리글과 속담이
+     그려져 있으므로 바로 아래에서 그 두 줄을 다시 보여 주지 않는다.
+     alt 에 속담을 넣어 이미지가 차단돼도 무슨 글인지 알 수 있게 한다.
+     카드는 경로가 슬러그당 고정이고 Cache-Control 이 4시간이라,
+     칼럼을 고쳐 카드를 다시 굽으면 옆 메일은 옛 카드를 불러온다.
+     updated_at 을 ?v= 로 붙여 둔다(reader.html 과 같은 이유). */
+  const cardVer = String((c && (c.updated_at || c.published_at)) || '').replace(/\D/g, '').slice(0, 14);
+  const cardUrl = (c && c.hero_image)
+    ? c.hero_image + (c.hero_image.indexOf('?') >= 0 ? '&' : '?') + 'v=' + (cardVer || '1')
+    : '';
+
+  const hero = cardUrl
+    ? '<tr><td style="padding:0;line-height:0;">'
+      + '<a href="' + mailEsc(webUrl) + '" style="display:block;">'
+      + '<img src="' + mailEsc(cardUrl) + '" width="560" alt="' + mailEsc(proverb) + '"'
+      + ' style="display:block;width:100%;max-width:560px;height:auto;border:0;'
+      + 'border-radius:13px 13px 0 0;">' + '</a></td></tr>'
+      + '<tr><td style="padding:0;line-height:0;font-size:0;height:3px;background:' + tone + ';"></td></tr>'
+    : '';
 
   const kicker = c && c.part_id
     ? '제' + c.part_id + '부 ' + c.chapter_id + '장'
@@ -490,26 +510,27 @@ function issueEmail(env, user, wisdomItem, unsubUrl) {
 
   const btn = (label, href, primary) =>
     '<a href="' + mailEsc(href) + '" style="display:inline-block;'
-    + (primary ? 'background:#5FA97E;color:#ffffff;border:1px solid #5FA97E;'
+    + (primary ? 'background:' + tone + ';color:#ffffff;border:1px solid ' + tone + ';'
                : 'background:#ffffff;color:#4a443d;border:1px solid #ddd8d0;')
     + 'text-decoration:none;padding:11px 20px;border-radius:999px;'
     + 'font-size:14px;font-weight:600;margin:0 6px 9px 0;">' + mailEsc(label) + '</a>';
 
   const body = hero
     + '<tr><td style="padding:30px 26px 8px;font-family:' + MAIL_SANS + ';">'
-    + '<div style="font-family:Menlo,Consolas,monospace;font-size:11px;letter-spacing:.1em;color:#9c9489;">'
+    + '<div style="font-family:Menlo,Consolas,monospace;font-size:11px;letter-spacing:.1em;color:' + tone + ';">'
     + mailEsc(kicker) + '</div>'
-    + '<p style="margin:12px 0 0;font-family:Georgia,\'Gowun Batang\',serif;font-size:22px;line-height:1.45;'
-    + 'font-weight:700;color:#2c2722;">' + mailEsc(proverb) + '</p>'
-    + (c ? '<p style="margin:14px 0 0;font-size:17px;line-height:1.55;color:#413b34;font-weight:600;">'
-        + mailEsc(c.title) + '</p>' : '')
-    + (c && c.hook ? '<p style="margin:8px 0 0;font-size:14px;line-height:1.7;color:#7a736a;">'
+    /* 속담은 카드 안에 큰 글씨로 들어 있다. 카드가 없을 때만 글로 낸다. */
+    + (hero ? '' : '<p style="margin:12px 0 0;font-family:Georgia,serif;font-size:22px;'
+        + 'line-height:1.45;font-weight:700;color:#2c2722;">' + mailEsc(proverb) + '</p>')
+    + (c ? '<p style="margin:' + (hero ? '10' : '14') + 'px 0 0;font-family:Georgia,serif;'
+        + 'font-size:21px;line-height:1.5;color:#2c2722;font-weight:700;">' + mailEsc(c.title) + '</p>' : '')
+    + (c && c.hook ? '<p style="margin:9px 0 0;font-size:14.5px;line-height:1.75;color:#7a736a;">'
         + mailEsc(c.hook) + '</p>' : '')
-    + '<div style="height:1px;background:#ece8e2;margin:22px 0 20px;"></div>'
+    + '<div style="width:34px;height:2px;background:' + tone + ';margin:22px 0 20px;"></div>'
     + (c && c.body_md ? mdToMailHtml(c.body_md) : '')
     + (c && c.action
         ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"'
-          + ' style="margin:6px 0 4px;background:#f7f5f1;border-radius:11px;"><tr>'
+          + ' style="margin:6px 0 4px;background:#f7f5f1;border-radius:11px;border-left:3px solid ' + tone + ';"><tr>'
           + '<td style="padding:16px 18px;font-family:' + MAIL_SANS + ';font-size:14px;line-height:1.75;color:#5c554d;">'
           + mailEsc(c.action).replace(/\n/g, '<br>') + '</td></tr></table>'
         : '')
@@ -641,7 +662,7 @@ async function handleEmailDiag(request, env) {
   if (sendTo && sendKind === 'issue') {
     try {
       const col = await env.DB.prepare(
-        "SELECT chapter_id, part_id, slug, title, hook, anchor_quote, body_md, action, quotable, hero_image"
+        "SELECT chapter_id, part_id, slug, title, hook, anchor_quote, body_md, action, quotable, hero_image, updated_at, published_at"
         + " FROM insights WHERE status = 'published' ORDER BY RANDOM() LIMIT 1"
       ).first();
       const item = { title: (col && col.anchor_quote) || '오늘의 한 문장', id: col ? col.chapter_id : null, column: col || null };
@@ -708,10 +729,10 @@ async function handleEmailTest(request, env) {
     try {
       const col = body.chapter_id
         ? await env.DB.prepare(
-            "SELECT chapter_id, part_id, slug, title, hook, anchor_quote, body_md, action, quotable, hero_image"
+            "SELECT chapter_id, part_id, slug, title, hook, anchor_quote, body_md, action, quotable, hero_image, updated_at, published_at"
             + " FROM insights WHERE status = 'published' AND chapter_id = ?").bind(body.chapter_id).first()
         : await env.DB.prepare(
-            "SELECT chapter_id, part_id, slug, title, hook, anchor_quote, body_md, action, quotable, hero_image"
+            "SELECT chapter_id, part_id, slug, title, hook, anchor_quote, body_md, action, quotable, hero_image, updated_at, published_at"
             + " FROM insights WHERE status = 'published' ORDER BY RANDOM() LIMIT 1").first();
       if (!col) return jsonResponse({ success: false, error: '발행된 칼럼이 없습니다.' }, 404);
       const item = { title: col.anchor_quote, id: col.chapter_id, column: col };
@@ -765,7 +786,7 @@ async function handleEmailPreview(request, env) {
   let column = null;
   try {
     const row = await env.DB.prepare(
-      "SELECT chapter_id, part_id, slug, title, hook, anchor_quote, body_md, action, quotable, hero_image FROM insights WHERE status = 'published' ORDER BY chapter_id LIMIT 1"
+      "SELECT chapter_id, part_id, slug, title, hook, anchor_quote, body_md, action, quotable, hero_image, updated_at, published_at FROM insights WHERE status = 'published' ORDER BY chapter_id LIMIT 1"
     ).first();
     if (row) column = row;
   } catch (_) {}
@@ -1073,7 +1094,7 @@ async function handleListInsights(request, env) {
   const lens    = url.searchParams.get('lens');
   const chapter = url.searchParams.get('chapter');
 
-  let sql = "SELECT id, chapter_id, part_id, lens, slug, title, hook, anchor_quote, quotable, hero_image, reading_time, tags, published_at FROM insights WHERE status = 'published'";
+  let sql = "SELECT id, chapter_id, part_id, lens, slug, title, hook, anchor_quote, quotable, hero_image, updated_at, reading_time, tags, published_at FROM insights WHERE status = 'published'";
   const binds = [];
   if (partId)  { sql += ' AND part_id = ?';    binds.push(parseInt(partId, 10)); }
   if (lens)    { sql += ' AND lens = ?';       binds.push(lens); }
@@ -1584,7 +1605,7 @@ async function handleNotifyCron(request, env) {
   const columnByChapter = {};
   try {
     const cRes = await env.DB.prepare(
-      "SELECT chapter_id, part_id, slug, title, hook, anchor_quote, body_md, action, quotable, hero_image FROM insights WHERE status = 'published'"
+      "SELECT chapter_id, part_id, slug, title, hook, anchor_quote, body_md, action, quotable, hero_image, updated_at, published_at FROM insights WHERE status = 'published'"
     ).all();
     for (const row of (cRes.results || [])) columnByChapter[row.chapter_id] = row;
   } catch (_) {}
