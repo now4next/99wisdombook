@@ -702,6 +702,32 @@ async function handleEmailTest(request, env) {
   const t = await ensureUnsubscribeToken(env, me.id);
   const unsubUrl = `https://99wisdombook.org/api/email/unsubscribe?t=${t}`;
 
+  /* kind=issue 면 안내문이 아니라 진짜 Daily Wisdom 한 통을 보낸다.
+     안내문만 보내서는 정작 독자가 받는 메일이 어떤지 확인할 수 없다. */
+  if (String(body.kind || '') === 'issue') {
+    try {
+      const col = body.chapter_id
+        ? await env.DB.prepare(
+            "SELECT chapter_id, part_id, slug, title, hook, anchor_quote, body_md, action, quotable, hero_image"
+            + " FROM insights WHERE status = 'published' AND chapter_id = ?").bind(body.chapter_id).first()
+        : await env.DB.prepare(
+            "SELECT chapter_id, part_id, slug, title, hook, anchor_quote, body_md, action, quotable, hero_image"
+            + " FROM insights WHERE status = 'published' ORDER BY RANDOM() LIMIT 1").first();
+      if (!col) return jsonResponse({ success: false, error: '발행된 칼럼이 없습니다.' }, 404);
+      const item = { title: col.anchor_quote, id: col.chapter_id, column: col };
+      const r = await sendEmail(env, issueEmail(env, { id: me.id, name: me.name, email: to }, item, unsubUrl));
+      const want0 = (env.MAIL_FROM || '').trim() || MAIL_FROM_DEFAULT;
+      return jsonResponse({
+        success: true, kind: 'issue', to, chapter_id: col.chapter_id, id: r.id || null,
+        from: r.from, verified: r.from === want0,
+        note: r.from === want0 ? `${col.chapter_id}장 칼럼을 보냈습니다.`
+                               : `발신 도메인이 검증되지 않아 ${r.from} 로 대체 발송했습니다.`,
+      });
+    } catch (err) {
+      return jsonResponse({ success: false, error: err.message, code: err.code || null }, 500);
+    }
+  }
+
   try {
     const r = await sendEmail(env, noticeEmail(env, { name: me.name, email: to }, {
       subject: '[테스트] 99 Wisdom Insight 이메일 발송 확인',

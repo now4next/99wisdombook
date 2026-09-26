@@ -592,6 +592,10 @@
           style="background:#2e7d32;color:#fff;padding:10px 20px;">
           ✉️ 이메일 발송 테스트
         </button>
+        <button class="btn" onclick="testEmailNotify('issue')" id="btn-email-issue"
+          style="background:#00695c;color:#fff;padding:10px 20px;">
+          📨 Daily Wisdom 샘플 보내기
+        </button>
         <a class="btn" href="/api/email/preview?kind=issue" target="_blank" rel="noopener"
           style="background:#455a64;color:#fff;padding:10px 20px;text-decoration:none;display:inline-flex;align-items:center;">
           👁 메일 미리보기
@@ -1165,10 +1169,12 @@
     }
 
     // 이메일 발송 테스트 (발신 도메인 검증 여부까지 확인된다)
-    async function testEmailNotify() {
-      const btn = document.getElementById('btn-email-test');
+    async function testEmailNotify(kind) {
+      const btn = document.getElementById(kind === 'issue' ? 'btn-email-issue' : 'btn-email-test');
       const result = document.getElementById('notify-test-result');
-      const to = prompt('테스트 메일을 받을 주소 (비우면 관리자 계정 이메일):', '') || '';
+      const to = prompt(kind === 'issue'
+        ? 'Daily Wisdom 샘플을 받을 주소 (비우면 관리자 계정 이메일):'
+        : '테스트 메일을 받을 주소 (비우면 관리자 계정 이메일):', '') || '';
       btn.disabled = true;
       result.textContent = '발송 중...';
       result.style.color = '#666';
@@ -1176,11 +1182,11 @@
         const res = await fetch('/api/notify/email-test', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${wisdomAPI.token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify(to.trim() ? { to: to.trim() } : {}),
+          body: JSON.stringify(Object.assign({}, to.trim() ? { to: to.trim() } : {}, kind === 'issue' ? { kind: 'issue' } : {})),
         });
         const data = await res.json();
         if (data.success) {
-          result.innerHTML = `✅ ${data.to} 로 발송<br><small>발신: ${data.from}${data.verified ? '' : ' — ' + data.note}</small>`;
+          result.innerHTML = `✅ ${data.to} 로 발송${data.chapter_id ? ` (${data.chapter_id}장 칼럼)` : ''}<br><small>발신: ${data.from}${data.verified ? '' : ' — ' + data.note}</small>`;
           result.style.color = data.verified ? '#2e7d32' : '#e65100';
         } else {
           result.textContent = `❌ 실패: ${data.error}`;
