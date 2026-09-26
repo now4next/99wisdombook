@@ -47,13 +47,13 @@
         var lens = LENS_KO[it.lens] || it.lens || '';
         return '<a class="col-card t-p' + (it.part_id || 1) + '" href="/insight/' + encodeURIComponent(it.slug) + '">' +
           '<div class="col-art">' +
+            /* 속담은 카드 상단 이미지 위에 둔다 */
+            (it.anchor_quote ? '<p class="col-anchor">「' + escH(it.anchor_quote) + '」</p>' : '') +
             '<span class="num">' + ('0' + it.chapter_id).slice(-2) + '</span>' +
             '<svg class="art" viewBox="0 0 100 100">' + (LENS_ART[it.lens] || LENS_ART.origin) + '</svg>' +
           '</div>' +
           '<div class="col-body">' +
             '<div class="col-kicker">제' + (it.part_id || 1) + '부 ' + it.chapter_id + '장</div>' +
-            /* 카드에 어느 속담의 칼럼인지 드러나야 한다 */
-            (it.anchor_quote ? '<p class="col-anchor">「' + escH(it.anchor_quote) + '」</p>' : '') +
             '<h3 class="col-title">' + escH(it.title) + '</h3>' +
             '<p class="col-lead">' + escH(it.hook || it.quotable || '') + '</p>' +
             '<div class="col-foot"><span class="tag-soft">' + escH(lens) + '</span>' +
