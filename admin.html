@@ -22,7 +22,7 @@
       }
       /* 캐시 무효화는 반드시 이 가드 안에 있어야 한다. 밖에 두면 위의 replace()
          로 떠나는 중에도 실행돼 그 이동을 덮어쓰고 왕복이 생긴다. */
-      var V = '20260926b';
+      var V = '20260926c';
       if (new URLSearchParams(location.search).get('v') !== V) {
         window.location.replace(location.pathname + '?v=' + V);
       }
@@ -221,6 +221,17 @@
     .roles label:has(input:checked) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 7%, #fff); }
 
     .note { font-size: 12.5px; color: var(--muted); line-height: 1.75; }
+    .chk { display: flex; align-items: center; gap: 8px; font-size: 13.5px; margin-top: 10px; cursor: pointer; }
+    .chk input { accent-color: var(--accent); width: 16px; height: 16px; flex: none; }
+    .chk .hint { color: var(--muted-2); font-size: 12.5px; }
+    .days { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+    .days label {
+      flex: 1; min-width: 38px; text-align: center; border: 1px solid var(--line-strong);
+      border-radius: 9px; padding: 8px 0; font-size: 13px; cursor: pointer; user-select: none;
+    }
+    .days label:has(input:checked) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, #fff); font-weight: 600; }
+    .days input { position: absolute; opacity: 0; pointer-events: none; }
+    #nt-detail[data-off="1"] { opacity: .42; pointer-events: none; }
 
     @media (max-width: 720px) {
       .wrap { padding: 0 14px 56px; }
@@ -350,19 +361,46 @@
 <!-- 회원 권한 편집 -->
 <div class="modal" id="edit-modal">
   <div class="modal-content">
-    <div class="modal-header"><h3>회원 권한</h3></div>
+    <div class="modal-header"><h3>회원 설정</h3></div>
     <div class="modal-body">
       <div class="userbox" id="modal-user-info"></div>
+
       <label class="fld" style="margin-top:18px;">권한</label>
       <div class="roles">
         <label><input type="radio" id="role-user" name="user-role" value="user"> 일반 회원</label>
         <label><input type="radio" id="role-admin" name="user-role" value="admin"> 관리자</label>
       </div>
-      <p class="note" style="margin-top:12px;">관리자는 회원 목록·접속기록·칼럼을 모두 볼 수 있습니다.</p>
+      <p class="note" style="margin-top:10px;">관리자는 회원 목록·접속기록·칼럼을 모두 볼 수 있습니다.</p>
+
+      <hr style="border:0;border-top:1px solid var(--line);margin:20px 0 16px;">
+
+      <label class="fld" style="margin-top:0;">Daily Wisdom</label>
+      <label class="chk"><input type="checkbox" id="nt-enabled"> 알림 받기<span class="hint"> · 끄면 아래 설정과 관계없이 발송하지 않습니다</span></label>
+      <div id="nt-detail" style="margin-top:12px;">
+        <label class="chk"><input type="checkbox" id="nt-email"> 이메일<span class="hint" id="nt-email-note"></span></label>
+        <div id="nt-push-row" style="margin-top:9px;display:none;align-items:center;gap:10px;">
+          <span class="badge admin">브라우저 푸시 등록됨</span>
+          <label class="chk" style="margin:0;"><input type="checkbox" id="nt-clear-push"> 해제하기</label>
+        </div>
+        <p class="note" id="nt-push-none" style="margin-top:9px;">브라우저 푸시는 본인이 기기에서 허용해야 생깁니다. 여기서는 켤 수 없습니다.</p>
+
+        <label class="fld">받을 요일</label>
+        <div class="days" id="nt-days"></div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <label class="fld">시</label>
+          <label class="fld">분</label>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:-8px;">
+          <select id="nt-hour"></select>
+          <select id="nt-minute"><option value="0">00</option><option value="30">30</option></select>
+        </div>
+        <p class="note" style="margin-top:9px;">한국 시간 기준입니다.</p>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn ghost" onclick="closeModal()">취소</button>
-      <button class="btn" onclick="saveUserRole()" id="btn-role-save">저장</button>
+      <button class="btn" onclick="saveUserSettings()" id="btn-role-save">저장</button>
     </div>
   </div>
 </div>
@@ -490,7 +528,7 @@
           + '<td class="dim">' + kstDate(u.created_at) + '</td>'
           + '<td class="dim">' + (u.last_login ? kstDate(u.last_login) : '–') + '</td>'
           + '<td style="text-align:right;white-space:nowrap;">'
-            + '<button class="btn-edit" data-edit="' + u.id + '">권한</button>'
+            + '<button class="btn-edit" data-edit="' + u.id + '">설정</button>'
             + (u.role === 'admin' ? '' : '<button class="btn-delete" data-del="' + u.id + '">삭제</button>')
           + '</td></tr>';
       }).join('');
@@ -506,6 +544,28 @@
     if (dl) deleteUser(find(dl.dataset.del));
   });
 
+  /* 시·분 선택지는 한 번만 만든다 */
+  (function buildNotifyControls() {
+    var h = document.getElementById('nt-hour');
+    for (var i = 0; i < 24; i++) {
+      var o = document.createElement('option');
+      o.value = i; o.textContent = ('0' + i).slice(-2);
+      h.appendChild(o);
+    }
+    var wrap = document.getElementById('nt-days');
+    DAY_KO.forEach(function (d, i) {
+      var l = document.createElement('label');
+      l.innerHTML = '<input type="checkbox" value="' + i + '">' + d;
+      wrap.appendChild(l);
+    });
+    document.getElementById('nt-enabled').addEventListener('change', syncNotifyDetail);
+  })();
+
+  function syncNotifyDetail() {
+    var on = document.getElementById('nt-enabled').checked;
+    document.getElementById('nt-detail').dataset.off = on ? '0' : '1';
+  }
+
   function openEditModal(user) {
     if (!user) return;
     currentEditUser = user;
@@ -515,6 +575,31 @@
       + '<div><b>가입</b>' + kstDate(user.created_at) + '</div>';
     var radio = document.getElementById('role-' + user.role);
     if (radio) radio.checked = true;
+
+    // Daily Wisdom
+    document.getElementById('nt-enabled').checked = !!user.notify_enabled;
+    var emailBox = document.getElementById('nt-email');
+    var addr = (user.email || '').trim();
+    emailBox.checked = !!user.email_enabled;
+    emailBox.disabled = !addr;
+    /* 주소가 없는데 이메일이 켜져 있으면 발송 때마다 조용히 실패한다.
+       관리자가 알아볼 수 있게 이유를 적어 둔다. */
+    document.getElementById('nt-email-note').textContent = addr
+      ? ' · ' + addr
+      : ' · 등록된 주소가 없어 켤 수 없습니다';
+
+    document.getElementById('nt-push-row').style.display = user.has_push ? 'flex' : 'none';
+    document.getElementById('nt-push-none').style.display = user.has_push ? 'none' : 'block';
+    document.getElementById('nt-clear-push').checked = false;
+
+    var days = String(user.notify_days || '').split(',').filter(Boolean);
+    document.querySelectorAll('#nt-days input').forEach(function (cb) {
+      cb.checked = days.indexOf(cb.value) >= 0;
+    });
+    document.getElementById('nt-hour').value = user.notify_hour == null ? 8 : user.notify_hour;
+    document.getElementById('nt-minute').value = (user.notify_minute === 30) ? 30 : 0;
+    syncNotifyDetail();
+
     document.getElementById('edit-modal').classList.add('active');
   }
   function closeModal() {
@@ -525,19 +610,42 @@
     if (e.target.id === 'edit-modal') closeModal();
   });
 
-  async function saveUserRole() {
+  async function saveUserSettings() {
     if (!currentEditUser) return;
+    var u = currentEditUser;
     var sel = document.querySelector('input[name="user-role"]:checked');
-    var role = sel ? sel.value : currentEditUser.role;
+    var role = sel ? sel.value : u.role;
     var btn = document.getElementById('btn-role-save');
     btn.disabled = true; btn.textContent = '저장 중…';
     try {
-      var r = await wisdomAPI.updateUser(currentEditUser.id, { role: role });
-      if (!r.success) throw new Error(r.error || '저장하지 못했습니다');
+      // 권한은 바뀐 때만 보낸다 — 값이 같으면 굳이 쓸 이유가 없다
+      if (role !== u.role) {
+        var r = await wisdomAPI.updateUser(u.id, { role: role });
+        if (!r.success) throw new Error(r.error || '권한을 바꾸지 못했습니다');
+      }
+
+      var days = [].slice.call(document.querySelectorAll('#nt-days input:checked'))
+        .map(function (cb) { return cb.value; }).join(',');
+      var body = {
+        notify_enabled: document.getElementById('nt-enabled').checked,
+        email_enabled: document.getElementById('nt-email').checked,
+        notify_days: days,
+        notify_hour: Number(document.getElementById('nt-hour').value),
+        notify_minute: Number(document.getElementById('nt-minute').value),
+        clear_push: document.getElementById('nt-clear-push').checked,
+      };
+      var res = await fetch('/api/users/' + u.id + '/notify', {
+        method: 'PUT',
+        headers: { 'Authorization': 'Bearer ' + wisdomAPI.token, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      var d = await res.json();
+      if (!d.success) throw new Error(d.error || '알림 설정을 저장하지 못했습니다');
+
       closeModal();
       await loadUsers();
     } catch (e) {
-      alert('권한을 바꾸지 못했습니다: ' + e.message);
+      alert(e.message);
     } finally {
       btn.disabled = false; btn.textContent = '저장';
     }

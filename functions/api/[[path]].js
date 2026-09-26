@@ -1361,13 +1361,32 @@ async function handleGetNotify(userId, request, env) {
 
 async function handleUpdateNotify(userId, request, env) {
   const tokenUserId = await getUserIdFromToken(request, env);
-  if (!tokenUserId || tokenUserId !== parseInt(userId)) return jsonResponse({ error: 'Unauthorized' }, 401);
-  const { notify_enabled, notify_days, notify_hour, notify_minute, email_enabled } = await request.json();
+  if (!tokenUserId) return jsonResponse({ error: 'Unauthorized' }, 401);
+
+  /* 본인이거나 관리자면 고칠 수 있다. 관리자가 대신 꺼 주어야 하는
+     경우가 있다 — 이메일 주소가 없는데 이메일 알림이 켜져 있으면
+     발송 때마다 조용히 실패하는데, 그 계정은 로그인할 수도 없다. */
+  const isSelf = tokenUserId === parseInt(userId);
+  if (!isSelf && !(await verifyAdminStrict(request, env))) {
+    return jsonResponse({ error: 'Forbidden' }, 403);
+  }
+
+  const b = await request.json().catch(() => ({}));
   await ensureEmailColumns(env);
+
+  /* 푸시는 브라우저에서 구독해야 생기므로 관리자가 켜 줄 수는 없다.
+     끌 수는 있어야 한다(단말을 잃었거나 해지 요청을 받은 경우). */
+  if (b.clear_push) {
+    await env.DB.prepare(
+      'UPDATE users SET push_endpoint = NULL, push_p256dh = NULL, push_auth = NULL WHERE id = ?'
+    ).bind(userId).run();
+  }
+
   await env.DB.prepare(
     'UPDATE users SET notify_enabled = ?, notify_days = ?, notify_hour = ?, notify_minute = ?, email_enabled = ? WHERE id = ?'
-  ).bind(notify_enabled ? 1 : 0, notify_days || null, notify_hour ?? null, notify_minute ?? 0,
-         email_enabled ? 1 : 0, userId).run();
+  ).bind(b.notify_enabled ? 1 : 0, b.notify_days || null, b.notify_hour ?? null, b.notify_minute ?? 0,
+         b.email_enabled ? 1 : 0, userId).run();
+
   return jsonResponse({ success: true, message: '알림 설정이 저장되었습니다.' });
 }
 
