@@ -39,7 +39,7 @@
       <a href="/">칼럼</a>
       <a href="/parts.html">9부 99장</a>
       <a href="/daily.html" class="on">오늘의 한 문장</a>
-      <a href="/my-wisdom.html">보관함</a>
+      <a href="/my-wisdom.html">공감지혜</a>
       <a class="btn-cta keep" href="#" onclick="openNotifyModal();return false;">알림 설정</a>
     </nav>
   </div>
@@ -116,7 +116,7 @@
     <div class="user-actions">
       <a class="btn-goto-book" href="/my-wisdom.html">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
-        보관함
+        공감지혜
       </a>
       <a class="btn-goto-book primary" id="btn-goto-book" href="/parts.html">도서 읽기 →</a>
       <button class="btn-goto-book notify" id="btn-notify" onclick="openNotifyModal()" style="display:none;">
@@ -152,7 +152,7 @@
       </div>
       <nav class="foot-nav">
         <a href="/">칼럼</a><a href="/parts.html">9부 99장</a>
-        <a href="/daily.html">오늘의 한 문장</a><a href="/my-wisdom.html">보관함</a>
+        <a href="/daily.html">오늘의 한 문장</a><a href="/my-wisdom.html">공감지혜</a>
       </nav>
     </div>
     <div class="foot-c">&copy; 2026 99 Wisdom Insight &middot; 9부 99장 &middot; 99wisdombook.org</div>
@@ -301,7 +301,7 @@
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <h2 class="modal-title">99 Wisdom Insight</h2>
-    <p class="modal-subtitle">로그인하면 보관함 · 소감 · 연속 읽기 기록을 쓸 수 있어요.</p>
+    <p class="modal-subtitle">로그인하면 공감지혜 · 소감 · 연속 읽기 기록을 쓸 수 있어요.</p>
     <p class="alert alert-error" id="modal-denied" style="display:none;">관리자 페이지는 관리자 계정으로만 열 수 있습니다.<br>관리자 계정으로 다시 로그인해 주세요.</p>
 
     <div class="tab-row">
@@ -733,7 +733,7 @@
             isSaved = false;
             btn.innerHTML = `${IC_BOOKMARK(false)} 보관하기`;
             btn.classList.remove('saved');
-            showToast('보관함에서 삭제했습니다.');
+            showToast('공감지혜에서 뺀다습니다.');
           } else {
             showToast(data.error || '삭제에 실패했습니다.');
           }
@@ -777,7 +777,7 @@
           isSaved = true;
           btn.innerHTML = `${IC_BOOKMARK(true)} 보관됨`;
           btn.classList.add('saved');
-          showToast(memo ? '소감과 함께 보관했습니다! 📝' : '보관함에 저장했습니다.');
+          showToast(memo ? '소감과 함께 보관했습니다! 📝' : '공감지혜에 담았습니다.');
         } else {
           showToast(data.error || '저장에 실패했습니다.');
         }
