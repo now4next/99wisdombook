@@ -1217,21 +1217,36 @@ async function handleDeleteInsight(id, request, env) {
 async function handleGetUsers(request, env) {
   if (!await verifyAdminStrict(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
 
-  // streak_count 컬럼이 없는 구버전 DB에도 동작하도록 fallback 처리
+  /* Daily Wisdom 신청 현황을 함께 내려준다. 전에는 이 값들이 DB 에만 있고
+     관리자 화면 어디에도 나오지 않아, 누가 신청했는지 볼 방법이 없었다.
+     push_endpoint 은 길고 민감해서 값 자체 대신 있는지만 보낸다. */
+  await ensureEmailColumns(env);
+  const FULL = 'SELECT id, username, name, email, role, permissions, streak_count, created_at, last_login,'
+    + ' notify_enabled, email_enabled, notify_days, notify_hour, notify_minute,'
+    + ' (push_endpoint IS NOT NULL) AS has_push FROM users ORDER BY created_at DESC';
+
+  // 구버전 DB 에도 동작하도록 fallback 처리
   let result;
   try {
-    result = await env.DB.prepare(
-      'SELECT id, username, name, email, role, permissions, streak_count, created_at, last_login FROM users ORDER BY created_at DESC'
-    ).all();
+    result = await env.DB.prepare(FULL).all();
   } catch (_) {
-    result = await env.DB.prepare(
-      'SELECT id, username, name, email, role, permissions, created_at, last_login FROM users ORDER BY created_at DESC'
-    ).all();
+    try {
+      result = await env.DB.prepare(
+        'SELECT id, username, name, email, role, permissions, streak_count, created_at, last_login FROM users ORDER BY created_at DESC'
+      ).all();
+    } catch (__) {
+      result = await env.DB.prepare(
+        'SELECT id, username, name, email, role, permissions, created_at, last_login FROM users ORDER BY created_at DESC'
+      ).all();
+    }
   }
 
   const users = result.results.map(u => ({
     ...u,
     streak_count: u.streak_count ?? 0,
+    notify_enabled: u.notify_enabled ?? 0,
+    email_enabled: u.email_enabled ?? 0,
+    has_push: !!u.has_push,
     permissions: JSON.parse(u.permissions || '[]'),
   }));
   return jsonResponse({ success: true, users, count: users.length });

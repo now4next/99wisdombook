@@ -22,7 +22,7 @@
       }
       /* 캐시 무효화는 반드시 이 가드 안에 있어야 한다. 밖에 두면 위의 replace()
          로 떠나는 중에도 실행돼 그 이동을 덮어쓰고 왕복이 생긴다. */
-      var V = '20260926a';
+      var V = '20260926b';
       if (new URLSearchParams(location.search).get('v') !== V) {
         window.location.replace(location.pathname + '?v=' + V);
       }
@@ -262,6 +262,7 @@
     <p class="lead">회원·칼럼·접속 현황을 한눈에 봅니다.</p>
     <div class="cards">
       <div class="card"><div class="k">전체 회원</div><div class="v" id="ov-users">–</div><div class="s" id="ov-users-s">&nbsp;</div></div>
+      <div class="card"><div class="k">Daily Wisdom 신청</div><div class="v" id="ov-subs">–</div><div class="s" id="ov-subs-s">&nbsp;</div></div>
       <div class="card"><div class="k">관리자</div><div class="v" id="ov-admins">–</div><div class="s">권한 있는 계정</div></div>
       <div class="card"><div class="k">발행 칼럼</div><div class="v" id="ov-columns">–</div><div class="s">9부 99장</div></div>
       <div class="card"><div class="k">최근 7일 로그인</div><div class="v" id="ov-logins">–</div><div class="s" id="ov-logins-s">&nbsp;</div></div>
@@ -270,7 +271,7 @@
     <h2>최근 접속</h2>
     <div class="tbl">
       <table>
-        <thead><tr><th>회원</th><th>방식</th><th>시각</th></tr></thead>
+        <thead><tr><th>회원</th><th>IP</th><th>시각</th></tr></thead>
         <tbody id="ov-recent"><tr><td colspan="3" class="state">불러오는 중…</td></tr></tbody>
       </table>
     </div>
@@ -283,9 +284,9 @@
     <div class="tbl">
       <table>
         <thead>
-          <tr><th>이름</th><th>이메일</th><th>권한</th><th>가입일</th><th>최근 로그인</th><th></th></tr>
+          <tr><th>이름</th><th>이메일</th><th>Daily Wisdom</th><th>권한</th><th>가입일</th><th>최근 로그인</th><th></th></tr>
         </thead>
-        <tbody id="user-table-body"><tr><td colspan="6" class="state">불러오는 중…</td></tr></tbody>
+        <tbody id="user-table-body"><tr><td colspan="7" class="state">불러오는 중…</td></tr></tbody>
       </table>
     </div>
   </section>
@@ -293,13 +294,13 @@
   <!-- ══════════ 접속기록 ══════════ -->
   <section class="panel" id="panel-access">
     <h1>접속기록</h1>
-    <p class="lead">최근 로그인 100건입니다. 시각은 한국 시간 기준입니다.</p>
+    <p class="lead">최근 로그인 100건입니다. 시각은 한국 시간 기준입니다.<br>로그인은 이메일 하나뿐이라 방식 열은 뺀다. Daily Wisdom 신청 상태는 「회원」 탭에서 볼 수 있다.</p>
     <div class="tbl">
       <table>
         <thead>
-          <tr><th>이름</th><th>이메일</th><th>방식</th><th>IP</th><th>시각</th></tr>
+          <tr><th>이름</th><th>이메일</th><th>IP</th><th>시각</th></tr>
         </thead>
-        <tbody id="login-log-body"><tr><td colspan="5" class="state">불러오는 중…</td></tr></tbody>
+        <tbody id="login-log-body"><tr><td colspan="4" class="state">불러오는 중…</td></tr></tbody>
       </table>
     </div>
   </section>
@@ -429,6 +430,31 @@
     history.replaceState(null, '', location.pathname + location.search + '#' + name);
   }
 
+  var DAY_KO = ['일', '월', '화', '수', '목', '금', '토'];
+
+  /* Daily Wisdom 신청 상태 한 칸.
+     notify_enabled 가 마스터 스위치고, 그 아래에 이메일·푸시가 따로 있다.
+     이메일을 켜 둔 계정에 주소가 없으면 발송 때마다 조용히 실패하므로
+     그 경우를 따로 표시한다. */
+  function subCell(u) {
+    if (!u.notify_enabled) return '<span class="dim" style="font-size:12.5px;">–</span>';
+    var ways = [];
+    if (u.email_enabled) ways.push((u.email || '').trim() ? '이메일' : '이메일(주소 없음)');
+    if (u.has_push) ways.push('푸시');
+    if (!ways.length) ways.push('받을 방법 없음');
+
+    var days = String(u.notify_days || '').split(',').filter(Boolean)
+      .map(function (d) { return DAY_KO[Number(d)] || d; });
+    var when = days.length === 7 ? '매일' : (days.length ? days.join('·') : '요일 미지정');
+    var hh = (u.notify_hour == null ? 8 : u.notify_hour);
+    var mm = (u.notify_minute == null ? 0 : u.notify_minute);
+    var time = ('0' + hh).slice(-2) + ':' + ('0' + mm).slice(-2);
+
+    var ok = u.email_enabled ? !!(u.email || '').trim() : u.has_push;
+    return '<span class="badge' + (ok ? ' admin' : '') + '">' + esc(ways.join(' · ')) + '</span>'
+      + '<div class="dim" style="font-size:12px;margin-top:3px;">' + esc(when) + ' ' + time + '</div>';
+  }
+
   // ── 회원 ──
   async function loadUsers() {
     var tbody = document.getElementById('user-table-body');
@@ -443,14 +469,22 @@
       var withEmail = users.filter(function (u) { return u.email; }).length;
       document.getElementById('ov-users-s').textContent = '이메일 있는 계정 ' + withEmail + '명';
 
+      var subs = users.filter(function (u) { return u.notify_enabled; });
+      var mailReady = subs.filter(function (u) { return u.email_enabled && (u.email || '').trim(); }).length;
+      var pushOnly = subs.filter(function (u) { return !u.email_enabled && u.has_push; }).length;
+      document.getElementById('ov-subs').textContent = subs.length;
+      document.getElementById('ov-subs-s').textContent =
+        '이메일 ' + mailReady + '명' + (pushOnly ? ' · 푸시만 ' + pushOnly + '명' : '');
+
       if (!users.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="state">등록된 회원이 없습니다.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="state">등록된 회원이 없습니다.</td></tr>';
         return;
       }
       tbody.innerHTML = users.map(function (u) {
         return '<tr>'
           + '<td>' + esc(u.name || u.username) + '</td>'
           + '<td class="dim">' + esc(u.email || '-') + '</td>'
+          + '<td>' + subCell(u) + '</td>'
           + '<td><span class="badge' + (u.role === 'admin' ? ' admin' : '') + '">'
             + (u.role === 'admin' ? '관리자' : '일반') + '</span></td>'
           + '<td class="dim">' + kstDate(u.created_at) + '</td>'
@@ -461,7 +495,7 @@
           + '</td></tr>';
       }).join('');
     } catch (e) {
-      tbody.innerHTML = '<tr><td colspan="6" class="state err">불러오지 못했습니다: ' + esc(e.message) + '</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="state err">불러오지 못했습니다: ' + esc(e.message) + '</td></tr>';
     }
   }
 
@@ -542,16 +576,16 @@
       document.getElementById('ov-logins-s').textContent = uniq + '명 · 최근 100건 기준';
 
       if (!logs.length) {
-        tbody.innerHTML  = '<tr><td colspan="5" class="state">접속 기록이 없습니다.</td></tr>';
+        tbody.innerHTML  = '<tr><td colspan="4" class="state">접속 기록이 없습니다.</td></tr>';
         recent.innerHTML = '<tr><td colspan="3" class="state">접속 기록이 없습니다.</td></tr>';
         return;
       }
-      var label = function (t) { return t === 'local' ? '이메일' : (t || '기타'); };
+      /* login_type 은 기록된 19건이 전부 local 이다. 카카오 로그인을 내린 뒤로
+         구분이 사라져서 열을 뺀다. 신청 상태는 「회원」 탭에 있다. */
       tbody.innerHTML = logs.map(function (l) {
         return '<tr>'
           + '<td>' + esc(l.user_name || '-') + '</td>'
           + '<td class="dim">' + esc(l.user_email || '-') + '</td>'
-          + '<td><span class="badge">' + esc(label(l.login_type)) + '</span></td>'
           + '<td class="mono">' + esc(l.ip_address || '-') + '</td>'
           + '<td class="dim">' + kstTime(l.logged_in_at) + '</td>'
           + '</tr>';
@@ -559,12 +593,12 @@
       recent.innerHTML = logs.slice(0, 8).map(function (l) {
         return '<tr>'
           + '<td>' + esc(l.user_name || '-') + '<br><span class="dim" style="font-size:12px;">' + esc(l.user_email || '') + '</span></td>'
-          + '<td><span class="badge">' + esc(label(l.login_type)) + '</span></td>'
+          + '<td class="mono">' + esc(l.ip_address || '-') + '</td>'
           + '<td class="dim">' + kstTime(l.logged_in_at) + '</td>'
           + '</tr>';
       }).join('');
     } catch (e) {
-      tbody.innerHTML  = '<tr><td colspan="5" class="state err">불러오지 못했습니다: ' + esc(e.message) + '</td></tr>';
+      tbody.innerHTML  = '<tr><td colspan="4" class="state err">불러오지 못했습니다: ' + esc(e.message) + '</td></tr>';
       recent.innerHTML = '<tr><td colspan="3" class="state err">불러오지 못했습니다.</td></tr>';
     }
   }
