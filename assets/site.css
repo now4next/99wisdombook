@@ -163,8 +163,15 @@
   align-items: center; gap: 16px; flex-wrap: wrap;
 }
 .logged-in-bar.visible { display: flex; }
-.logged-in-name { font-size: .9rem; color: var(--ink-2); flex: 1; min-width: 0; }
-.user-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+/* 바는 max-width:560px 라 뷰포트가 아무리 넓어도 이 폭을 넘지 않는다.
+   버튼이 다섯 개면 그만으로 한 줄이 차서, flex:1 에 min-width:0 이던
+   인사말이 0폭까지 눌려 한 글자씩 세로로 쌓였다. 뷰포트 미디어쿼리로는
+   잡을 수 없는 문제라(컨테이너 폭 문제다), 아예 각자 한 줄씩 차지하게 한다. */
+.logged-in-name {
+  font-size: .9rem; color: var(--ink-2);
+  flex: 1 0 100%; min-width: 0; word-break: keep-all;
+}
+.user-actions { display: flex; flex-wrap: wrap; gap: 8px; flex: 1 1 100%; }
 .btn-goto-book {
   background: var(--surface); border: 1px solid var(--line); color: var(--ink-2);
   border-radius: 999px; padding: 8px 16px; font-size: .8rem;
@@ -474,8 +481,9 @@ select { cursor: pointer; }
   .card-page  { padding: 26px 20px 24px; border-radius: 18px; }
   .cover-ghost-99 { font-size: 8.5rem; }
   .modal-sheet { padding: 22px 20px 24px; }
-  .logged-in-bar { flex-direction: column; align-items: stretch; }
-  .user-actions > * { flex: 1; justify-content: center; }
+  .logged-in-bar { align-items: stretch; gap: 12px; }
+  .logged-in-name { text-align: center; }
+  .user-actions > * { flex: 1 1 auto; justify-content: center; }
   .main { padding: 26px 16px 60px; }
   .item-actions-sub { margin-left: 0; }
 }
