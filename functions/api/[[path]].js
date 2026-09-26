@@ -435,46 +435,113 @@ function emailLayout({ preheader, body, footer }) {
 
 const MAIL_SANS = "-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif";
 
-/** 오늘의 한 문장 + 칼럼 */
+/* 칼럼 본문(body_md)을 메일용 HTML 로 옮긴다. 본문에 실제로 쓰이는 문법은
+   **굵게**, 인용(>), 불릿(-) 뿐이라 정식 마크다운 파서를 들일 이유가 없다.
+   메일 클라이언트는 <style> 을 잘 지우므로 태그마다 인라인으로 준다. */
+function mdToMailHtml(md) {
+  const P = 'margin:0 0 15px;font-size:15px;line-height:1.85;color:#413b34;';
+  return String(md || '').trim().split(/\n\s*\n/).map((block) => {
+    const raw = block.trim();
+    if (!raw) return '';
+    const inline = (t) => mailEsc(t).replace(/\*\*([^*]+)\*\*/g, '<strong style="color:#221f1b;">$1</strong>');
+
+    if (/^>\s/.test(raw)) {
+      const t = raw.split('\n').map((l) => l.replace(/^>\s?/, '')).join(' ');
+      return '<blockquote style="margin:0 0 15px;padding:2px 0 2px 14px;'
+        + 'border-left:3px solid #d8d2c8;font-size:15px;line-height:1.8;color:#5c554d;">'
+        + inline(t) + '</blockquote>';
+    }
+    if (/^[-*]\s/.test(raw)) {
+      const items = raw.split('\n').filter((l) => /^[-*]\s/.test(l))
+        .map((l) => '<li style="margin:0 0 7px;">' + inline(l.replace(/^[-*]\s+/, '')) + '</li>').join('');
+      return '<ul style="margin:0 0 15px;padding-left:20px;font-size:15px;line-height:1.85;color:#413b34;">' + items + '</ul>';
+    }
+    return '<p style="' + P + '">' + inline(raw.replace(/\n/g, ' ')) + '</p>';
+  }).join('');
+}
+
+/** 같은 본문의 평문 버전 */
+function mdToMailText(md) {
+  return String(md || '').trim()
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/^>\s?/gm, '')
+    .replace(/\n{3,}/g, '\n\n');
+}
+
+/** 오늘의 한 문장 + 칼럼 전문 */
 function issueEmail(env, user, wisdomItem, unsubUrl) {
   const c = wisdomItem.column;
-  const url = c
-    ? 'https://99wisdombook.org/insight/' + c.slug
-    : 'https://99wisdombook.org/daily.html?autoopen=1';
+  const SITE = 'https://99wisdombook.org';
+  const webUrl    = c ? SITE + '/insight/' + c.slug : SITE + '/daily.html?autoopen=1';
+  const sourceUrl = SITE + '/chapter/' + (c ? c.chapter_id : (wisdomItem.id || 1));
+  const notifyUrl = SITE + '/daily.html?notify=1';
   const name = user.name || '독자';
+  const proverb = (c && c.anchor_quote) || wisdomItem.title;
 
-  const hero = (c && c.hero_image)
-    ? '<tr><td style="padding:0;"><a href="' + mailEsc(url) + '"><img src="' + mailEsc(c.hero_image)
-      + '" width="560" alt="" style="display:block;width:100%;height:auto;border:0;border-radius:14px 14px 0 0;"></a></td></tr>'
-    : '';
+  /* OG 카드를 머리에 넣지 않는다. 그 카드에는 머리글·속담·인용구가
+     그대로 들어 있어 바로 아래 본문과 세 줄이 겹친다. 게다가 메일은
+     이미지가 차단된 상태에서도 다 읽혀야 하므로 속담은 어차피 텍스트여야
+     한다. 그러면 카드는 같은 것을 두 번 보여 주는 일밖에 하지 않는다. */
+  const hero = '';
+
+  const kicker = c && c.part_id
+    ? '제' + c.part_id + '부 ' + c.chapter_id + '장'
+    : '99 Wisdom Insight';
+
+  const btn = (label, href, primary) =>
+    '<a href="' + mailEsc(href) + '" style="display:inline-block;'
+    + (primary ? 'background:#5FA97E;color:#ffffff;border:1px solid #5FA97E;'
+               : 'background:#ffffff;color:#4a443d;border:1px solid #ddd8d0;')
+    + 'text-decoration:none;padding:11px 20px;border-radius:999px;'
+    + 'font-size:14px;font-weight:600;margin:0 6px 9px 0;">' + mailEsc(label) + '</a>';
 
   const body = hero
-    + '<tr><td style="padding:28px 26px 24px;font-family:' + MAIL_SANS + ';">'
-    + '<div style="font-size:12px;letter-spacing:.08em;color:#9c9489;text-transform:uppercase;">99 Wisdom Insight</div>'
-    + '<p style="margin:14px 0 0;font-family:Georgia,\'Gowun Batang\',serif;font-size:20px;line-height:1.5;color:#2c2722;">'
-    + '&ldquo;' + mailEsc(wisdomItem.title) + '&rdquo;</p>'
-    + (c ? '<p style="margin:18px 0 0;font-size:16px;line-height:1.6;color:#4a443d;font-weight:600;">' + mailEsc(c.title) + '</p>' : '')
-    + (c && c.quotable ? '<p style="margin:10px 0 0;font-size:14px;line-height:1.7;color:#6b645c;">' + mailEsc(c.quotable) + '</p>' : '')
-    + '<div style="margin:26px 0 4px;"><a href="' + mailEsc(url)
-    + '" style="display:inline-block;background:#5FA97E;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:999px;font-size:14px;font-weight:600;">오늘의 칼럼 읽기</a></div>'
+    + '<tr><td style="padding:30px 26px 8px;font-family:' + MAIL_SANS + ';">'
+    + '<div style="font-family:Menlo,Consolas,monospace;font-size:11px;letter-spacing:.1em;color:#9c9489;">'
+    + mailEsc(kicker) + '</div>'
+    + '<p style="margin:12px 0 0;font-family:Georgia,\'Gowun Batang\',serif;font-size:22px;line-height:1.45;'
+    + 'font-weight:700;color:#2c2722;">' + mailEsc(proverb) + '</p>'
+    + (c ? '<p style="margin:14px 0 0;font-size:17px;line-height:1.55;color:#413b34;font-weight:600;">'
+        + mailEsc(c.title) + '</p>' : '')
+    + (c && c.hook ? '<p style="margin:8px 0 0;font-size:14px;line-height:1.7;color:#7a736a;">'
+        + mailEsc(c.hook) + '</p>' : '')
+    + '<div style="height:1px;background:#ece8e2;margin:22px 0 20px;"></div>'
+    + (c && c.body_md ? mdToMailHtml(c.body_md) : '')
+    + (c && c.action
+        ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"'
+          + ' style="margin:6px 0 4px;background:#f7f5f1;border-radius:11px;"><tr>'
+          + '<td style="padding:16px 18px;font-family:' + MAIL_SANS + ';font-size:14px;line-height:1.75;color:#5c554d;">'
+          + mailEsc(c.action).replace(/\n/g, '<br>') + '</td></tr></table>'
+        : '')
+    + '</td></tr>'
+    + '<tr><td style="padding:18px 26px 28px;font-family:' + MAIL_SANS + ';">'
+    + btn('원문 읽기', sourceUrl, true)
+    + btn('웹에서 보기', webUrl, false)
+    + btn('알림 설정', notifyUrl, false)
     + '</td></tr>';
 
-  const footer = mailEsc(name) + '님께 보내 드립니다 · <a href="https://99wisdombook.org" style="color:#a29a90;">99wisdombook.org</a><br>'
-    + '<a href="' + mailEsc(unsubUrl) + '" style="color:#a29a90;text-decoration:underline;">이메일 받지 않기</a>';
+  const footer = mailEsc(name) + '님께 보내 드립니다 · <a href="' + SITE + '" style="color:#a29a90;">99wisdombook.org</a><br>'
+    + '<a href="' + mailEsc(notifyUrl) + '" style="color:#a29a90;text-decoration:underline;">받는 요일·시각 바꾸기</a>'
+    + ' · <a href="' + mailEsc(unsubUrl) + '" style="color:#a29a90;text-decoration:underline;">이메일 받지 않기</a>';
 
   const text = [
-    '"' + wisdomItem.title + '"',
+    kicker,
+    proverb,
     c ? '\n' + c.title : '',
-    (c && c.quotable) ? c.quotable : '',
-    '\n오늘의 칼럼 읽기: ' + url,
+    (c && c.hook) ? c.hook : '',
+    c && c.body_md ? '\n' + mdToMailText(c.body_md) : '',
+    (c && c.action) ? '\n' + c.action : '',
+    '\n원문 읽기: ' + sourceUrl,
+    '웹에서 보기: ' + webUrl,
+    '알림 설정: ' + notifyUrl,
     '\n---\n' + name + '님께 보내 드립니다 · 99wisdombook.org',
     '이메일 받지 않기: ' + unsubUrl,
   ].filter(Boolean).join('\n');
 
   return {
     to: user.email,
-    subject: c ? wisdomItem.title + ' — ' + c.title : wisdomItem.title,
-    html: emailLayout({ preheader: c ? c.title : wisdomItem.title, body, footer }),
+    subject: c ? proverb + ' — ' + c.title : proverb,
+    html: emailLayout({ preheader: (c && c.hook) || (c && c.title) || proverb, body, footer }),
     text,
     unsub: unsubUrl,
   };
@@ -568,7 +635,25 @@ async function handleEmailDiag(request, env) {
   }
 
   // ?send=주소 → 실제로 한 통 보내 발송 경로까지 확인한다
+  // ?kind=issue 를 붙이면 안내문이 아니라 진짜 Daily Wisdom 한 통을 보낸다
   const sendTo = new URL(request.url).searchParams.get('send');
+  const sendKind = new URL(request.url).searchParams.get('kind') || 'notice';
+  if (sendTo && sendKind === 'issue') {
+    try {
+      const col = await env.DB.prepare(
+        "SELECT chapter_id, part_id, slug, title, hook, anchor_quote, body_md, action, quotable, hero_image"
+        + " FROM insights WHERE status = 'published' ORDER BY RANDOM() LIMIT 1"
+      ).first();
+      const item = { title: (col && col.anchor_quote) || '오늘의 한 문장', id: col ? col.chapter_id : null, column: col || null };
+      const unsub = 'https://99wisdombook.org/api/email/unsubscribe?t=' + '0'.repeat(32);
+      const r = await sendEmail(env, issueEmail(env, { id: 0, name: '독자', email: sendTo }, item, unsub));
+      out.send = { ok: true, kind: 'issue', to: sendTo, chapter_id: col ? col.chapter_id : null,
+                   id: r.id || null, from: r.from, used_fallback: !!mailVia(env, r) };
+    } catch (err) {
+      out.send = { ok: false, kind: 'issue', to: sendTo, error: err.message, code: err.code || null };
+    }
+    return jsonResponse(out);
+  }
   if (sendTo) {
     try {
       const r = await sendEmail(env, noticeEmail(env, { name: '관리자', email: sendTo }, {
@@ -654,7 +739,7 @@ async function handleEmailPreview(request, env) {
   let column = null;
   try {
     const row = await env.DB.prepare(
-      "SELECT chapter_id, slug, title, quotable, hero_image FROM insights WHERE status = 'published' ORDER BY chapter_id LIMIT 1"
+      "SELECT chapter_id, part_id, slug, title, hook, anchor_quote, body_md, action, quotable, hero_image FROM insights WHERE status = 'published' ORDER BY chapter_id LIMIT 1"
     ).first();
     if (row) column = row;
   } catch (_) {}
@@ -1473,7 +1558,7 @@ async function handleNotifyCron(request, env) {
   const columnByChapter = {};
   try {
     const cRes = await env.DB.prepare(
-      "SELECT chapter_id, slug, title, quotable, hero_image FROM insights WHERE status = 'published'"
+      "SELECT chapter_id, part_id, slug, title, hook, anchor_quote, body_md, action, quotable, hero_image FROM insights WHERE status = 'published'"
     ).all();
     for (const row of (cRes.results || [])) columnByChapter[row.chapter_id] = row;
   } catch (_) {}
