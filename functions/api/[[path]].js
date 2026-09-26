@@ -225,6 +225,7 @@ export async function onRequest(context) {
 
     // Admin – login logs
     if (path === '/api/admin/login-logs' && method === 'GET') return handleGetLoginLogs(request, env);
+    if (path === '/api/admin/send-logs' && method === 'GET') return handleGetSendLogs(request, env);
 
     // Insights (칼럼)
     if (path === '/api/insights' && method === 'GET') return handleListInsights(request, env);
@@ -417,6 +418,78 @@ async function sendEmail(env, m, from) {
     throw err;
   }
   return { ...data, from: sender };
+}
+
+/* 발송 기록.
+   지금까지는 보냈는지 실패했는지 되짚을 방법이 전혀 없었다. 외부 스케줄러가
+   401 로 26번 연속 실패해 멈춰 있어도 알 수 없었고, "오늘 메일이 왔나"를
+   확인하려면 매번 추측해야 했다. 보낸 것과 실패한 것을 모두 남긴다. */
+const SEND_LOG_KEEP_DAYS = 90;
+
+async function ensureSendLogTable(env) {
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS send_logs (
+       id          INTEGER PRIMARY KEY AUTOINCREMENT,
+       user_id     INTEGER,
+       user_name   TEXT,
+       user_email  TEXT,
+       channel     TEXT NOT NULL,
+       kind        TEXT NOT NULL,
+       chapter_id  INTEGER,
+       status      TEXT NOT NULL,
+       provider_id TEXT,
+       from_addr   TEXT,
+       error       TEXT,
+       sent_at     TEXT DEFAULT CURRENT_TIMESTAMP
+     )`
+  ).run();
+  await env.DB.prepare(
+    'CREATE INDEX IF NOT EXISTS idx_send_logs_sent ON send_logs(sent_at DESC)'
+  ).run();
+}
+
+/* 기록이 실패해도 발송은 계속돼야 한다. 그래서 전부 삼킨다. */
+async function recordSend(env, o) {
+  try {
+    await ensureSendLogTable(env);
+    await env.DB.prepare(
+      `INSERT INTO send_logs
+         (user_id, user_name, user_email, channel, kind, chapter_id, status, provider_id, from_addr, error)
+       VALUES (?,?,?,?,?,?,?,?,?,?)`
+    ).bind(
+      o.user_id ?? null, o.user_name ?? null, o.user_email ?? null,
+      o.channel, o.kind, o.chapter_id ?? null, o.status,
+      o.provider_id ?? null, o.from_addr ?? null,
+      o.error ? String(o.error).slice(0, 300) : null
+    ).run();
+
+    // 가끔 오래된 것을 지운다 (세션 정리와 같은 방식)
+    if (Math.random() < 0.02) {
+      await env.DB.prepare(
+        `DELETE FROM send_logs WHERE sent_at < datetime('now', ?)`
+      ).bind('-' + SEND_LOG_KEEP_DAYS + ' days').run();
+    }
+  } catch (_) {}
+}
+
+/* sendEmail 을 부르고 결과를 기록까지 하는 창구. 호출부가 성공·실패
+   양쪽을 빠짐없이 남기도록 한곳으로 모은다. */
+async function sendAndLog(env, message, meta) {
+  try {
+    const r = await sendEmail(env, message);
+    await recordSend(env, {
+      ...meta, channel: 'email', status: 'ok',
+      provider_id: r.id || null, from_addr: r.from || null,
+      user_email: meta.user_email || message.to,
+    });
+    return r;
+  } catch (err) {
+    await recordSend(env, {
+      ...meta, channel: 'email', status: 'failed',
+      error: err.message, user_email: meta.user_email || message.to,
+    });
+    throw err;
+  }
 }
 
 /** MAIL_FROM 이 아닌 발신자로 나갔으면 남길 문구 (폴백이 쓰였다는 신호) */
@@ -613,7 +686,11 @@ function noticeEmail(env, user, o) {
 async function sendNewsletterEmail(env, user, wisdomItem) {
   const t = await ensureUnsubscribeToken(env, user.id);
   const unsubUrl = 'https://99wisdombook.org/api/email/unsubscribe?t=' + t;
-  return sendEmail(env, issueEmail(env, user, wisdomItem, unsubUrl));
+  return sendAndLog(env, issueEmail(env, user, wisdomItem, unsubUrl), {
+    kind: 'issue',
+    user_id: user.id, user_name: user.name, user_email: user.email,
+    chapter_id: (wisdomItem && wisdomItem.column && wisdomItem.column.chapter_id) || null,
+  });
 }
 /** 수신 거부. 로그인 없이 링크만으로 동작해야 한다. */
 // ── 이메일 테스트 발송 (관리자 전용) ────────────────────────
@@ -682,7 +759,8 @@ async function handleEmailDiag(request, env) {
       ).first();
       const item = { title: (col && col.anchor_quote) || '오늘의 한 문장', id: col ? col.chapter_id : null, column: col || null };
       const unsub = 'https://99wisdombook.org/api/email/unsubscribe?t=' + '0'.repeat(32);
-      const r = await sendEmail(env, issueEmail(env, { id: 0, name: '독자', email: sendTo }, item, unsub));
+      const r = await sendAndLog(env, issueEmail(env, { id: 0, name: '독자', email: sendTo }, item, unsub),
+        { kind: 'diag_sample', user_email: sendTo, chapter_id: col ? col.chapter_id : null });
       out.send = { ok: true, kind: 'issue', to: sendTo, chapter_id: col ? col.chapter_id : null,
                    id: r.id || null, from: r.from, used_fallback: !!mailVia(env, r) };
     } catch (err) {
@@ -692,12 +770,12 @@ async function handleEmailDiag(request, env) {
   }
   if (sendTo) {
     try {
-      const r = await sendEmail(env, noticeEmail(env, { name: '관리자', email: sendTo }, {
+      const r = await sendAndLog(env, noticeEmail(env, { name: '관리자', email: sendTo }, {
         subject: '[점검] 99 Wisdom Insight 이메일 발송 확인',
         heading: '이메일 발송 경로가 정상입니다',
         lead: '이 메일이 보이면 Resend 연동·발신 도메인·템플릿이 모두 동작하는 것입니다.<br>실제 알림은 설정한 요일과 시각에 발송됩니다.',
         cta: '오늘의 문장 보기', ctaUrl: 'https://99wisdombook.org/daily.html?autoopen=1',
-      }));
+      }), { kind: 'diag_check', user_email: sendTo });
       out.send = { ok: true, to: sendTo, id: r.id || null, from: r.from, used_fallback: !!mailVia(env, r) };
     } catch (err) {
       out.send = { ok: false, to: sendTo, error: err.message, code: err.code || null };
@@ -751,7 +829,8 @@ async function handleEmailTest(request, env) {
             + " FROM insights WHERE status = 'published' ORDER BY RANDOM() LIMIT 1").first();
       if (!col) return jsonResponse({ success: false, error: '발행된 칼럼이 없습니다.' }, 404);
       const item = { title: col.anchor_quote, id: col.chapter_id, column: col };
-      const r = await sendEmail(env, issueEmail(env, { id: me.id, name: me.name, email: to }, item, unsubUrl));
+      const r = await sendAndLog(env, issueEmail(env, { id: me.id, name: me.name, email: to }, item, unsubUrl),
+        { kind: 'admin_sample', user_id: me.id, user_name: me.name, user_email: to, chapter_id: col.chapter_id });
       const want0 = (env.MAIL_FROM || '').trim() || MAIL_FROM_DEFAULT;
       return jsonResponse({
         success: true, kind: 'issue', to, chapter_id: col.chapter_id, id: r.id || null,
@@ -765,13 +844,13 @@ async function handleEmailTest(request, env) {
   }
 
   try {
-    const r = await sendEmail(env, noticeEmail(env, { name: me.name, email: to }, {
+    const r = await sendAndLog(env, noticeEmail(env, { name: me.name, email: to }, {
       subject: '[테스트] 99 Wisdom Insight 이메일 발송 확인',
       heading: '이메일 발송이 정상입니다',
       lead: '이 메일이 보이면 Resend 연동과 템플릿이 모두 동작하는 것입니다.<br>실제 알림은 설정한 요일과 시각에 발송됩니다.',
       cta: '오늘의 문장 보기', ctaUrl: 'https://99wisdombook.org/daily.html?autoopen=1',
       unsubUrl,
-    }));
+    }), { kind: 'admin_test', user_id: me.id, user_name: me.name, user_email: to });
     const want = (env.MAIL_FROM || '').trim() || MAIL_FROM_DEFAULT;
     return jsonResponse({
       success: true, to, id: r.id || null, from: r.from,
@@ -1022,6 +1101,33 @@ async function handleStreak(request, env) {
 }
 
 // ── Admin: Login Logs ────────────────────────────────────────
+async function handleGetSendLogs(request, env) {
+  if (!await verifyAdminStrict(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
+  try {
+    await ensureSendLogTable(env);
+    const url = new URL(request.url);
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '100', 10), 500);
+    const rows = await env.DB.prepare(
+      `SELECT id, user_id, user_name, user_email, channel, kind, chapter_id,
+              status, provider_id, from_addr, error, sent_at
+       FROM send_logs ORDER BY id DESC LIMIT ?`
+    ).bind(limit).all();
+
+    // 최근 7일 요약 — "요즘 나가고 있나"를 한 줄로 보기 위한 값
+    const sum = await env.DB.prepare(
+      `SELECT COUNT(*) total,
+              SUM(status = 'ok') ok,
+              SUM(status = 'failed') failed,
+              MAX(sent_at) last_at
+       FROM send_logs WHERE sent_at >= datetime('now', '-7 days')`
+    ).first();
+
+    return jsonResponse({ success: true, logs: rows.results || [], summary: sum || {} });
+  } catch (err) {
+    return jsonResponse({ error: err.message }, 500);
+  }
+}
+
 async function handleGetLoginLogs(request, env) {
   if (!await verifyAdminStrict(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
   try {
@@ -1624,12 +1730,12 @@ async function handleReminderCron(request, env) {
       try {
         const t = await ensureUnsubscribeToken(env, user.id);
         const unsubUrl = `https://99wisdombook.org/api/email/unsubscribe?t=${t}`;
-        await sendEmail(env, noticeEmail(env, user, {
+        await sendAndLog(env, noticeEmail(env, user, {
           subject: `오늘의 한 문장이 아직 남아 있어요`,
           heading,
           lead: '오늘의 문장을 아직 읽지 않으셨어요.<br>한 문장이면 충분합니다.',
           cta: '오늘의 문장 읽기', ctaUrl: url, unsubUrl,
-        }));
+        }), { kind: 'reminder', user_id: user.id, user_name: user.name, user_email: user.email });
         results.email_sent++; touched = true;
       } catch (err) {
         results.errors.push({ userId: user.id, error: `Email: ${err.message}` });
@@ -1692,11 +1798,11 @@ async function handleWeeklyCron(request, env) {
       try {
         const t = await ensureUnsubscribeToken(env, user.id);
         const unsubUrl = `https://99wisdombook.org/api/email/unsubscribe?t=${t}`;
-        await sendEmail(env, noticeEmail(env, user, {
+        await sendAndLog(env, noticeEmail(env, user, {
           subject: `이번 주 기록 · ${streak}일 연속`,
           heading, lead,
           cta: '다음 문장 보기', ctaUrl: url, unsubUrl,
-        }));
+        }), { kind: 'weekly', user_id: user.id, user_name: user.name, user_email: user.email });
         results.email_sent++; touched = true;
       } catch (err) {
         results.errors.push({ userId: user.id, error: `Email: ${err.message}` });
@@ -1871,8 +1977,18 @@ async function handleNotifyCron(request, env) {
           (env.VAPID_SUBJECT || 'mailto:info@99wisdombook.org').trim()
         );
         results.push_sent++;
+        await recordSend(env, {
+          channel: 'push', kind: 'issue', status: 'ok',
+          user_id: user.id, user_name: user.name, user_email: user.email,
+          chapter_id: (wisdomItem && wisdomItem.column && wisdomItem.column.chapter_id) || null,
+        });
       } catch (pushErr) {
         results.errors.push({ userId: user.id, error: `WebPush: ${pushErr.message}` });
+        await recordSend(env, {
+          channel: 'push', kind: 'issue', status: 'failed',
+          user_id: user.id, user_name: user.name, user_email: user.email,
+          error: pushErr.message,
+        });
       }
     }
 

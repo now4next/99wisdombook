@@ -90,6 +90,28 @@ CREATE INDEX IF NOT EXISTS idx_saved_user ON saved_wisdom(user_id);
 CREATE INDEX IF NOT EXISTS idx_login_logs_at ON login_logs(logged_in_at DESC);
 CREATE INDEX IF NOT EXISTS idx_login_logs_user ON login_logs(user_id);
 
+-- 발송 기록.
+-- 이메일·푸시가 실제로 나갔는지를 되짚기 위한 표다. 성공과 실패를 모두 남긴다.
+--   channel  email | push
+--   kind     issue | reminder | weekly | admin_test | admin_sample | diag_check | diag_sample
+--   status   ok | failed
+-- 앱에서 ensureSendLogTable() 이 같은 정의로 자동 생성하므로 둘은 같아야 한다.
+CREATE TABLE IF NOT EXISTS send_logs (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     INTEGER,
+    user_name   TEXT,
+    user_email  TEXT,
+    channel     TEXT NOT NULL,
+    kind        TEXT NOT NULL,
+    chapter_id  INTEGER,
+    status      TEXT NOT NULL,
+    provider_id TEXT,
+    from_addr   TEXT,
+    error       TEXT,
+    sent_at     TEXT DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_send_logs_sent ON send_logs(sent_at DESC);
+
 -- ⚠ 초기 관리자 계정.
 -- password 는 비밀번호의 SHA-256 16진 문자열이다.
 -- 예전에는 흔한 기본 비밀번호의 해시가 이 파일에 그대로 적혀 있었고, schema.sql 이

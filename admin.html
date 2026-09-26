@@ -22,7 +22,7 @@
       }
       /* 캐시 무효화는 반드시 이 가드 안에 있어야 한다. 밖에 두면 위의 replace()
          로 떠나는 중에도 실행돼 그 이동을 덮어쓰고 왕복이 생긴다. */
-      var V = '20260926e';
+      var V = '20260927a';
       if (new URLSearchParams(location.search).get('v') !== V) {
         window.location.replace(location.pathname + '?v=' + V);
       }
@@ -264,6 +264,7 @@
     <button data-tab="members">회원</button>
     <button data-tab="access">접속기록</button>
     <button data-tab="columns">칼럼</button>
+    <button data-tab="sends">발송</button>
     <button data-tab="mail">메일</button>
   </nav>
 
@@ -336,6 +337,37 @@
           <tr><th style="text-align:center;">장</th><th style="text-align:center;">부</th><th>렌즈</th><th>제목 · 슬러그</th><th>공유 문장</th><th style="text-align:center;">분</th><th></th></tr>
         </thead>
         <tbody id="ins-body"><tr><td colspan="7" class="state">불러오는 중…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══════════ 발송 ══════════ -->
+  <section class="panel" id="panel-sends">
+    <h1>발송 <span id="send-count" style="font-family:var(--sans);font-size:13px;font-weight:400;color:var(--muted-2);"></span></h1>
+    <p class="lead">Daily Wisdom 과 안내 메일이 실제로 나갔는지 남긴 기록입니다. 실패도 함께 남습니다.</p>
+
+    <div class="cards" style="margin-bottom:22px;">
+      <div class="card"><div class="k">최근 7일 발송</div><div class="v" id="sv-total">–</div><div class="s" id="sv-total-s">&nbsp;</div></div>
+      <div class="card"><div class="k">실패</div><div class="v" id="sv-failed">–</div><div class="s">다시 보내지지 않습니다</div></div>
+      <div class="card"><div class="k">마지막 발송</div><div class="v" id="sv-last" style="font-size:19px;line-height:1.5;">–</div><div class="s">한국 시간</div></div>
+    </div>
+
+    <div class="row" style="margin-bottom:14px;">
+      <select id="send-filter" style="max-width:180px;">
+        <option value="">전체</option>
+        <option value="failed">실패만</option>
+        <option value="issue">Daily Wisdom</option>
+        <option value="push">푸시</option>
+      </select>
+      <button class="btn ghost small" onclick="loadSendLogs()">새로고침</button>
+    </div>
+
+    <div class="tbl">
+      <table>
+        <thead>
+          <tr><th>시각</th><th>받는 사람</th><th>종류</th><th>상태</th><th>발신</th></tr>
+        </thead>
+        <tbody id="send-log-body"><tr><td colspan="5" class="state">불러오는 중…</td></tr></tbody>
       </table>
     </div>
   </section>
@@ -886,6 +918,74 @@
     }
   }
 
+  // ── 발송 기록 ──
+  var sendLogs = [];
+  var KIND_KO = {
+    issue: 'Daily Wisdom', reminder: '리마인더', weekly: '주간 리포트',
+    admin_test: '발송 확인', admin_sample: '샘플', diag_check: '점검', diag_sample: '점검 샘플',
+  };
+
+  async function loadSendLogs() {
+    var tbody = document.getElementById('send-log-body');
+    tbody.innerHTML = '<tr><td colspan="5" class="state">불러오는 중…</td></tr>';
+    try {
+      var res = await fetch('/api/admin/send-logs?limit=200', {
+        headers: { 'Authorization': 'Bearer ' + wisdomAPI.token },
+      });
+      var d = await res.json();
+      if (!d.success) throw new Error(d.error || '불러오지 못했습니다');
+      sendLogs = d.logs || [];
+
+      var sm = d.summary || {};
+      document.getElementById('sv-total').textContent = sm.total || 0;
+      document.getElementById('sv-total-s').textContent = '성공 ' + (sm.ok || 0) + '건';
+      document.getElementById('sv-failed').textContent = sm.failed || 0;
+      document.getElementById('sv-last').textContent = sm.last_at ? kstTime(sm.last_at + 'Z') : '없음';
+
+      renderSendLogs();
+    } catch (e) {
+      tbody.innerHTML = '<tr><td colspan="5" class="state err">불러오지 못했습니다: ' + esc(e.message) + '</td></tr>';
+    }
+  }
+
+  function renderSendLogs() {
+    var f = document.getElementById('send-filter').value;
+    var rows = sendLogs.filter(function (l) {
+      if (f === 'failed') return l.status === 'failed';
+      if (f === 'issue')  return l.kind === 'issue';
+      if (f === 'push')   return l.channel === 'push';
+      return true;
+    });
+    document.getElementById('send-count').textContent =
+      rows.length === sendLogs.length ? '· 최근 ' + sendLogs.length + '건' : '· ' + rows.length + ' / ' + sendLogs.length + '건';
+
+    var tbody = document.getElementById('send-log-body');
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="state">기록이 없습니다.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map(function (l) {
+      var ok = l.status === 'ok';
+      return '<tr>'
+        + '<td class="dim" style="white-space:nowrap;">' + kstTime(l.sent_at + 'Z') + '</td>'
+        + '<td>' + esc(l.user_name || '-')
+          + '<br><span class="dim" style="font-size:12px;">' + esc(l.user_email || '') + '</span></td>'
+        + '<td><span class="badge">' + esc(KIND_KO[l.kind] || l.kind) + '</span>'
+          + (l.channel === 'push' ? ' <span class="badge">푸시</span>' : '')
+          + (l.chapter_id ? '<div class="dim" style="font-size:12px;margin-top:3px;">' + l.chapter_id + '장</div>' : '')
+          + '</td>'
+        + '<td>' + (ok
+            ? '<span class="badge admin">성공</span>'
+            : '<span class="badge" style="color:var(--danger);border-color:color-mix(in srgb,var(--danger) 35%,transparent);">실패</span>'
+              + (l.error ? '<div class="dim" style="font-size:12px;margin-top:3px;max-width:320px;white-space:normal;">' + esc(l.error) + '</div>' : ''))
+          + '</td>'
+        + '<td class="dim" style="font-size:12px;">' + esc(l.from_addr || '-') + '</td>'
+        + '</tr>';
+    }).join('');
+  }
+
+  document.getElementById('send-filter').addEventListener('change', renderSendLogs);
+
   // ── 메일 ──
   async function testEmailNotify(kind) {
     var isIssue = kind === 'issue';
@@ -964,10 +1064,11 @@
     var u = wisdomAPI.getCurrentUser() || {};
     document.getElementById('whoami').textContent = u.name || u.username || '';
     var tab = (location.hash || '').replace('#', '');
-    if (['overview', 'members', 'access', 'columns', 'mail'].indexOf(tab) >= 0) showTab(tab);
+    if (['overview', 'members', 'access', 'columns', 'sends', 'mail'].indexOf(tab) >= 0) showTab(tab);
 
     loadUsers();
     loadLoginLogs();
+    loadSendLogs();
     /* admin-insights.js 는 defer 로 실행돼 이 스크립트보다 늦을 수 있다. */
     if (window.loadInsights) loadInsights();
     else window.addEventListener('DOMContentLoaded', function () { if (window.loadInsights) loadInsights(); });
