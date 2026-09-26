@@ -91,12 +91,17 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   display: flex; align-items: center; gap: 18px;
 }
 .brand { display: flex; align-items: center; gap: 11px; }
+/* 두 개의 9 를 닫는 따옴표 모양으로 그렸다.
+   숫자 99 이면서 동시에 인용부호다 — 문장을 모은 책이라서. */
 .brand-mark {
   width: 34px; height: 34px; border-radius: 10px; flex: none;
-  background: color-mix(in srgb, var(--p2) 16%, #fff);
+  background: linear-gradient(145deg,
+    color-mix(in srgb, var(--p2) 24%, #fff),
+    color-mix(in srgb, var(--p2) 10%, #fff));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--p2) 20%, transparent);
   color: var(--p2); display: grid; place-items: center;
-  font-family: var(--serif-display); font-weight: 900; font-size: 1rem; line-height: 1;
 }
+.brand-mark svg { width: 23px; height: 23px; display: block; }
 .brand-word {
   font-family: var(--serif); font-weight: 700; font-size: 1.06rem;
   letter-spacing: -.02em;
@@ -115,9 +120,17 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 
 .btn-cta {
   background: var(--p2); color: #fff; border-radius: 999px;
-  padding: 9px 19px; font-size: .84rem; font-weight: 600;
+  font-size: .84rem; font-weight: 600;
   box-shadow: 0 2px 8px color-mix(in srgb, var(--p2) 30%, transparent);
   transition: filter .18s, transform .18s;
+}
+/* .nav a (0,0,1,1) 가 .btn-cta (0,0,1,0) 를 이기므로 padding 을 그침에
+   써 두면 padding:4px 0 이 이긴다. 좌우 여백이 0이 돼 글자가 알약에
+   꽉 차고, 긴 문구(Daily Wisdom)에서는 알약 밖으로 샐어난다.
+   720px 미디어쿼리 안에만 보정이 있어서 데스크톱이 깨져 있었다. */
+.nav a.btn-cta {
+  padding: 10px 20px; border-bottom: none; line-height: 1.2;
+  white-space: nowrap;
 }
 .btn-cta:hover { filter: brightness(1.06); transform: translateY(-1px); }
 
