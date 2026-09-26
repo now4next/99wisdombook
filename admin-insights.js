@@ -51,11 +51,11 @@
   async function load() {
     var body = el('ins-body');
     if (!body) return;
-    body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:32px;">로딩 중...</td></tr>';
+    body.innerHTML = '<tr><td colspan="7" class="state">로딩 중...</td></tr>';
     try {
       var res = await fetch('/api/admin/insights', { headers: authHeaders(false) });
       if (res.status === 401) {
-        body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#c62828;padding:32px;">' +
+        body.innerHTML = '<tr><td colspan="7" class="state err">' +
           '관리자 권한이 필요합니다. 로그아웃 후 다시 로그인해 주세요.</td></tr>';
         return;
       }
@@ -73,7 +73,7 @@
       }
       render();
     } catch (e) {
-      body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#c62828;padding:32px;">' +
+      body.innerHTML = '<tr><td colspan="7" class="state err">' +
         '불러오지 못했습니다: ' + esc(e.message) + '</td></tr>';
     }
   }
@@ -96,20 +96,20 @@
 
     var body = el('ins-body');
     if (!rows.length) {
-      body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;padding:32px;">해당하는 칼럼이 없습니다.</td></tr>';
+      body.innerHTML = '<tr><td colspan="7" class="state">해당하는 칼럼이 없습니다.</td></tr>';
       return;
     }
 
     body.innerHTML = rows.map(function (i) {
       return '<tr>' +
-        '<td style="text-align:center;">' + i.chapter_id + '</td>' +
-        '<td style="text-align:center;color:#888;">' + i.part_id + '부</td>' +
+        '<td class="num" style="color:var(--ink);font-weight:600;">' + i.chapter_id + '</td>' +
+        '<td class="num">' + i.part_id + '부</td>' +
         '<td><span class="badge">' + esc(LENS_KO[i.lens] || i.lens) + '</span></td>' +
-        '<td><a href="/insight/' + encodeURIComponent(i.slug) + '" target="_blank" rel="noopener" style="color:#5d4037;">' +
+        '<td><a href="/insight/' + encodeURIComponent(i.slug) + '" target="_blank" rel="noopener" style="color:var(--ink);font-weight:500;">' +
           esc(i.title) + '</a><br>' +
-          '<span style="color:#aaa;font-size:0.78rem;font-family:monospace;">' + esc(i.slug) + '</span></td>' +
-        '<td style="color:#666;font-size:0.85rem;">' + esc(i.quotable || '') + '</td>' +
-        '<td style="text-align:center;color:#888;">' + (i.reading_time || '-') + '분</td>' +
+          '<span style="color:var(--muted-2);font-size:11.5px;font-family:var(--mono);">' + esc(i.slug) + '</span></td>' +
+        '<td class="dim">' + esc(i.quotable || '') + '</td>' +
+        '<td class="num">' + (i.reading_time || '-') + '분</td>' +
         '<td><button class="btn btn-edit" data-ins-edit="' + i.id + '">편집</button> ' +
           '<button class="btn btn-delete" data-ins-del="' + i.id + '">삭제</button></td>' +
         '</tr>';
@@ -165,7 +165,7 @@
     var ok = n >= MIN_CHARS && n <= MAX_CHARS;
     c.textContent = '공백 제외 ' + n + '자' +
       (ok ? ' · 기준 범위' : ' · 기준 ' + MIN_CHARS + '~' + MAX_CHARS + '자를 벗어났습니다');
-    c.style.color = ok ? '#2e7d32' : '#c62828';
+    c.style.color = ok ? 'var(--accent)' : 'var(--danger)';
   }
 
   function msg(text, ok) {
@@ -173,7 +173,7 @@
     m.textContent = text;
     m.style.display = 'block';
     m.style.background = ok ? '#e8f5e9' : '#ffebee';
-    m.style.color = ok ? '#2e7d32' : '#c62828';
+    m.style.color = ok ? 'var(--accent)' : 'var(--danger)';
   }
 
   async function save() {
