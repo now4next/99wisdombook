@@ -196,20 +196,22 @@
         </div>
         <h3 class="item-title">${item.title}</h3>
         ${hasMemo ? `<div class="item-memo">${item.memo.trim()}</div>` : ''}
-        <div class="item-actions">
-          <a class="btn-item-read" href="/chapter/${item.chapter_id}">챕터 읽기 →</a>
-          <button class="btn-item-share" type="button">공유</button>
-          <div class="item-actions-sub">
-            <button class="btn-memo" type="button">${hasMemo ? '소감 수정' : '소감 남기기'}</button>
-            <button class="btn-item-remove" type="button">삭제</button>
-          </div>
-        </div>
+        <!-- 입력창은 소감이 실제로 놓일 자리에서 열려야 한다.
+             전에는 버튼 줄 아래에서 열려 쓰는 곳과 보이는 곳이 달랐다. -->
         <div class="memo-edit-area" hidden>
           <textarea class="memo-textarea" maxlength="300" placeholder="이 문장과 관련된 나만의 생각이나 경험을 기록해보세요…">${hasMemo ? item.memo.trim() : ''}</textarea>
           <div class="memo-char-count"><span class="memo-count-num">${hasMemo ? item.memo.trim().length : 0}</span>/300</div>
           <div class="memo-edit-actions">
             <button class="btn-memo-cancel" type="button">취소</button>
             <button class="btn-memo-save" type="button">저장</button>
+          </div>
+        </div>
+        <div class="item-actions">
+          <a class="btn-item-read" href="/chapter/${item.chapter_id}">챕터 읽기 →</a>
+          <button class="btn-item-share" type="button">공유</button>
+          <div class="item-actions-sub">
+            <button class="btn-memo" type="button">${hasMemo ? '소감 수정' : '소감 남기기'}</button>
+            <button class="btn-item-remove" type="button">삭제</button>
           </div>
         </div>
       `;
@@ -226,14 +228,22 @@
         charNum.textContent = textarea.value.length;
       });
 
+      /* 입력창과 소감 상자가 같은 자리에 있으므로 한 번에 하나만 보인다. */
+      const toggleMemoBox = (editing) => {
+        const box = el.querySelector('.item-memo');
+        if (box) box.hidden = editing;
+      };
+
       btnMemo.addEventListener('click', () => {
         editArea.hidden = false;
+        toggleMemoBox(true);
         textarea.focus();
-        btnMemo.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        editArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       });
 
       btnCancel.addEventListener('click', () => {
         editArea.hidden = true;
+        toggleMemoBox(false);
         const curMemo = el.querySelector('.item-memo');
         textarea.value = curMemo ? curMemo.textContent : '';
         charNum.textContent = textarea.value.length;
@@ -243,6 +253,7 @@
         btnSave.disabled = true;
         await saveMemo(item.chapter_id, textarea.value.trim(), el);
         editArea.hidden = true;
+        toggleMemoBox(false);
         btnSave.disabled = false;
       });
 
