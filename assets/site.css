@@ -203,6 +203,13 @@
   padding: 10px 18px; font-size: .82rem; font-weight: 600; cursor: pointer;
 }
 .referral-stats { margin-top: 13px; font-size: .83rem; color: var(--muted); line-height: 1.8; }
+/* 이 뱃지는 스타일이 없어 맨글로 묻혀 있었다. */
+.referral-badge {
+  display: inline-block; margin-left: 6px; padding: 3px 10px; border-radius: 999px;
+  font-size: .76rem; background: color-mix(in srgb, var(--accent) 13%, #fff);
+  color: color-mix(in srgb, var(--accent) 72%, #000);
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, transparent);
+}
 
 /* ══════════ 모달 공통 ══════════ */
 .modal-backdrop {
@@ -391,25 +398,15 @@ select { cursor: pointer; }
 }
 
 /* ══════════ 보관함 (my-wisdom.html) ══════════ */
-.top-bar {
-  position: sticky; top: 0; z-index: 90;
-  background: rgba(251,251,248,.88); backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--line);
-  display: flex; align-items: center; gap: 14px; padding: 15px 20px;
-}
-.top-bar-back {
-  width: 34px; height: 34px; flex: none; border-radius: 50%;
-  border: 1px solid var(--line); display: grid; place-items: center;
-  color: var(--ink-2); font-size: 1.05rem; background: var(--surface); transition: all .2s;
-}
-.top-bar-back:hover { border-color: var(--line-strong); background: var(--surface-2); }
-.top-bar-title { font-family: var(--serif); font-weight: 700; font-size: 1.06rem; letter-spacing: -.02em; }
+/* .top-bar 는 지웠다. 이 페이지만 다른 머리를 써서 내비도 푸터도 없었고,
+   그 때문에 다른 사이트처럼 보였다. 이제 masthead 를 공유한다. */
 .streak-pill {
-  margin-left: auto; font-family: var(--mono); font-size: .7rem; border-radius: 999px; padding: 4px 12px;
+  font-family: var(--mono); font-size: .7rem; border-radius: 999px; padding: 4px 12px;
   background: color-mix(in srgb, var(--p1) 16%, #fff); color: color-mix(in srgb, var(--p1) 78%, #000);
 }
 
 .main { max-width: 760px; margin: 0 auto; padding: 34px 20px 70px; }
+.slabel .streak-pill { margin-left: 12px; }
 .section-label {
   font-family: var(--mono); font-size: .72rem; letter-spacing: .17em;
   text-transform: uppercase; color: var(--muted); margin-bottom: 22px;
@@ -423,7 +420,13 @@ select { cursor: pointer; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.empty-state { text-align: center; padding: 60px 20px; }
+.empty-state { text-align: center; padding: 64px 20px 60px; }
+/* 이모지였던 자리. 사이트의 다른 아트가 전부 선화라 결을 맞춘다. */
+svg.empty-icon {
+  width: 52px; height: 52px; display: block; margin: 0 auto;
+  stroke: color-mix(in srgb, var(--accent) 60%, var(--muted-2));
+  fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+}
 .empty-icon { font-size: 2.6rem; opacity: .7; }
 .empty-title { font-family: var(--serif); font-weight: 700; font-size: 1.26rem; margin-top: 16px; letter-spacing: -.02em; }
 .empty-desc { font-size: .92rem; color: var(--muted); line-height: 1.85; margin-top: 12px; word-break: keep-all; }
