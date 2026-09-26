@@ -464,8 +464,15 @@
              로그인한 경우에도 엉뚱한 곳으로 떨어진다. 관리자 페이지에서
              되돌려진 경우(?login=1 / ?denied=admin)에만 거기로 보낸다. */
           const fromAdmin = /[?&](login=1|denied=admin)/.test(location.search);
+          /* 주소에 목적지가 적혀 있으면 그쪽이 우선이다.
+             pendingChapterHref 는 오늘의 카드가 렌더될 때 /chapter/N 으로
+             덮어쓰여서, 거기에만 기대면 ?account=1 로 들어온 사람이
+             로그인 뒤 엉뚱한 장으로 떨어진다. */
+          const back = /[?&]account=1/.test(location.search) ? 'daily.html?account=1'
+                     : /[?&]notify=1/.test(location.search)  ? 'daily.html?notify=1'
+                     : pendingChapterHref;
           window.location.href = (result.user.role === 'admin' && fromAdmin)
-            ? 'admin.html' : pendingChapterHref;
+            ? 'admin.html' : back;
         }
       } catch (err) {
         showAlert('login-error', err.message || '로그인에 실패했습니다.');
