@@ -289,6 +289,13 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 }
 .col-body { padding: 18px 20px 18px; display: flex; flex-direction: column; flex: 1; }
 .col-kicker { font-family: var(--mono); font-size: .66rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted-2); }
+.col-anchor {
+  font-family: var(--serif); font-size: .82rem; line-height: 1.5;
+  /* 파트 색을 유지하되 본문으로 읽힐 만큼 어둡게 한다 */
+  color: color-mix(in srgb, var(--accent) 55%, var(--ink));
+  font-weight: 600; margin: 7px 0 0; word-break: keep-all;
+}
+.col-anchor + .col-title { margin-top: 4px; }
 .col-title {
   font-family: var(--serif); font-weight: 700; font-size: 1.14rem;
   margin: 8px 0 9px; line-height: 1.42; letter-spacing: -.024em; word-break: keep-all;

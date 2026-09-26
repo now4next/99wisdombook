@@ -51,7 +51,9 @@
             '<svg class="art" viewBox="0 0 100 100">' + (LENS_ART[it.lens] || LENS_ART.origin) + '</svg>' +
           '</div>' +
           '<div class="col-body">' +
-            '<div class="col-kicker">제' + (it.part_id || 1) + '부 ' + it.chapter_id + '장 · ' + escH(lens) + '</div>' +
+            '<div class="col-kicker">제' + (it.part_id || 1) + '부 ' + it.chapter_id + '장</div>' +
+            /* 카드에 어느 속담의 칼럼인지 드러나야 한다 */
+            (it.anchor_quote ? '<p class="col-anchor">「' + escH(it.anchor_quote) + '」</p>' : '') +
             '<h3 class="col-title">' + escH(it.title) + '</h3>' +
             '<p class="col-lead">' + escH(it.hook || it.quotable || '') + '</p>' +
             '<div class="col-foot"><span class="tag-soft">' + escH(lens) + '</span>' +
