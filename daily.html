@@ -1071,6 +1071,16 @@
       switchTab(tab === 'register' ? 'register' : 'login');
     }
 
+    (function autoOpenAccount() {
+      if (!/[?&]account=1/.test(location.search)) return;
+      function go() {
+        if (window.wisdomAPI && wisdomAPI.isLoggedIn()) openAccountModal();
+        else { pendingChapterHref = 'daily.html?account=1'; openModal(); }
+      }
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go);
+      else go();
+    })();
+
     (function autoOpenNotify() {
       if (!/[?&]notify=1/.test(location.search)) return;
       function go() { if (window.wisdomAPI && wisdomAPI.isLoggedIn()) openNotifyModal(); }

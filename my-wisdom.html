@@ -19,6 +19,8 @@
     <a class="top-bar-back" href="/" aria-label="뒤로">&larr;</a>
     <span class="top-bar-title">내가 모은 지혜</span>
     <span class="streak-pill" id="streak-pill" hidden>&#128293; <span id="header-streak">0</span>일</span>
+    <a class="top-bar-account" href="/daily.html?account=1" aria-label="내 정보" title="내 정보"
+       style="margin-left:10px;font-size:.78rem;color:var(--muted);text-decoration:none;white-space:nowrap;">내 정보</a>
   </header>
 
   <main class="main">
@@ -266,7 +268,11 @@
         document.getElementById('empty-state').hidden = false;
         document.getElementById('empty-state').querySelector('.empty-desc').textContent =
           '로그인 후 보관한 지혜를 확인할 수 있습니다.';
-        document.getElementById('empty-state').querySelector('a').textContent = '로그인하러 가기';
+        /* 문구만 바꾸고 href 는 '/' 로 두면 누른 사람은 홈으로 간다.
+           로그인 화면은 daily.html 에만 있다. */
+        const emptyLink = document.getElementById('empty-state').querySelector('a');
+        emptyLink.textContent = '로그인하러 가기';
+        emptyLink.href = '/daily.html?login=1';
         return;
       }
 
