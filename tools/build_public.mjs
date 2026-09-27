@@ -79,6 +79,23 @@ const REQUIRED = [
   'og/ginkgo-survived.png',
 ];
 
+/* ⚠ 장별 원문은 프론트매터를 정규식으로 걷어낸다. 윈도우에서 한 번
+   저장해 CRLF 가 되면 그 정규식이 빗나가, 화면에 chapter_id 부터 그대로
+   찍힌다. 실제로 1~4장이 그 상태로 배포된 적이 있어 빌드에서 막는다.
+   (렌더러 쪽도 고쳤지만, 원인을 근처에서 잡는 편이 낫다.) */
+function assertChaptersAreLF() {
+  const dir = path.join(ROOT, 'data', 'chapters');
+  if (!fs.existsSync(dir)) return;
+  const bad = fs.readdirSync(dir)
+    .filter((f) => f.endsWith('.md'))
+    .filter((f) => fs.readFileSync(path.join(dir, f), 'utf8').includes('\r\n'));
+  if (bad.length) {
+    console.error('\n❌ 줄바꿈이 CRLF 인 장이 있습니다:', bad.join(', '));
+    console.error('   LF 로 되돌린 뒤 다시 빌드하세요.\n');
+    process.exit(1);
+  }
+}
+
 const isExcludedRootFile = (name) => EXCLUDE_ROOT.some((re) => re.test(name));
 
 function countFiles(dir) {
@@ -90,6 +107,8 @@ function countFiles(dir) {
 }
 
 function main() {
+  assertChaptersAreLF();
+
   fs.rmSync(DIST, { recursive: true, force: true });
   fs.mkdirSync(DIST, { recursive: true });
 

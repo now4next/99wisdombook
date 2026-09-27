@@ -12,7 +12,10 @@ function esc(s) {
 }
 
 function parseFront(text) {
-  const m = text.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  /* ⚠ \n 만 받으면 안 된다. 윈도우에서 파일을 한 번 저장하면 CRLF 가 되고,
+     그러면 이 정규식이 빗나가 프론트매터가 본문으로 그대로 출력된다.
+     실제로 1~4장이 이 상태로 배포된 적이 있다. */
+  const m = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
   if (!m) return { meta: {}, body: text };
   const meta = {};
   for (const line of m[1].split('\n')) {
