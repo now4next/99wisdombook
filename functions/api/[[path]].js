@@ -37,10 +37,91 @@ function jsonResponse(data, status = 200) {
   });
 }
 
+/* 비밀번호 해시.
+
+   예전에는 소금 없는 SHA-256 한 번이었다. 빠른 해시라 유출되면 무차별
+   대입이 사실상 공짜고, 소금이 없어 같은 비밀번호를 쓴 계정이 한눈에
+   드러난다. 지금은 PBKDF2-SHA256 을 쓴다.
+
+   저장 형식: pbkdf2$<반복 횟수>$<소금 base64>$<해시 base64>
+   기존 계정의 값은 64자리 16진수 그대로 남아 있다. verifyPassword 가
+   두 형식을 모두 받고, 로그인에 성공하면 새 형식으로 조용히 올린다. */
+/* 반복 횟수는 Workers 가 PBKDF2 에 허용하는 상한(10만)에 맞췄다.
+   나중에 올리면 verifyPassword 가 낡은 값을 needsUpgrade 로 표시해
+   로그인할 때 알아서 다시 해시한다. */
+const PBKDF2_ITERATIONS = 100000;
+
+function bytesToB64(bytes) {
+  let s = '';
+  for (const b of bytes) s += String.fromCharCode(b);
+  return btoa(s);
+}
+function b64ToBytes(b64) {
+  const s = atob(b64);
+  const out = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
+  return out;
+}
+
+async function pbkdf2Bits(password, salt, iterations) {
+  const key = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', hash: 'SHA-256', salt, iterations }, key, 256
+  );
+  return new Uint8Array(bits);
+}
+
 async function hashPassword(password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const hash = await pbkdf2Bits(password, salt, PBKDF2_ITERATIONS);
+  return `pbkdf2$${PBKDF2_ITERATIONS}$${bytesToB64(salt)}$${bytesToB64(hash)}`;
+}
+
+/** 구버전 형식. 대조용으로만 남긴다 — 새로 저장하는 데 쓰지 말 것. */
+async function legacyHashPassword(password) {
   const data = new TextEncoder().encode(password);
   const buf  = await crypto.subtle.digest('SHA-256', data);
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+/** 길이가 달라도 비교 시간이 값에 따라 달라지지 않게 한다. */
+function timingSafeEqual(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  let diff = a.length ^ b.length;
+  const n = Math.min(a.length, b.length);
+  for (let i = 0; i < n; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+/** 맞으면 { ok: true, needsUpgrade } 를 준다. needsUpgrade 면 새 형식으로 다시 저장한다. */
+async function verifyPassword(password, stored) {
+  if (!stored) return { ok: false, needsUpgrade: false };
+  if (stored.startsWith('pbkdf2$')) {
+    const [, iterStr, saltB64, hashB64] = stored.split('$');
+    const iterations = parseInt(iterStr, 10);
+    if (!iterations || !saltB64 || !hashB64) return { ok: false, needsUpgrade: false };
+    let got;
+    try {
+      got = await pbkdf2Bits(password, b64ToBytes(saltB64), iterations);
+    } catch (_) {
+      return { ok: false, needsUpgrade: false };
+    }
+    const ok = timingSafeEqual(bytesToB64(got), hashB64);
+    return { ok, needsUpgrade: ok && iterations < PBKDF2_ITERATIONS };
+  }
+  // 구버전 소금 없는 SHA-256
+  const ok = timingSafeEqual(await legacyHashPassword(password), stored);
+  return { ok, needsUpgrade: ok };
+}
+
+/** 로그인에 성공한 구버전 해시를 새 형식으로 올린다. 실패해도 로그인은 막지 않는다. */
+async function upgradePasswordHash(env, userId, password) {
+  try {
+    await env.DB.prepare('UPDATE users SET password = ? WHERE id = ?')
+      .bind(await hashPassword(password), userId).run();
+  } catch (_) {}
 }
 
 async function sha256hex(text) {
@@ -271,18 +352,22 @@ async function handleLogin(request, env) {
   const { email, password } = await request.json();
   if (!email || !password) return jsonResponse({ error: '이메일과 비밀번호를 입력해주세요.' }, 400);
 
-  const hashed = await hashPassword(password);
+  /* 비밀번호는 소금이 섞여 있어 SQL 에서 대조할 수 없다. 계정을 먼저
+     찾고 해시는 코드에서 검증한다. */
   // 이메일로 조회 (신규) → 구버전 username으로 fallback
   let row = await env.DB.prepare(
-    'SELECT id, username, name, email, role, permissions, last_login FROM users WHERE email = ? AND password = ?'
-  ).bind(email, hashed).first();
+    'SELECT id, username, name, email, role, permissions, last_login, password FROM users WHERE email = ?'
+  ).bind(email).first();
   if (!row) {
     row = await env.DB.prepare(
-      'SELECT id, username, name, email, role, permissions, last_login FROM users WHERE username = ? AND password = ?'
-    ).bind(email, hashed).first();
+      'SELECT id, username, name, email, role, permissions, last_login, password FROM users WHERE username = ?'
+    ).bind(email).first();
   }
 
-  if (!row) return jsonResponse({ error: '이메일 또는 비밀번호가 올바르지 않습니다.' }, 401);
+  const check = await verifyPassword(password, row?.password);
+  if (!row || !check.ok) return jsonResponse({ error: '이메일 또는 비밀번호가 올바르지 않습니다.' }, 401);
+  if (check.needsUpgrade) await upgradePasswordHash(env, row.id, password);
+  delete row.password;
 
   await env.DB.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?').bind(row.id).run();
   await recordLoginLog(env, request, { user_id: row.id, user_name: row.name || row.username, user_email: row.email, login_type: 'local' });
@@ -1521,7 +1606,7 @@ async function handleChangePassword(userId, request, env) {
 
   const row = await env.DB.prepare('SELECT password FROM users WHERE id = ?').bind(tokenUserId).first();
   if (!row) return jsonResponse({ error: 'User not found' }, 404);
-  if (row.password !== await hashPassword(current)) {
+  if (!(await verifyPassword(current, row.password)).ok) {
     return jsonResponse({ error: '현재 비밀번호가 맞지 않습니다.' }, 403);
   }
 
@@ -1746,11 +1831,8 @@ async function handleReminderCron(request, env) {
 
     if (user.push_endpoint && env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY) {
       try {
-        await sendWebPush(
-          user.push_endpoint, user.push_p256dh, user.push_auth,
-          { title: heading, body: '오늘의 한 문장이 기다리고 있어요', url: '/daily.html?autoopen=1' },
-          env.VAPID_PRIVATE_KEY.trim(), env.VAPID_PUBLIC_KEY.trim(),
-          (env.VAPID_SUBJECT || 'mailto:info@99wisdombook.org').trim()
+        await sendWebPushToUser(env, user,
+          { title: heading, body: '오늘의 한 문장이 기다리고 있어요', url: '/daily.html?autoopen=1' }
         );
         results.push_sent++; touched = true;
       } catch (err) {
@@ -1813,11 +1895,8 @@ async function handleWeeklyCron(request, env) {
 
     if (user.push_endpoint && env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY) {
       try {
-        await sendWebPush(
-          user.push_endpoint, user.push_p256dh, user.push_auth,
-          { title: heading, body: `${streak}일 연속 읽고 계십니다`, url: '/daily.html?autoopen=1' },
-          env.VAPID_PRIVATE_KEY.trim(), env.VAPID_PUBLIC_KEY.trim(),
-          (env.VAPID_SUBJECT || 'mailto:info@99wisdombook.org').trim()
+        await sendWebPushToUser(env, user,
+          { title: heading, body: `${streak}일 연속 읽고 계십니다`, url: '/daily.html?autoopen=1' }
         );
         results.push_sent++; touched = true;
       } catch (err) {
@@ -1968,15 +2047,12 @@ async function handleNotifyCron(request, env) {
     // ── Web Push 알림 (독립적) ──
     if (user.push_endpoint && env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY) {
       try {
-        await sendWebPush(
-          user.push_endpoint, user.push_p256dh, user.push_auth,
+        await sendWebPushToUser(env, user,
           {
             title: wisdomItem.column ? wisdomItem.title : '📚 오늘의 Daily Wisdom',
             body:  wisdomItem.column ? wisdomItem.column.title : wisdomItem.title,
             url:   pushUrl,
-          },
-          env.VAPID_PRIVATE_KEY.trim(), env.VAPID_PUBLIC_KEY.trim(),
-          (env.VAPID_SUBJECT || 'mailto:info@99wisdombook.org').trim()
+          }
         );
         results.push_sent++;
         await recordSend(env, {
@@ -2225,9 +2301,34 @@ async function sendWebPush(endpoint, p256dhB64u, authB64u, payload, vapidPriv, v
   });
   if (res.status !== 200 && res.status !== 201) {
     const txt = await res.text().catch(() => '');
-    throw new Error(`${res.status} ${txt.slice(0, 200)}`);
+    const err = new Error(`${res.status} ${txt.slice(0, 200)}`);
+    err.statusCode = res.status;
+    throw err;
   }
   return res.status;
+}
+
+/* 구독이 만료되면 푸시 서비스가 404/410 을 돌려준다. 그대로 두면 같은
+   사용자에게서 같은 실패가 매일 쌓이고, 관리 화면의 발송 실패도 줄지
+   않는다. 만료가 확인되면 구독 정보를 지워 다음부터 건너뛰게 한다. */
+async function sendWebPushToUser(env, user, payload) {
+  try {
+    return await sendWebPush(
+      user.push_endpoint, user.push_p256dh, user.push_auth, payload,
+      env.VAPID_PRIVATE_KEY.trim(), env.VAPID_PUBLIC_KEY.trim(),
+      (env.VAPID_SUBJECT || 'mailto:info@99wisdombook.org').trim()
+    );
+  } catch (err) {
+    if (err.statusCode === 404 || err.statusCode === 410) {
+      try {
+        await env.DB.prepare(
+          'UPDATE users SET push_endpoint = NULL, push_p256dh = NULL, push_auth = NULL WHERE id = ?'
+        ).bind(user.id).run();
+        err.message += ' — 만료된 구독이라 삭제했습니다';
+      } catch (_) {}
+    }
+    throw err;
+  }
 }
 
 // ── Web Push 구독 관리 ──────────────────────────────────────────

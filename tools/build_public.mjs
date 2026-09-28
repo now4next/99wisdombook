@@ -64,6 +64,9 @@ const EXCLUDE_ROOT = [
 
 const EXCLUDE_DIRS = new Set([
   'dist', 'tools', 'mockup', 'node_modules', '.git', '.wrangler', '.claude',
+  // 개발 메모 보관소. EXCLUDE_ROOT 의 *.md 규칙은 루트 파일에만 걸리므로,
+  // 여기서 디렉터리째 막지 않으면 dist 로 통째로 복사돼 공개된다.
+  'docs',
 ]);
 
 /** 이것들이 하나라도 빠지면 배포하면 안 된다. */
