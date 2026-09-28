@@ -649,7 +649,9 @@ function issueEmail(env, user, wisdomItem, unsubUrl) {
 
   return {
     to: user.email,
-    subject: c ? proverb + ' — ' + c.title : proverb,
+    /* 제목은 받는상자에서 잘리기 쉬우므로 구분자를 따옴표로 대신한다.
+       속담이 어디까지인지가 줄표보다 분명하고 한 글자 덜 쓴다. */
+    subject: c ? '"' + proverb + '" ' + c.title : '"' + proverb + '"',
     html: emailLayout({ preheader: (c && c.hook) || (c && c.title) || proverb, body, footer }),
     text,
     unsub: unsubUrl,
