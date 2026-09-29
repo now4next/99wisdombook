@@ -1867,7 +1867,47 @@ async function handleReminderCron(request, env) {
   return jsonResponse({ success: true, date: today, total: users.length, ...results });
 }
 
-// ── 주간 리포트 (일요일 저녁) ──────────────────────────────────
+/* 매주 다른 칼럼을 고른다.
+
+   발송 기록(send_logs)은 주기적으로 지워지므로 "이미 보낸 것"을 순번
+   상태로 쓸 수 없다. 그래서 상태를 두지 않고 날짜에서 계산한다.
+   고정 기준일부터 몇 주가 지났는지 세고, chapter_id 를 섞어 만든 고정
+   순서에서 그 주차에 해당하는 칼럼을 꺼낸다.
+
+   순서를 섞는 이유는 1장, 2장, 3장 순으로 나가면 한 부에 몇 달씩
+   머물기 때문이다. 섞어 두면 주마다 다른 부의 글이 나간다.
+   한 주에 한 칸씩 나아가므로 전부 한 번 돌고 나서야 처음으로 돌아온다.
+   칼럼이 99편이면 약 이 년 주기다. */
+const PROMO_EPOCH_MS = Date.UTC(2026, 0, 5); // 2026-01-05 (월)
+
+function promoHash(n) {
+  let x = Math.imul(n, 2654435761) >>> 0;
+  x = (x ^ (x >>> 15)) >>> 0;
+  x = Math.imul(x, 2246822519) >>> 0;
+  return (x ^ (x >>> 13)) >>> 0;
+}
+
+/** 발행된 칼럼의 chapter_id 를 섞은 고정 순서로 돌려준다. */
+async function promoOrder(env) {
+  const r = await env.DB.prepare(
+    "SELECT chapter_id FROM insights WHERE status = 'published' ORDER BY chapter_id"
+  ).all();
+  return (r.results || [])
+    .map((x) => x.chapter_id)
+    .sort((a, b) => promoHash(a) - promoHash(b));
+}
+
+function promoWeek(nowMs) {
+  return Math.floor((nowMs - PROMO_EPOCH_MS) / 604800000);
+}
+
+/** 그 주차에 나갈 chapter_id. 순서가 비어 있으면 null. */
+function promoPick(order, week) {
+  if (!order.length) return null;
+  const n = order.length;
+  return order[((week % n) + n) % n];
+}
+
 /* ── 칼럼 한 편 + 알림 설정 유도 (매주 수요일 12시) ──────────
 
    왜 별도 엔드포인트인가. 기존 /api/notify/cron 은 이미 알림을 켠
@@ -1888,12 +1928,30 @@ async function handlePromoCron(request, env) {
     return jsonResponse({ error: 'Unauthorized' }, 401);
 
   const b = await request.json().catch(() => ({}));
-  const chapterId = parseInt(b.chapter_id, 10) || 23;
   const audience = b.audience === 'all' ? 'all' : 'subscribed';
   const to = String(b.to || '').trim();
   const dryRun = !!b.dry_run;
 
   await ensureEmailColumns(env);
+
+  /* chapter_id 를 주면 그 칼럼, 주지 않으면 이번 주 차례의 칼럼. */
+  const order = await promoOrder(env);
+  const week = promoWeek(Date.now());
+  const chapterId = parseInt(b.chapter_id, 10) || promoPick(order, week);
+  if (!chapterId)
+    return jsonResponse({ success: false, error: '발행된 칼럼이 없습니다.' }, 404);
+
+  /* 앞으로 어떤 순서로 나가는지 미리 볼 수 있게 한다. 상태가 없으므로
+     날짜만 있으면 몇 주 뒤 것도 계산된다. */
+  if (dryRun && b.preview) {
+    const nWeeks = Math.min(parseInt(b.preview, 10) || 8, 99);
+    const rows = [];
+    for (let i = 0; i < nWeeks; i++) {
+      const d = new Date(PROMO_EPOCH_MS + (week + i) * 604800000);
+      rows.push({ week: week + i, from: d.toISOString().slice(0, 10), chapter_id: promoPick(order, week + i) });
+    }
+    return jsonResponse({ success: true, dry_run: true, total_columns: order.length, schedule: rows });
+  }
 
   const col = await env.DB.prepare(
     "SELECT chapter_id, part_id, slug, title, hook, anchor_quote, body_md, action,"
@@ -1906,7 +1964,7 @@ async function handlePromoCron(request, env) {
 
   /* 테스트 발송. 회원이 아닌 주소로도 보낼 수 있어야 한다. */
   if (to) {
-    if (dryRun) return jsonResponse({ success: true, dry_run: true, mode: 'test', to, chapter_id: chapterId });
+    if (dryRun) return jsonResponse({ success: true, dry_run: true, mode: 'test', to, week, chapter_id: chapterId, title: col.title });
     try {
       const r = await sendAndLog(env,
         issueEmail(env, { id: null, name: '독자', email: to }, item,
@@ -1933,7 +1991,7 @@ async function handlePromoCron(request, env) {
   }
 
   if (dryRun)
-    return jsonResponse({ success: true, dry_run: true, audience, chapter_id: chapterId, total: users.length });
+    return jsonResponse({ success: true, dry_run: true, audience, week, chapter_id: chapterId, title: col.title, total: users.length });
 
   const results = { sent: 0, errors: [] };
   for (const user of users) {
@@ -1947,9 +2005,10 @@ async function handlePromoCron(request, env) {
       results.errors.push({ userId: user.id, error: err.message });
     }
   }
-  return jsonResponse({ success: true, audience, chapter_id: chapterId, total: users.length, ...results });
+  return jsonResponse({ success: true, audience, week, chapter_id: chapterId, title: col.title, total: users.length, ...results });
 }
 
+// ── 주간 리포트 (일요일 저녁) ──────────────────────────────────
 async function handleWeeklyCron(request, env) {
   const authHeader = request.headers.get('Authorization') || '';
   const cronSecret = (env.CRON_SECRET || '').trim();
