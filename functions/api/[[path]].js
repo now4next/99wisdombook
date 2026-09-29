@@ -273,6 +273,8 @@ export async function onRequest(context) {
       return handleReminderCron(request, env);
     if (path === '/api/notify/weekly' && method === 'POST')
       return handleWeeklyCron(request, env);
+    if (path === '/api/notify/promo' && method === 'POST')
+      return handlePromoCron(request, env);
     if (path === '/api/notify/email-test' && method === 'POST')
       return handleEmailTest(request, env);
     if (path === '/api/email/preview' && method === 'GET')
@@ -642,7 +644,8 @@ function mdToMailText(md) {
 }
 
 /** 오늘의 한 문장 + 칼럼 전문 */
-function issueEmail(env, user, wisdomItem, unsubUrl) {
+function issueEmail(env, user, wisdomItem, unsubUrl, opt) {
+  const promo = !!(opt && opt.promo);
   const c = wisdomItem.column;
   const SITE = 'https://99wisdombook.org';
   const webUrl    = c ? SITE + '/insight/' + c.slug : SITE + '/daily.html?autoopen=1';
@@ -708,10 +711,28 @@ function issueEmail(env, user, wisdomItem, unsubUrl) {
           + mailEsc(c.action).replace(/\n/g, '<br>') + '</td></tr></table>'
         : '')
     + '</td></tr>'
+    /* 알림 유도 배너. 칼럼을 다 읽은 자리에 놓는다. 권유가 글보다
+       앞에 오면 광고로 읽히고, 글 뒤에 오면 이어지는 제안이 된다. */
+    + (promo
+        ? '<tr><td style="padding:4px 26px 0;font-family:' + MAIL_SANS + ';">'
+          + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"'
+          + ' style="background:#f7f5f1;border-radius:11px;border:1px solid #ece8e2;"><tr>'
+          + '<td style="padding:22px 20px;text-align:center;">'
+          + '<p style="margin:0;font-family:Georgia,serif;font-size:19px;line-height:1.5;'
+          + 'font-weight:700;color:#2c2722;">매일 아침 지혜의 문장으로 시작하세요</p>'
+          + '<p style="margin:10px 0 0;font-size:14px;line-height:1.75;color:#6b645c;">'
+          + '이런 글을 매일 아침 한 편씩 보내 드립니다.<br>'
+          + '받는 요일과 시각은 직접 고르실 수 있고, 언제든 끄실 수 있습니다.</p>'
+          + '<div style="margin:18px 0 2px;"><a href="' + mailEsc(notifyUrl) + '"'
+          + ' style="display:inline-block;background:' + tone + ';color:#ffffff;'
+          + 'text-decoration:none;padding:12px 24px;border-radius:999px;'
+          + 'font-size:14px;font-weight:600;">이메일 알림 켜기</a></div>'
+          + '</td></tr></table></td></tr>'
+        : '')
     + '<tr><td style="padding:18px 26px 28px;font-family:' + MAIL_SANS + ';">'
     + btn('원문 읽기', sourceUrl, true)
     + btn('웹에서 보기', webUrl, false)
-    + btn('알림 설정', notifyUrl, false)
+    + (promo ? '' : btn('알림 설정', notifyUrl, false))
     + '</td></tr>';
 
   const footer = mailEsc(name) + '님께 보내 드립니다 · <a href="' + SITE + '" style="color:#a29a90;">99wisdombook.org</a><br>'
@@ -725,9 +746,10 @@ function issueEmail(env, user, wisdomItem, unsubUrl) {
     (c && c.hook) ? c.hook : '',
     c && c.body_md ? '\n' + mdToMailText(c.body_md) : '',
     (c && c.action) ? '\n' + c.action : '',
+    promo ? '\n매일 아침 지혜의 문장으로 시작하세요\n이런 글을 매일 아침 한 편씩 보내 드립니다. 받는 요일과 시각은 직접 고르실 수 있고, 언제든 끄실 수 있습니다.\n이메일 알림 켜기: ' + notifyUrl : '',
     '\n원문 읽기: ' + sourceUrl,
     '웹에서 보기: ' + webUrl,
-    '알림 설정: ' + notifyUrl,
+    promo ? '' : '알림 설정: ' + notifyUrl,
     '\n---\n' + name + '님께 보내 드립니다 · 99wisdombook.org',
     '이메일 받지 않기: ' + unsubUrl,
   ].filter(Boolean).join('\n');
@@ -1846,6 +1868,88 @@ async function handleReminderCron(request, env) {
 }
 
 // ── 주간 리포트 (일요일 저녁) ──────────────────────────────────
+/* ── 칼럼 한 편 + 알림 설정 유도 (매주 수요일 12시) ──────────
+
+   왜 별도 엔드포인트인가. 기존 /api/notify/cron 은 이미 알림을 켠
+   사람에게 오늘의 칼럼을 보내는 정기 발송이다. 이쪽은 대상과 목적이
+   다르다. 아직 알림을 켜지 않은 회원에게 칼럼을 한 편 보여 주고
+   설정을 권하는 일이다.
+
+   대상은 audience 로 고른다.
+     subscribed (기본) — email_enabled = 1. 매주 수요일 정기 발송용.
+     all               — 이메일이 있는 전 회원. 동의 없이 나가므로
+                         1회 안내에만 쓴다. 반복 호출하지 말 것.
+   to 를 주면 그 주소로만 한 통 보낸다(테스트). 회원 조회를 하지 않는다.
+   dry_run 이면 보내지 않고 대상만 세어 돌려준다. */
+async function handlePromoCron(request, env) {
+  const authHeader = request.headers.get('Authorization') || '';
+  const cronSecret = (env.CRON_SECRET || '').trim();
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`)
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+
+  const b = await request.json().catch(() => ({}));
+  const chapterId = parseInt(b.chapter_id, 10) || 23;
+  const audience = b.audience === 'all' ? 'all' : 'subscribed';
+  const to = String(b.to || '').trim();
+  const dryRun = !!b.dry_run;
+
+  await ensureEmailColumns(env);
+
+  const col = await env.DB.prepare(
+    "SELECT chapter_id, part_id, slug, title, hook, anchor_quote, body_md, action,"
+    + " quotable, hero_image, updated_at, published_at"
+    + " FROM insights WHERE status = 'published' AND chapter_id = ?"
+  ).bind(chapterId).first();
+  if (!col) return jsonResponse({ success: false, error: `${chapterId}장 칼럼이 없습니다.` }, 404);
+
+  const item = { title: col.anchor_quote, id: col.chapter_id, column: col };
+
+  /* 테스트 발송. 회원이 아닌 주소로도 보낼 수 있어야 한다. */
+  if (to) {
+    if (dryRun) return jsonResponse({ success: true, dry_run: true, mode: 'test', to, chapter_id: chapterId });
+    try {
+      const r = await sendAndLog(env,
+        issueEmail(env, { id: null, name: '독자', email: to }, item,
+                   'https://99wisdombook.org/daily.html?notify=1', { promo: true }),
+        { kind: 'promo_test', user_email: to, chapter_id: chapterId });
+      const want = (env.MAIL_FROM || '').trim() || MAIL_FROM_DEFAULT;
+      return jsonResponse({
+        success: true, mode: 'test', to, chapter_id: chapterId,
+        id: r.id || null, from: r.from, verified: r.from === want,
+      });
+    } catch (err) {
+      return jsonResponse({ success: false, error: err.message }, 500);
+    }
+  }
+
+  const sql = audience === 'all'
+    ? "SELECT id, name, email FROM users WHERE email IS NOT NULL AND email <> ''"
+    : "SELECT id, name, email FROM users WHERE email_enabled = 1 AND email IS NOT NULL AND email <> ''";
+  let users = [];
+  try {
+    users = (await env.DB.prepare(sql).all()).results || [];
+  } catch (err) {
+    return jsonResponse({ error: err.message }, 500);
+  }
+
+  if (dryRun)
+    return jsonResponse({ success: true, dry_run: true, audience, chapter_id: chapterId, total: users.length });
+
+  const results = { sent: 0, errors: [] };
+  for (const user of users) {
+    try {
+      const t = await ensureUnsubscribeToken(env, user.id);
+      await sendAndLog(env,
+        issueEmail(env, user, item, `https://99wisdombook.org/api/email/unsubscribe?t=${t}`, { promo: true }),
+        { kind: 'promo', user_id: user.id, user_name: user.name, user_email: user.email, chapter_id: chapterId });
+      results.sent++;
+    } catch (err) {
+      results.errors.push({ userId: user.id, error: err.message });
+    }
+  }
+  return jsonResponse({ success: true, audience, chapter_id: chapterId, total: users.length, ...results });
+}
+
 async function handleWeeklyCron(request, env) {
   const authHeader = request.headers.get('Authorization') || '';
   const cronSecret = (env.CRON_SECRET || '').trim();
