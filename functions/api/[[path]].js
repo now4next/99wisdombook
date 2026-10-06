@@ -330,6 +330,12 @@ export async function onRequest(context) {
     if (path.match(/^\/api\/notes\/\d+$/) && method === 'DELETE')
       return handleDeleteNote(path.split('/').pop(), request, env);
 
+    if (path === '/api/admin/notes' && method === 'GET')
+      return handleAdminListNotes(request, env);
+    if (path.match(/^\/api\/admin\/notes\/\d+$/) && method === 'PUT')
+      return handleAdminSetNoteStatus(path.split('/').pop(), request, env);
+    if (path.match(/^\/api\/admin\/notes\/\d+$/) && method === 'DELETE')
+      return handleAdminDeleteNote(path.split('/').pop(), request, env);
     if (path === '/api/admin/insights' && method === 'GET')    return handleAdminListInsights(request, env);
     if (path === '/api/admin/insights' && method === 'POST')   return handleCreateInsight(request, env);
     if (path.match(/^\/api\/admin\/insights\/\d+$/) && method === 'PUT')
@@ -1253,6 +1259,81 @@ async function noteWho(env, request, body, chapterId) {
   const uid = await getUserIdFromToken(request, env);
   if (uid) return await env.DB.prepare('SELECT id, name FROM users WHERE id = ?').bind(uid).first();
   return null;
+}
+
+/* ── 독자의 기록 · 관리자 ────────────────────────────────────
+
+   공개 목록과 달리 숨긴 것까지 보여 주고 실명도 함께 준다.
+   독자에게 약속한 익명은 다른 독자에 대한 것이고, 운영자는 같은 글을
+   반복해 쓰는 사람을 알아볼 수 있어야 검수가 된다.
+
+   지우는 것보다 숨기는 것을 기본으로 둔다. 지우면 왜 지웠는지 남지
+   않고, 같은 사람이 다시 쓸 때 전에 무슨 일이 있었는지 알 수 없다. */
+async function handleAdminListNotes(request, env) {
+  if (!await verifyAdminStrict(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
+  await ensureInsightNotesTable(env);
+
+  const url = new URL(request.url);
+  const only = url.searchParams.get('status') || '';
+  const limit = Math.min(parseInt(url.searchParams.get('limit'), 10) || 200, 500);
+
+  let sql = 'SELECT nt.id, nt.chapter_id, nt.user_id, nt.body, nt.status,'
+    + ' nt.created_at, nt.updated_at, u.name, u.email, i.title, i.slug'
+    + ' FROM insight_notes nt'
+    + ' LEFT JOIN users u ON u.id = nt.user_id'
+    + ' LEFT JOIN insights i ON i.chapter_id = nt.chapter_id';
+  const bind = [];
+  if (only === 'visible' || only === 'hidden') { sql += ' WHERE nt.status = ?'; bind.push(only); }
+  sql += ' ORDER BY nt.id DESC LIMIT ?';
+  bind.push(limit);
+
+  try {
+    const r = await env.DB.prepare(sql).bind(...bind).all();
+    const rows = r.results || [];
+    const sum = await env.DB.prepare(
+      "SELECT COUNT(*) AS total,"
+      + " SUM(CASE WHEN status = 'visible' THEN 1 ELSE 0 END) AS visible,"
+      + " SUM(CASE WHEN status = 'hidden' THEN 1 ELSE 0 END) AS hidden,"
+      + ' COUNT(DISTINCT user_id) AS writers,'
+      + ' MAX(created_at) AS last_at'
+      + ' FROM insight_notes'
+    ).first();
+    return jsonResponse({
+      success: true,
+      summary: sum || {},
+      notes: rows.map((x) => ({ ...x, masked: maskName(x.name) })),
+    });
+  } catch (err) {
+    return jsonResponse({ success: false, error: err.message }, 500);
+  }
+}
+
+async function handleAdminSetNoteStatus(id, request, env) {
+  if (!await verifyAdminStrict(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
+  await ensureInsightNotesTable(env);
+
+  const b = await request.json().catch(() => ({}));
+  const status = b.status === 'hidden' ? 'hidden' : 'visible';
+  try {
+    const cur = await env.DB.prepare('SELECT id FROM insight_notes WHERE id = ?').bind(id).first();
+    if (!cur) return jsonResponse({ success: false, error: '없는 기록입니다.' }, 404);
+    await env.DB.prepare("UPDATE insight_notes SET status = ?, updated_at = datetime('now') WHERE id = ?")
+      .bind(status, id).run();
+    return jsonResponse({ success: true, id: parseInt(id, 10), status });
+  } catch (err) {
+    return jsonResponse({ success: false, error: err.message }, 500);
+  }
+}
+
+async function handleAdminDeleteNote(id, request, env) {
+  if (!await verifyAdminStrict(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
+  await ensureInsightNotesTable(env);
+  try {
+    await env.DB.prepare('DELETE FROM insight_notes WHERE id = ?').bind(id).run();
+    return jsonResponse({ success: true });
+  } catch (err) {
+    return jsonResponse({ success: false, error: err.message }, 500);
+  }
 }
 
 async function handleListNotes(chapterId, request, env) {

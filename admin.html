@@ -264,6 +264,7 @@
     <button data-tab="members">회원</button>
     <button data-tab="access">접속기록</button>
     <button data-tab="columns">칼럼</button>
+    <button data-tab="notes">기록</button>
     <button data-tab="sends">발송</button>
     <button data-tab="mail">메일</button>
   </nav>
@@ -342,6 +343,38 @@
   </section>
 
   <!-- ══════════ 발송 ══════════ -->
+  <!-- ══════════ 독자의 기록 ══════════ -->
+  <section class="panel" id="panel-notes">
+    <h1>독자의 기록 <span id="note-count" style="font-family:var(--sans);font-size:13px;font-weight:400;color:var(--muted-2);"></span></h1>
+    <p class="lead">독자가 칼럼 아래에 남긴 소감입니다. 독자에게는 익명(홍**)으로 보이고, 이 화면에서만 실명이 함께 보입니다.
+      지우는 것보다 <b>숨기기</b>를 먼저 쓰세요 — 지우면 같은 사람이 다시 쓸 때 전에 무슨 일이 있었는지 알 수 없습니다.</p>
+
+    <div class="cards" style="margin-bottom:22px;">
+      <div class="card"><div class="k">전체</div><div class="v" id="nv-total">–</div><div class="s" id="nv-total-s">&nbsp;</div></div>
+      <div class="card"><div class="k">숨김</div><div class="v" id="nv-hidden">–</div><div class="s">독자에게 보이지 않습니다</div></div>
+      <div class="card"><div class="k">쓴 사람</div><div class="v" id="nv-writers">–</div><div class="s">중복 제외</div></div>
+      <div class="card"><div class="k">마지막 기록</div><div class="v" id="nv-last" style="font-size:19px;line-height:1.5;">–</div><div class="s">한국 시간</div></div>
+    </div>
+
+    <div class="row" style="margin-bottom:14px;">
+      <select id="note-filter" style="max-width:180px;">
+        <option value="">전체</option>
+        <option value="visible">공개된 것만</option>
+        <option value="hidden">숨긴 것만</option>
+      </select>
+      <button class="btn ghost small" onclick="loadNotes()">새로고침</button>
+    </div>
+
+    <div class="tbl">
+      <table>
+        <thead>
+          <tr><th>시각</th><th>쓴 사람</th><th>칼럼</th><th>내용</th><th>상태</th><th></th></tr>
+        </thead>
+        <tbody id="note-body"><tr><td colspan="6" class="state">불러오는 중…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
   <section class="panel" id="panel-sends">
     <h1>발송 <span id="send-count" style="font-family:var(--sans);font-size:13px;font-weight:400;color:var(--muted-2);"></span></h1>
     <p class="lead">Daily Wisdom 과 안내 메일이 실제로 나갔는지 남긴 기록입니다. 실패도 함께 남습니다.</p>
@@ -558,6 +591,8 @@
   function showTab(name) {
     document.querySelectorAll('#tabs button').forEach(function (x) { x.classList.toggle('on', x.dataset.tab === name); });
     document.querySelectorAll('.panel').forEach(function (p) { p.classList.toggle('on', p.id === 'panel-' + name); });
+    /* 기록 탭은 열 때 불러온다. 첫 화면에서 쓸데없이 조회하지 않는다. */
+    if (name === 'notes') loadNotes();
     /* 주소에 남겨 두면 새로 고쳐도 보던 탭으로 돌아온다. 가드가 ?v= 를 쓰므로
        해시로 둔다 — 쿼리를 건드리면 캐시 무효화 리다이렉트와 부딪힌다. */
     history.replaceState(null, '', location.pathname + location.search + '#' + name);
@@ -924,6 +959,90 @@
     issue: 'Daily Wisdom', reminder: '리마인더', weekly: '주간 리포트',
     admin_test: '발송 확인', admin_sample: '샘플', diag_check: '점검', diag_sample: '점검 샘플',
   };
+
+  // ── 독자의 기록 ──
+  var noteRows = [];
+
+  async function loadNotes() {
+    var tbody = document.getElementById('note-body');
+    tbody.innerHTML = '<tr><td colspan="6" class="state">불러오는 중…</td></tr>';
+    try {
+      var q = document.getElementById('note-filter').value;
+      var res = await fetch('/api/admin/notes?limit=300' + (q ? '&status=' + q : ''), {
+        headers: { 'Authorization': 'Bearer ' + wisdomAPI.token },
+      });
+      var d = await res.json();
+      if (!d.success) throw new Error(d.error || '불러오지 못했습니다');
+      noteRows = d.notes || [];
+
+      var sm = d.summary || {};
+      document.getElementById('nv-total').textContent = sm.total || 0;
+      document.getElementById('nv-total-s').textContent = '공개 ' + (sm.visible || 0) + '건';
+      document.getElementById('nv-hidden').textContent = sm.hidden || 0;
+      document.getElementById('nv-writers').textContent = sm.writers || 0;
+      document.getElementById('nv-last').textContent = sm.last_at ? kstTime(sm.last_at + 'Z') : '없음';
+      document.getElementById('note-count').textContent = (sm.total || 0) + '건';
+
+      renderNotes();
+    } catch (e) {
+      tbody.innerHTML = '<tr><td colspan="6" class="state err">불러오지 못했습니다: ' + esc(e.message) + '</td></tr>';
+    }
+  }
+
+  function renderNotes() {
+    var tbody = document.getElementById('note-body');
+    if (!noteRows.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="state">아직 기록이 없습니다.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = noteRows.map(function (n) {
+      var hidden = n.status === 'hidden';
+      return '<tr' + (hidden ? ' style="opacity:.55"' : '') + '>' +
+        '<td style="white-space:nowrap">' + esc(kstTime((n.created_at || '') + 'Z')) + '</td>' +
+        '<td style="white-space:nowrap">' + esc(n.name || '–') +
+          '<br><span class="dim" style="font-size:12px">' + esc(n.masked || '') + '</span></td>' +
+        '<td style="white-space:nowrap">' +
+          (n.slug ? '<a href="/insight/' + encodeURIComponent(n.slug) + '" target="_blank" rel="noopener">' +
+            esc(n.title || ('제' + n.chapter_id + '장')) + '</a>' : esc('제' + n.chapter_id + '장')) +
+          '<br><span class="dim" style="font-size:12px">제' + n.chapter_id + '장</span></td>' +
+        '<td style="max-width:420px;white-space:pre-wrap;line-height:1.7">' + esc(n.body || '') + '</td>' +
+        '<td style="white-space:nowrap">' + (hidden
+          ? '<span class="dim" style="font-size:12.5px">숨김</span>'
+          : '<span style="font-size:12.5px;color:var(--ok,#5FA97E)">공개</span>') + '</td>' +
+        '<td style="white-space:nowrap">' +
+          '<button class="btn ghost small" onclick="setNoteStatus(' + n.id + ',\'' +
+            (hidden ? 'visible' : 'hidden') + '\')">' + (hidden ? '다시 공개' : '숨기기') + '</button> ' +
+          '<button class="btn ghost small" onclick="deleteNote(' + n.id + ')">삭제</button>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  async function setNoteStatus(id, status) {
+    try {
+      var res = await fetch('/api/admin/notes/' + id, {
+        method: 'PUT',
+        headers: { 'Authorization': 'Bearer ' + wisdomAPI.token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: status }),
+      });
+      var d = await res.json();
+      if (!d.success) throw new Error(d.error || '바꾸지 못했습니다');
+      loadNotes();
+    } catch (e) { alert(e.message); }
+  }
+
+  async function deleteNote(id) {
+    if (!confirm('이 기록을 지웁니다. 되돌릴 수 없습니다.\n숨기기로 충분하지 않은 경우에만 쓰세요.')) return;
+    try {
+      var res = await fetch('/api/admin/notes/' + id, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + wisdomAPI.token },
+      });
+      var d = await res.json();
+      if (!d.success) throw new Error(d.error || '지우지 못했습니다');
+      loadNotes();
+    } catch (e) { alert(e.message); }
+  }
 
   async function loadSendLogs() {
     var tbody = document.getElementById('send-log-body');
