@@ -244,6 +244,12 @@ export async function onRequest(context) {
     if (path === '/api/email/subscribe' && method === 'GET')  return handleEmailSubscribePage(request, env);
     if (path === '/api/email/subscribe' && method === 'POST') return handleEmailSubscribe(request, env);
 
+    // 비밀번호 재설정 (로그인 없이)
+    if (path === '/api/auth/forgot' && method === 'GET')  return handleForgotPage(request, env);
+    if (path === '/api/auth/forgot' && method === 'POST') return handleForgotRequest(request, env);
+    if (path === '/api/auth/reset'  && method === 'GET')  return handleResetPage(request, env);
+    if (path === '/api/auth/reset'  && method === 'POST') return handleResetSubmit(request, env);
+
     // Wisdom – saved (보관함)
     if (path === '/api/wisdom/saved' && method === 'GET')  return handleGetSaved(request, env);
     if (path === '/api/wisdom/save'  && method === 'POST') return handleSaveWisdom(request, env);
@@ -1059,6 +1065,201 @@ function subPage(inner) {
     + '</div></body></html>',
     { headers: { 'Content-Type': 'text/html; charset=utf-8', ...corsHeaders } }
   );
+}
+
+/* ── 비밀번호 재설정 ─────────────────────────────────────────
+
+   이 사이트에는 재설정 경로가 없었다. 로그인 화면의 "비밀번호를
+   잊으셨나요?"는 관리자에게 문의하라는 알림창이었고, 관리자가 임시
+   비밀번호를 발급하는 길밖에 없었다. 19명 중 18명이 아직 구버전 해시인
+   것은 그 계정들이 PBKDF2 전환 이후 한 번도 로그인하지 않았다는 뜻이다.
+
+   토큰을 어디에 두는가가 문제였다. 새 테이블은 스키마 변경이고, 세션
+   테이블에 끼워 넣으면 그 행이 유효한 세션으로도 동작해 버린다.
+   그래서 저장하지 않는다.
+
+   서명 키로 그 사용자의 현재 비밀번호 해시를 쓴다. 해시는 서버에만
+   있으므로 밖에서는 토큰을 만들 수 없고, 비밀번호가 바뀌면 키가 바뀌어
+   토큰이 저절로 죽는다. 한 번만 쓰이는 성질이 공짜로 따라온다.
+   새 테이블도 새 시크릿도 필요하지 않다.
+
+   형식: <user_id>.<만료 유닉스초>.<서명 43자>  */
+
+const RESET_TTL_SEC = 3600;       // 1시간
+const RESET_MAX_PER_HOUR = 3;     // 같은 계정에 보낼 수 있는 횟수
+
+async function resetSign(userId, exp, pwHash) {
+  const enc = new TextEncoder();
+  const sig = await hmacSha256(enc.encode(String(pwHash)), enc.encode('pwreset:' + userId + '.' + exp));
+  return b64uEncode(sig);
+}
+
+async function resetMakeToken(env, userId, pwHash) {
+  const exp = Math.floor(Date.now() / 1000) + RESET_TTL_SEC;
+  return userId + '.' + exp + '.' + (await resetSign(userId, exp, pwHash));
+}
+
+/** 토큰을 검증하고 사용자 행을 돌려준다. 실패하면 null. */
+async function resetVerify(env, token) {
+  const m = String(token || '').match(/^(\d+)\.(\d+)\.([A-Za-z0-9_-]{20,})$/);
+  if (!m) return null;
+  const userId = parseInt(m[1], 10);
+  const exp = parseInt(m[2], 10);
+  if (!(exp > Math.floor(Date.now() / 1000))) return null;
+
+  const row = await env.DB.prepare('SELECT id, name, email, password FROM users WHERE id = ?')
+    .bind(userId).first();
+  if (!row || !row.password) return null;
+
+  const want = await resetSign(userId, exp, row.password);
+  return timingSafeEqual(want, m[3]) ? row : null;
+}
+
+function authPage(inner) {
+  return new Response(
+    '<!doctype html><html lang="ko"><head><meta charset="utf-8">'
+    + '<meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<title>비밀번호 · 99 Wisdom Insight</title></head>'
+    + '<body style="margin:0;background:#faf9f7;">'
+    + '<div style="font-family:-apple-system,\'Apple SD Gothic Neo\',\'Malgun Gothic\',sans-serif;'
+    + 'max-width:430px;margin:11vh auto;padding:0 20px;color:#2c2722;">'
+    + '<div style="font-size:12px;letter-spacing:.08em;color:#9c9489;text-align:center;">99 WISDOM INSIGHT</div>'
+    + inner
+    + '<p style="margin:28px 0 0;font-size:13px;text-align:center;">'
+    + '<a href="https://99wisdombook.org/daily.html" style="color:#a29a90;">로그인 화면으로</a></p>'
+    + '</div></body></html>',
+    { headers: { 'Content-Type': 'text/html; charset=utf-8', ...corsHeaders } }
+  );
+}
+
+const AUTH_INPUT = 'width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid #ddd8d0;'
+  + 'border-radius:10px;font-size:15px;color:#2c2722;background:#fff;';
+const AUTH_BTN = 'width:100%;box-sizing:border-box;background:#5FA97E;color:#fff;border:0;'
+  + 'border-radius:999px;padding:13px;font-size:15px;font-weight:600;cursor:pointer;margin-top:14px;';
+
+async function handleForgotPage(request, env) {
+  return authPage(
+    '<p style="margin:16px 0 6px;font-size:18px;font-weight:600;text-align:center;">비밀번호 재설정</p>'
+    + '<p style="margin:0 0 20px;font-size:14px;line-height:1.75;color:#7a736a;text-align:center;">'
+    + '가입하신 이메일 주소를 적어 주세요.<br>재설정 링크를 보내 드립니다.</p>'
+    + '<form id="f">'
+    + '<input id="e" type="email" required placeholder="이메일 주소" autocomplete="email" style="' + AUTH_INPUT + '">'
+    + '<button type="submit" style="' + AUTH_BTN + '">재설정 링크 받기</button>'
+    + '</form>'
+    + '<p id="m" style="margin:16px 0 0;font-size:14px;line-height:1.75;color:#5c554d;text-align:center;"></p>'
+    + '<script>document.getElementById("f").onsubmit=function(ev){ev.preventDefault();'
+    + 'var b=ev.target.querySelector("button");b.disabled=true;b.textContent="보내는 중…";'
+    + 'fetch("/api/auth/forgot",{method:"POST",headers:{"Content-Type":"application/json"},'
+    + 'body:JSON.stringify({email:document.getElementById("e").value})})'
+    + '.then(function(r){return r.json()}).then(function(){'
+    + 'document.getElementById("f").style.display="none";'
+    + 'document.getElementById("m").innerHTML="메일을 보냈습니다.<br>받은편지함을 확인해 주세요. 링크는 1시간 동안 쓸 수 있습니다.";'
+    + '}).catch(function(){b.disabled=false;b.textContent="재설정 링크 받기";'
+    + 'document.getElementById("m").textContent="잠시 후 다시 시도해 주세요.";});};</script>'
+  );
+}
+
+async function handleForgotRequest(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const email = String(b.email || '').trim();
+
+  /* 응답은 언제나 같다. 가입 여부를 알려 주지 않는다. */
+  const ok = () => jsonResponse({ success: true });
+  if (!email) return ok();
+
+  try {
+    const row = await env.DB.prepare(
+      'SELECT id, name, email, password FROM users WHERE email = ?'
+    ).bind(email).first();
+    if (!row || !row.password) return ok();
+
+    /* 같은 계정으로 메일이 쏟아지지 않게 막는다. 발송 기록을 그대로 쓴다. */
+    const recent = await env.DB.prepare(
+      "SELECT COUNT(*) AS n FROM send_logs WHERE kind = 'password_reset' AND user_id = ?"
+      + " AND sent_at > datetime('now', '-1 hours')"
+    ).bind(row.id).first();
+    if (recent && recent.n >= RESET_MAX_PER_HOUR) return ok();
+
+    const token = await resetMakeToken(env, row.id, row.password);
+    const url = 'https://99wisdombook.org/api/auth/reset?t=' + encodeURIComponent(token);
+
+    await sendAndLog(env, noticeEmail(env, row, {
+      subject: '비밀번호 재설정 · 99 Wisdom Insight',
+      heading: '비밀번호를 새로 정하실 수 있습니다',
+      lead: '아래 버튼을 누르면 새 비밀번호를 정하는 화면으로 갑니다.<br>'
+        + '이 링크는 1시간 동안만 쓸 수 있고, 한 번 쓰면 더 쓰이지 않습니다.<br><br>'
+        + '<span style="color:#9c9489;">본인이 요청하지 않았다면 이 메일을 지우셔도 됩니다. '
+        + '지금 비밀번호는 그대로입니다.</span>',
+      cta: '새 비밀번호 정하기', ctaUrl: url,
+    }), { kind: 'password_reset', user_id: row.id, user_name: row.name, user_email: row.email });
+  } catch (_) {}
+
+  return ok();
+}
+
+async function handleResetPage(request, env) {
+  const t = new URL(request.url).searchParams.get('t') || '';
+  const row = await resetVerify(env, t).catch(() => null);
+  if (!row)
+    return authPage('<p style="margin:16px 0 6px;font-size:18px;font-weight:600;text-align:center;">'
+      + '링크를 쓸 수 없습니다</p>'
+      + '<p style="margin:0;font-size:14px;line-height:1.75;color:#7a736a;text-align:center;">'
+      + '이미 사용했거나 1시간이 지난 링크입니다.<br>'
+      + '<a href="/api/auth/forgot" style="color:#5FA97E;">다시 받기</a></p>');
+
+  return authPage(
+    '<p style="margin:16px 0 6px;font-size:18px;font-weight:600;text-align:center;">새 비밀번호</p>'
+    + '<p style="margin:0 0 20px;font-size:14px;line-height:1.75;color:#7a736a;text-align:center;">'
+    + mailEsc(maskName(row.name)) + '님, 8자 이상으로 정해 주세요.</p>'
+    + '<form id="f">'
+    + '<input id="p1" type="password" required minlength="8" placeholder="새 비밀번호"'
+    + ' autocomplete="new-password" style="' + AUTH_INPUT + '">'
+    + '<div style="height:10px"></div>'
+    + '<input id="p2" type="password" required minlength="8" placeholder="새 비밀번호 확인"'
+    + ' autocomplete="new-password" style="' + AUTH_INPUT + '">'
+    + '<button type="submit" style="' + AUTH_BTN + '">비밀번호 바꾸기</button>'
+    + '</form>'
+    + '<p id="m" style="margin:16px 0 0;font-size:14px;line-height:1.75;color:#c0564f;text-align:center;"></p>'
+    + '<script>(function(){var T=' + JSON.stringify(t) + ';'
+    + 'document.getElementById("f").onsubmit=function(ev){ev.preventDefault();'
+    + 'var m=document.getElementById("m"),p1=document.getElementById("p1").value,'
+    + 'p2=document.getElementById("p2").value;'
+    + 'if(p1!==p2){m.textContent="두 번 적은 비밀번호가 다릅니다.";return;}'
+    + 'var b=ev.target.querySelector("button");b.disabled=true;b.textContent="바꾸는 중…";'
+    + 'fetch("/api/auth/reset",{method:"POST",headers:{"Content-Type":"application/json"},'
+    + 'body:JSON.stringify({t:T,password:p1})}).then(function(r){return r.json()}).then(function(d){'
+    + 'if(d&&d.success){document.getElementById("f").style.display="none";'
+    + 'm.style.color="#5c554d";'
+    + 'm.innerHTML="비밀번호를 바꿨습니다.<br>새 비밀번호로 로그인해 주세요.";}'
+    + 'else{b.disabled=false;b.textContent="비밀번호 바꾸기";'
+    + 'm.textContent=(d&&d.error)||"처리 중 문제가 생겼습니다.";}})'
+    + '.catch(function(){b.disabled=false;b.textContent="비밀번호 바꾸기";'
+    + 'm.textContent="잠시 후 다시 시도해 주세요.";});};})();</script>'
+  );
+}
+
+async function handleResetSubmit(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const t = String(b.t || '');
+  const pw = String(b.password || '');
+
+  const bad = passwordProblem(pw);
+  if (bad) return jsonResponse({ success: false, error: bad }, 400);
+
+  const row = await resetVerify(env, t).catch(() => null);
+  if (!row)
+    return jsonResponse({ success: false, error: '이미 사용했거나 만료된 링크입니다.' }, 400);
+
+  try {
+    await env.DB.prepare('UPDATE users SET password = ? WHERE id = ?')
+      .bind(await hashPassword(pw), row.id).run();
+    /* 비밀번호가 바뀌었으니 기존 세션은 전부 끊는다. 같은 이유로
+       이 재설정 토큰도 이 시점에 효력을 잃는다(키가 해시였다). */
+    await revokeSessions(env, row.id, null);
+    return jsonResponse({ success: true });
+  } catch (err) {
+    return jsonResponse({ success: false, error: '처리 중 문제가 생겼습니다.' }, 500);
+  }
 }
 
 async function handleEmailSubscribePage(request, env) {
