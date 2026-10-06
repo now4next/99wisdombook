@@ -241,6 +241,8 @@ export async function onRequest(context) {
     if (path === '/api/auth/register' && method === 'POST') return handleRegister(request, env, context);
     if (path === '/api/auth/logout'   && method === 'POST') return handleLogout(request, env);
     if (path === '/api/email/unsubscribe' && method === 'GET') return handleEmailUnsubscribe(request, env);
+    if (path === '/api/email/subscribe' && method === 'GET')  return handleEmailSubscribePage(request, env);
+    if (path === '/api/email/subscribe' && method === 'POST') return handleEmailSubscribe(request, env);
 
     // Wisdom – saved (보관함)
     if (path === '/api/wisdom/saved' && method === 'GET')  return handleGetSaved(request, env);
@@ -650,7 +652,12 @@ function issueEmail(env, user, wisdomItem, unsubUrl, opt) {
   const SITE = 'https://99wisdombook.org';
   const webUrl    = c ? SITE + '/insight/' + c.slug : SITE + '/daily.html?autoopen=1';
   const sourceUrl = SITE + '/chapter/' + (c ? c.chapter_id : (wisdomItem.id || 1));
-  const notifyUrl = SITE + '/daily.html?notify=1';
+  /* 알림 켜기는 로그인 없이 되어야 한다. 수신 거부 링크에 들어 있는 토큰을
+     그대로 떼어 쓴다. 토큰이 없으면(미리보기 등) 설정 화면으로 보낸다. */
+  const unsubTok = (String(unsubUrl || '').match(/[?&]t=([0-9a-f]{32})/) || [])[1];
+  const notifyUrl = unsubTok
+    ? SITE + '/api/email/subscribe?t=' + unsubTok
+    : SITE + '/daily.html?notify=1';
   const name = user.name || '독자';
   const proverb = (c && c.anchor_quote) || wisdomItem.title;
 
@@ -722,7 +729,7 @@ function issueEmail(env, user, wisdomItem, unsubUrl, opt) {
           + 'font-weight:700;color:#2c2722;">매일 아침 지혜의 문장으로 시작하세요</p>'
           + '<p style="margin:10px 0 0;font-size:14px;line-height:1.75;color:#6b645c;">'
           + '이런 글을 매일 아침 한 편씩 보내 드립니다.<br>'
-          + '받는 요일과 시각은 직접 고르실 수 있고, 언제든 끄실 수 있습니다.</p>'
+          + '받는 시각은 직접 고르실 수 있고, 언제든 끄실 수 있습니다.</p>'
           + '<div style="margin:18px 0 2px;"><a href="' + mailEsc(notifyUrl) + '"'
           + ' style="display:inline-block;background:' + tone + ';color:#ffffff;'
           + 'text-decoration:none;padding:12px 24px;border-radius:999px;'
@@ -736,7 +743,7 @@ function issueEmail(env, user, wisdomItem, unsubUrl, opt) {
     + '</td></tr>';
 
   const footer = mailEsc(name) + '님께 보내 드립니다 · <a href="' + SITE + '" style="color:#a29a90;">99wisdombook.org</a><br>'
-    + '<a href="' + mailEsc(notifyUrl) + '" style="color:#a29a90;text-decoration:underline;">받는 요일·시각 바꾸기</a>'
+    + '<a href="' + mailEsc(notifyUrl) + '" style="color:#a29a90;text-decoration:underline;">받는 시각 바꾸기</a>'
     + ' · <a href="' + mailEsc(unsubUrl) + '" style="color:#a29a90;text-decoration:underline;">이메일 받지 않기</a>';
 
   const text = [
@@ -746,7 +753,7 @@ function issueEmail(env, user, wisdomItem, unsubUrl, opt) {
     (c && c.hook) ? c.hook : '',
     c && c.body_md ? '\n' + mdToMailText(c.body_md) : '',
     (c && c.action) ? '\n' + c.action : '',
-    promo ? '\n매일 아침 지혜의 문장으로 시작하세요\n이런 글을 매일 아침 한 편씩 보내 드립니다. 받는 요일과 시각은 직접 고르실 수 있고, 언제든 끄실 수 있습니다.\n이메일 알림 켜기: ' + notifyUrl : '',
+    promo ? '\n매일 아침 지혜의 문장으로 시작하세요\n이런 글을 매일 아침 한 편씩 보내 드립니다. 받는 시각은 직접 고르실 수 있고, 언제든 끄실 수 있습니다.\n이메일 알림 켜기: ' + notifyUrl : '',
     '\n원문 읽기: ' + sourceUrl,
     '웹에서 보기: ' + webUrl,
     promo ? '' : '알림 설정: ' + notifyUrl,
@@ -1010,6 +1017,149 @@ async function handleEmailPreview(request, env) {
   return new Response(m.html, {
     headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Subject': encodeURIComponent(m.subject), ...corsHeaders },
   });
+}
+
+/** 이름을 익명 표기로 바꾼다. 홍길동 → 홍**, 김수 → 김*, 비한글·한 글자는 독자. */
+function maskName(name) {
+  const n = String(name || '').trim();
+  if (!n || n.length < 2 || !/[가-힣]/.test(n[0])) return '독자';
+  return n[0] + '*'.repeat(Math.min(n.length - 1, 3));
+}
+
+/* ── 로그인 없이 이메일 알림 켜기 ────────────────────────────
+
+   왜 필요한가. 끄는 것은 메일 바닥의 링크 한 번으로 되는데, 켜는 것은
+   로그인이 필요했다. 게다가 이 사이트에는 비밀번호 재설정 메일이 없어
+   비밀번호를 잊은 회원에게는 켤 방법이 아예 없었다. 2026-09-29 에
+   19명에게 알림 설정을 권하는 메일을 보냈고 전환은 0명이었다. 무관심이
+   아니라 길이 막혀 있었다.
+
+   토큰은 수신 거부에 쓰는 것을 그대로 쓴다. 이미 모든 메일에 들어가
+   있고, 유출됐을 때의 피해가 켜기와 끄기에서 같다. 되돌릴 수 있고 남의
+   정보가 드러나지 않는다. 그래서 새 컬럼도 새 비밀도 두지 않는다.
+
+   ⚠ 켜기를 GET 으로 하지 않는 이유. 메일 클라이언트와 보안 스캐너가
+   링크를 미리 긁어 간다. GET 에서 바로 켜면 누르지도 않은 사람의 설정이
+   켜진다. 그래서 GET 은 화면만 주고 변경은 POST 로만 한다. 화면이 열리면
+   자바스크립트가 곧바로 POST 하므로 사람에게는 클릭 한 번이다. */
+
+const SUB_DEFAULT_HOUR = 8; // 아침 8시 (KST). 기존 수신자와 같은 시각.
+
+function subPage(inner) {
+  return new Response(
+    '<!doctype html><html lang="ko"><head><meta charset="utf-8">'
+    + '<meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<title>이메일 알림 · 99 Wisdom Insight</title></head>'
+    + '<body style="margin:0;background:#faf9f7;">'
+    + '<div style="font-family:-apple-system,\'Apple SD Gothic Neo\',\'Malgun Gothic\',sans-serif;'
+    + 'max-width:430px;margin:12vh auto;padding:0 20px;color:#2c2722;text-align:center;">'
+    + '<div style="font-size:12px;letter-spacing:.08em;color:#9c9489;">99 WISDOM INSIGHT</div>'
+    + inner
+    + '<p style="margin:30px 0 0;font-size:13px;"><a href="https://99wisdombook.org" style="color:#a29a90;">사이트로 가기</a></p>'
+    + '</div></body></html>',
+    { headers: { 'Content-Type': 'text/html; charset=utf-8', ...corsHeaders } }
+  );
+}
+
+async function handleEmailSubscribePage(request, env) {
+  const t = new URL(request.url).searchParams.get('t') || '';
+  if (!/^[0-9a-f]{32}$/.test(t))
+    return subPage('<p style="margin:18px 0 0;font-size:17px;line-height:1.7;">잘못된 링크입니다.</p>');
+
+  await ensureEmailColumns(env);
+  let row = null;
+  try {
+    row = await env.DB.prepare(
+      'SELECT id, name, email_enabled, notify_enabled, notify_hour FROM users WHERE unsubscribe_token = ?'
+    ).bind(t).first();
+  } catch (_) {}
+  if (!row)
+    return subPage('<p style="margin:18px 0 0;font-size:17px;line-height:1.7;">유효하지 않은 링크입니다.</p>');
+
+  const hours = [7, 8, 9, 21];
+  const opts = hours.map((h) =>
+    '<button data-h="' + h + '" style="background:#fff;border:1px solid #ddd8d0;border-radius:999px;'
+    + 'padding:9px 15px;margin:0 4px 8px 0;font-size:14px;cursor:pointer;color:#4a443d;">'
+    + (h < 12 ? '아침 ' + h + '시' : '저녁 ' + (h - 12) + '시') + '</button>').join('');
+
+  /* 화면이 열리면 바로 켠다. 사람에게는 메일에서 누른 한 번이 전부다.
+     자바스크립트가 꺼져 있으면 아래 버튼이 같은 일을 한다. */
+  const inner =
+    '<p id="msg" style="margin:18px 0 6px;font-size:17px;line-height:1.7;">알림을 켜고 있습니다…</p>'
+    + '<p id="sub" style="margin:0;font-size:14px;line-height:1.75;color:#7a736a;"></p>'
+    + '<div id="pick" style="display:none;margin:26px 0 0;">'
+    + '<p style="margin:0 0 10px;font-size:13px;color:#9c9489;">받는 시각을 고르실 수 있습니다</p>'
+    + opts + '</div>'
+    + '<noscript><form method="POST" action="/api/email/subscribe">'
+    + '<input type="hidden" name="t" value="' + mailEsc(t) + '">'
+    + '<button type="submit" style="background:#5FA97E;color:#fff;border:0;border-radius:999px;'
+    + 'padding:12px 24px;font-size:15px;font-weight:600;cursor:pointer;">이메일 알림 켜기</button>'
+    + '</form></noscript>'
+    + '<script>(function(){var T=' + JSON.stringify(t) + ';'
+    + 'function post(b){return fetch("/api/email/subscribe",{method:"POST",'
+    + 'headers:{"Content-Type":"application/json"},body:JSON.stringify(b)}).then(function(r){return r.json()});}'
+    + 'post({t:T}).then(function(d){'
+    + 'if(!d||!d.success){document.getElementById("msg").textContent="처리 중 문제가 생겼습니다.";return;}'
+    + 'document.getElementById("msg").innerHTML="이메일 알림을 켰습니다.";'
+    + 'document.getElementById("sub").innerHTML=d.masked+"님께 "+d.hour+"시에 보내 드립니다.<br>'
+    + '메일 바닥의 링크로 언제든 끄실 수 있습니다.";'
+    + 'document.getElementById("pick").style.display="block";});'
+    + 'Array.prototype.forEach.call(document.querySelectorAll("#pick button"),function(b){'
+    + 'b.onclick=function(){post({t:T,hour:parseInt(b.dataset.h,10)}).then(function(d){'
+    + 'if(d&&d.success){document.getElementById("sub").innerHTML=d.masked+"님께 "+d.hour+"시에 보내 드립니다.<br>'
+    + '메일 바닥의 링크로 언제든 끄실 수 있습니다.";}});};});})();</script>';
+
+  return subPage(inner);
+}
+
+async function handleEmailSubscribe(request, env) {
+  /* 폼(noscript)과 JSON 양쪽을 받는다. */
+  let t = '', hour = null;
+  const ct = (request.headers.get('Content-Type') || '').toLowerCase();
+  try {
+    if (ct.indexOf('application/json') >= 0) {
+      const b = await request.json();
+      t = String(b.t || '').trim();
+      if (b.hour != null) hour = parseInt(b.hour, 10);
+    } else {
+      const f = await request.formData();
+      t = String(f.get('t') || '').trim();
+    }
+  } catch (_) {}
+
+  const wantsHtml = ct.indexOf('application/json') < 0;
+  const fail = (msg, code) => wantsHtml
+    ? subPage('<p style="margin:18px 0 0;font-size:17px;line-height:1.7;">' + mailEsc(msg) + '</p>')
+    : jsonResponse({ success: false, error: msg }, code || 400);
+
+  if (!/^[0-9a-f]{32}$/.test(t)) return fail('잘못된 링크입니다.');
+  if (hour != null && !(hour >= 0 && hour <= 23)) hour = null;
+
+  try {
+    await ensureEmailColumns(env);
+    const row = await env.DB.prepare(
+      'SELECT id, name, notify_hour FROM users WHERE unsubscribe_token = ?'
+    ).bind(t).first();
+    if (!row) return fail('유효하지 않은 링크입니다.');
+
+    /* 시각이 아직 없으면 기본값을 넣는다. notify_days 는 건드리지 않는다
+       (NULL 이면 매일이고, 이미 고른 요일이 있으면 그대로 둔다). */
+    const h = hour != null ? hour : (row.notify_hour != null ? row.notify_hour : SUB_DEFAULT_HOUR);
+    await env.DB.prepare(
+      'UPDATE users SET email_enabled = 1, notify_enabled = 1, notify_hour = ?,'
+      + ' notify_minute = COALESCE(notify_minute, 0) WHERE id = ?'
+    ).bind(h, row.id).run();
+
+    if (wantsHtml)
+      return subPage('<p style="margin:18px 0 6px;font-size:17px;line-height:1.7;">이메일 알림을 켰습니다.</p>'
+        + '<p style="margin:0;font-size:14px;line-height:1.75;color:#7a736a;">'
+        + mailEsc(maskName(row.name)) + '님께 ' + h + '시에 보내 드립니다.<br>'
+        + '메일 바닥의 링크로 언제든 끄실 수 있습니다.</p>');
+
+    return jsonResponse({ success: true, masked: maskName(row.name), hour: h });
+  } catch (err) {
+    return fail('처리 중 문제가 생겼습니다.', 500);
+  }
 }
 
 async function handleEmailUnsubscribe(request, env) {
