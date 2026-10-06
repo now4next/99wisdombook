@@ -112,6 +112,23 @@ CREATE TABLE IF NOT EXISTS send_logs (
 );
 CREATE INDEX IF NOT EXISTS idx_send_logs_sent ON send_logs(sent_at DESC);
 
+-- 독자의 기록 (칼럼 아래 익명 소감)
+-- ⚠ saved_wisdom.memo 와 섞지 말 것. 그 칸은 공감지혜에서 본인만 보도록
+--    적은 사적인 메모이고, 이 테이블은 공개 글이다. 한 칸에 섞으면 사후
+--    공개 사고가 난다.
+-- 쓰기는 메일 링크의 토큰이나 로그인 세션으로만 가능하다 (API 참고).
+CREATE TABLE IF NOT EXISTS insight_notes (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    chapter_id INTEGER NOT NULL,
+    user_id    INTEGER NOT NULL,
+    body       TEXT    NOT NULL,          -- 300자 상한은 API 에서 막는다
+    status     TEXT    DEFAULT 'visible', -- visible | hidden (관리자가 숨김)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    UNIQUE(user_id, chapter_id)           -- 한 사람이 한 칼럼에 하나
+);
+CREATE INDEX IF NOT EXISTS idx_insight_notes_ch ON insight_notes(chapter_id, status, id DESC);
+
 -- ⚠ 초기 관리자 계정.
 -- password 는 PBKDF2-SHA256 해시다. 형식은 pbkdf2$<반복 횟수>$<소금 b64>$<해시 b64>.
 -- (구버전인 64자리 SHA-256 16진 문자열도 로그인은 되지만, 성공하는 순간

@@ -322,6 +322,14 @@ export async function onRequest(context) {
     if (path === '/api/insights' && method === 'GET') return handleListInsights(request, env);
     if (path.match(/^\/api\/insights\/[A-Za-z0-9가-힣_-]+$/) && method === 'GET')
       return handleGetInsight(decodeURIComponent(path.split('/').pop()), env);
+    // 독자의 기록 (칼럼 아래 익명 소감)
+    if (path.match(/^\/api\/notes\/\d+$/) && method === 'GET')
+      return handleListNotes(path.split('/').pop(), request, env);
+    if (path.match(/^\/api\/notes\/\d+$/) && method === 'POST')
+      return handleSaveNote(path.split('/').pop(), request, env);
+    if (path.match(/^\/api\/notes\/\d+$/) && method === 'DELETE')
+      return handleDeleteNote(path.split('/').pop(), request, env);
+
     if (path === '/api/admin/insights' && method === 'GET')    return handleAdminListInsights(request, env);
     if (path === '/api/admin/insights' && method === 'POST')   return handleCreateInsight(request, env);
     if (path.match(/^\/api\/admin\/insights\/\d+$/) && method === 'PUT')
@@ -654,6 +662,7 @@ function mdToMailText(md) {
 /** 오늘의 한 문장 + 칼럼 전문 */
 function issueEmail(env, user, wisdomItem, unsubUrl, opt) {
   const promo = !!(opt && opt.promo);
+  const noteUrl = (opt && opt.noteUrl) || '';
   const c = wisdomItem.column;
   const SITE = 'https://99wisdombook.org';
   const webUrl    = c ? SITE + '/insight/' + c.slug : SITE + '/daily.html?autoopen=1';
@@ -745,6 +754,7 @@ function issueEmail(env, user, wisdomItem, unsubUrl, opt) {
     + '<tr><td style="padding:18px 26px 28px;font-family:' + MAIL_SANS + ';">'
     + btn('원문 읽기', sourceUrl, true)
     + btn('웹에서 보기', webUrl, false)
+    + (noteUrl ? btn('이 글에서 느낀 것 적기', noteUrl, false) : '')
     + (promo ? '' : btn('알림 설정', notifyUrl, false))
     + '</td></tr>';
 
@@ -762,6 +772,7 @@ function issueEmail(env, user, wisdomItem, unsubUrl, opt) {
     promo ? '\n매일 아침 지혜의 문장으로 시작하세요\n이런 글을 매일 아침 한 편씩 보내 드립니다. 받는 시각은 직접 고르실 수 있고, 언제든 끄실 수 있습니다.\n이메일 알림 켜기: ' + notifyUrl : '',
     '\n원문 읽기: ' + sourceUrl,
     '웹에서 보기: ' + webUrl,
+    noteUrl ? '이 글에서 느낀 것 적기: ' + noteUrl : '',
     promo ? '' : '알림 설정: ' + notifyUrl,
     '\n---\n' + name + '님께 보내 드립니다 · 99wisdombook.org',
     '이메일 받지 않기: ' + unsubUrl,
@@ -1084,6 +1095,166 @@ function subPage(inner) {
    새 테이블도 새 시크릿도 필요하지 않다.
 
    형식: <user_id>.<만료 유닉스초>.<서명 43자>  */
+
+/* ── 독자의 기록 ─────────────────────────────────────────────
+
+   이메일로 칼럼을 받은 사람이 소감을 적으면 칼럼 아래에 익명으로
+   남는다. 홍길동 → 홍**.
+
+   ⚠ saved_wisdom.memo 를 쓰지 않는다. 그 칸에는 공감지혜에서 본인만
+   보도록 적은 메모가 이미 들어 있다(13건). 거기에 공개 기능을 얹으면
+   사후 공개가 된다. 사적인 메모와 공개 글을 한 칸에 섞으면 앞으로 어느
+   코드가 어느 쪽을 읽는지 매번 확인해야 하고, 사고는 한 번으로 끝나지
+   않는다. 그래서 테이블을 따로 둔다.
+
+   로그인 없이 써야 하므로 메일 링크에 토큰을 싣는다. 키는 그 사람의
+   수신 거부 토큰이고, 메시지에 chapter_id 를 넣어 칼럼마다 서명이
+   달라지게 한다. 그래서 한 칼럼의 링크가 유출돼도 그 칼럼에만 쓸 수
+   있고, 역산해서 수신 거부 토큰을 얻을 수도 없다.
+
+   만료는 두지 않는다. 지난 메일의 링크도 계속 동작해야 한다. */
+
+const NOTE_MAX_LEN = 300;
+const NOTE_SHOW_LIMIT = 20;
+
+async function ensureInsightNotesTable(env) {
+  try {
+    await env.DB.prepare(
+      'CREATE TABLE IF NOT EXISTS insight_notes ('
+      + ' id INTEGER PRIMARY KEY AUTOINCREMENT,'
+      + ' chapter_id INTEGER NOT NULL,'
+      + ' user_id INTEGER NOT NULL,'
+      + " body TEXT NOT NULL,"
+      + " status TEXT DEFAULT 'visible',"
+      + ' created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,'
+      + ' updated_at TIMESTAMP,'
+      + ' UNIQUE(user_id, chapter_id))'
+    ).run();
+  } catch (_) {}
+  try {
+    await env.DB.prepare(
+      'CREATE INDEX IF NOT EXISTS idx_insight_notes_ch ON insight_notes(chapter_id, status, id DESC)'
+    ).run();
+  } catch (_) {}
+}
+
+/** 메일 링크에 실을 토큰. 칼럼마다 다르다. */
+async function noteMakeToken(env, userId, chapterId) {
+  const tok = await ensureUnsubscribeToken(env, userId);
+  const enc = new TextEncoder();
+  const sig = await hmacSha256(enc.encode(tok), enc.encode('note:' + userId + ':' + chapterId));
+  return userId + '.' + chapterId + '.' + b64uEncode(sig);
+}
+
+/** 토큰이 그 칼럼에 대해 유효하면 user 행, 아니면 null. */
+async function noteVerifyToken(env, token, chapterId) {
+  const m = String(token || '').match(/^(\d+)\.(\d+)\.([A-Za-z0-9_-]{20,})$/);
+  if (!m) return null;
+  if (parseInt(m[2], 10) !== parseInt(chapterId, 10)) return null;
+  const userId = parseInt(m[1], 10);
+
+  const row = await env.DB.prepare('SELECT id, name, unsubscribe_token FROM users WHERE id = ?')
+    .bind(userId).first();
+  if (!row || !row.unsubscribe_token) return null;
+
+  const enc = new TextEncoder();
+  const sig = await hmacSha256(enc.encode(row.unsubscribe_token),
+    enc.encode('note:' + userId + ':' + parseInt(chapterId, 10)));
+  return timingSafeEqual(b64uEncode(sig), m[3]) ? row : null;
+}
+
+/** 토큰이든 세션이든, 쓰는 사람을 확정한다. */
+async function noteWho(env, request, body, chapterId) {
+  if (body && body.note) {
+    const u = await noteVerifyToken(env, body.note, chapterId);
+    if (u) return u;
+  }
+  const uid = await getUserIdFromToken(request, env);
+  if (uid) return await env.DB.prepare('SELECT id, name FROM users WHERE id = ?').bind(uid).first();
+  return null;
+}
+
+async function handleListNotes(chapterId, request, env) {
+  await ensureInsightNotesTable(env);
+  const ch = parseInt(chapterId, 10);
+  try {
+    const r = await env.DB.prepare(
+      "SELECT n.body, n.created_at, u.name FROM insight_notes n"
+      + " JOIN users u ON u.id = n.user_id"
+      + " WHERE n.chapter_id = ? AND n.status = 'visible'"
+      + ' ORDER BY n.id DESC LIMIT ?'
+    ).bind(ch, NOTE_SHOW_LIMIT).all();
+    const rows = r.results || [];
+
+    const c = await env.DB.prepare(
+      "SELECT COUNT(*) AS n FROM insight_notes WHERE chapter_id = ? AND status = 'visible'"
+    ).bind(ch).first();
+
+    /* 이름은 서버에서 가린다. 원래 이름을 내려보내지 않는다. */
+    return jsonResponse({
+      success: true,
+      count: (c && c.n) || 0,
+      notes: rows.map((x) => ({
+        masked: maskName(x.name),
+        body: x.body,
+        created_at: x.created_at,
+      })),
+    });
+  } catch (err) {
+    return jsonResponse({ success: true, count: 0, notes: [] });
+  }
+}
+
+async function handleSaveNote(chapterId, request, env) {
+  await ensureInsightNotesTable(env);
+  const ch = parseInt(chapterId, 10);
+  const b = await request.json().catch(() => ({}));
+
+  const who = await noteWho(env, request, b, ch);
+  if (!who)
+    return jsonResponse({ success: false, error: '메일의 링크로 들어오시거나 로그인해 주세요.' }, 401);
+
+  const body = String(b.body || '').trim();
+  if (!body) return jsonResponse({ success: false, error: '내용을 적어 주세요.' }, 400);
+  if (body.length > NOTE_MAX_LEN)
+    return jsonResponse({ success: false, error: NOTE_MAX_LEN + '자까지 적을 수 있습니다.' }, 400);
+  /* 링크는 받지 않는다. 광고가 들어오는 가장 짧은 길이다. */
+  if (/https?:\/\/|www\./i.test(body))
+    return jsonResponse({ success: false, error: '링크는 넣을 수 없습니다.' }, 400);
+
+  const col = await env.DB.prepare(
+    "SELECT chapter_id FROM insights WHERE chapter_id = ? AND status = 'published'"
+  ).bind(ch).first();
+  if (!col) return jsonResponse({ success: false, error: '없는 칼럼입니다.' }, 404);
+
+  try {
+    await env.DB.prepare(
+      'INSERT INTO insight_notes (chapter_id, user_id, body) VALUES (?, ?, ?)'
+      + ' ON CONFLICT(user_id, chapter_id) DO UPDATE SET'
+      + " body = excluded.body, updated_at = datetime('now')"
+    ).bind(ch, who.id, body).run();
+    return jsonResponse({ success: true, masked: maskName(who.name), body });
+  } catch (err) {
+    return jsonResponse({ success: false, error: '저장하지 못했습니다.' }, 500);
+  }
+}
+
+async function handleDeleteNote(chapterId, request, env) {
+  await ensureInsightNotesTable(env);
+  const ch = parseInt(chapterId, 10);
+  const b = await request.json().catch(() => ({}));
+
+  const who = await noteWho(env, request, b, ch);
+  if (!who) return jsonResponse({ success: false, error: 'Unauthorized' }, 401);
+
+  try {
+    await env.DB.prepare('DELETE FROM insight_notes WHERE user_id = ? AND chapter_id = ?')
+      .bind(who.id, ch).run();
+    return jsonResponse({ success: true });
+  } catch (err) {
+    return jsonResponse({ success: false, error: '지우지 못했습니다.' }, 500);
+  }
+}
 
 const RESET_TTL_SEC = 3600;       // 1시간
 const RESET_MAX_PER_HOUR = 3;     // 같은 계정에 보낼 수 있는 횟수
@@ -2328,8 +2499,12 @@ async function handlePromoCron(request, env) {
       const unsubUrl = member
         ? 'https://99wisdombook.org/api/email/unsubscribe?t=' + (await ensureUnsubscribeToken(env, member.id))
         : 'https://99wisdombook.org/daily.html?notify=1';
+      const noteUrl = member
+        ? `https://99wisdombook.org/insight/${encodeURIComponent(col.slug)}?note=`
+          + (await noteMakeToken(env, member.id, chapterId))
+        : '';
       const r = await sendAndLog(env,
-        issueEmail(env, who, item, unsubUrl, { promo: true }),
+        issueEmail(env, who, item, unsubUrl, { promo: true, noteUrl }),
         { kind: 'promo_test', user_id: member ? member.id : null, user_email: to, chapter_id: chapterId });
       const want = (env.MAIL_FROM || '').trim() || MAIL_FROM_DEFAULT;
       return jsonResponse({
@@ -2358,8 +2533,12 @@ async function handlePromoCron(request, env) {
   for (const user of users) {
     try {
       const t = await ensureUnsubscribeToken(env, user.id);
+      const noteTok = await noteMakeToken(env, user.id, chapterId);
       await sendAndLog(env,
-        issueEmail(env, user, item, `https://99wisdombook.org/api/email/unsubscribe?t=${t}`, { promo: true }),
+        issueEmail(env, user, item, `https://99wisdombook.org/api/email/unsubscribe?t=${t}`, {
+          promo: true,
+          noteUrl: `https://99wisdombook.org/insight/${encodeURIComponent(col.slug)}?note=${noteTok}`,
+        }),
         { kind: 'promo', user_id: user.id, user_name: user.name, user_email: user.email, chapter_id: chapterId });
       results.sent++;
     } catch (err) {

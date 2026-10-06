@@ -266,6 +266,11 @@
         '</section>';
       }
 
+      /* 독자의 기록 — 익명 소감. 비어 있으면 아무것도 그리지 않는다.
+         참여형 영역은 빈 칸이 보이면 역효과다. 메일 링크(?note=)로 들어온
+         사람과 로그인한 회원만 쓸 수 있다. */
+      html += '<section id="notes-sec" style="margin-bottom:48px"></section>';
+
       /* 원문 · 같은 장 */
       html += '<section style="margin-bottom:56px;border-top:1px solid var(--line);padding-top:28px;' +
                 'display:flex;flex-wrap:wrap;gap:16px;align-items:center">' +
@@ -291,6 +296,87 @@
         el.textContent = t; el.classList.add('on');
         setTimeout(function () { el.classList.remove('on'); }, 2200);
       }
+      /* ── 독자의 기록 ── */
+      (function () {
+        var sec = document.getElementById('notes-sec');
+        if (!sec) return;
+        var ch = it.chapter_id;
+        var noteTok = new URLSearchParams(location.search).get('note') || '';
+
+        function fmt(d) {
+          var m = String(d || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+          return m ? m[1] + '. ' + m[2] + '. ' + m[3] : '';
+        }
+
+        function draw(data) {
+          var n = data.count || 0;
+          var list = data.notes || [];
+          /* 아무도 쓰지 않았고 나도 쓸 수 없으면 섹션을 숨긴다. */
+          if (!n && !noteTok) { sec.innerHTML = ''; return; }
+
+          var h = '<div class="slabel"><h2>Notes</h2>' +
+                  '<span class="sub">독자의 기록' + (n ? ' · ' + n : '') + '</span>' +
+                  '<span class="rule"></span></div>';
+
+          if (noteTok) {
+            h += '<div id="nf" style="margin-bottom:22px">' +
+                 '<textarea id="nb" maxlength="300" rows="3" placeholder="이 글에서 느낀 것을 적어 주세요"' +
+                 ' style="width:100%;box-sizing:border-box;padding:13px 14px;border:1px solid var(--line);' +
+                 'border-radius:10px;font-size:.95rem;line-height:1.7;font-family:inherit;color:inherit;' +
+                 'background:var(--bg);resize:vertical"></textarea>' +
+                 '<div style="display:flex;align-items:center;gap:12px;margin-top:9px;flex-wrap:wrap">' +
+                 '<span id="nc" style="font-size:.8rem;color:var(--muted-2)">0 / 300</span>' +
+                 '<span style="font-size:.8rem;color:var(--muted-2)">다른 독자에게 공개됩니다</span>' +
+                 '<button id="ns" class="sbtn" style="margin-left:auto">기록 남기기</button>' +
+                 '</div><div id="nm" style="font-size:.85rem;margin-top:8px;color:var(--muted-2)"></div></div>';
+          }
+
+          h += list.map(function (x) {
+            return '<div style="padding:15px 0;border-top:1px solid var(--line)">' +
+              '<div style="font-size:.8rem;color:var(--muted-2);margin-bottom:5px">' +
+              esc(x.masked) + '<span style="margin:0 6px">·</span>' + fmt(x.created_at) + '</div>' +
+              '<div style="font-size:.95rem;line-height:1.75;white-space:pre-wrap">' + esc(x.body) + '</div>' +
+            '</div>';
+          }).join('');
+
+          if (!list.length && noteTok)
+            h += '<p style="font-size:.9rem;color:var(--muted-2);border-top:1px solid var(--line);' +
+                 'padding-top:15px">아직 기록이 없습니다. 첫 기록을 남겨 보세요.</p>';
+
+          sec.innerHTML = h;
+
+          if (!noteTok) return;
+          var tb = document.getElementById('nb'), btn = document.getElementById('ns'),
+              cnt = document.getElementById('nc'), msg = document.getElementById('nm');
+          tb.addEventListener('input', function () { cnt.textContent = tb.value.length + ' / 300'; });
+          btn.addEventListener('click', function () {
+            var v = tb.value.trim();
+            if (!v) { msg.textContent = '내용을 적어 주세요.'; return; }
+            btn.disabled = true; btn.textContent = '저장 중…';
+            fetch('/api/notes/' + ch, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ note: noteTok, body: v })
+            }).then(function (r) { return r.json(); }).then(function (d) {
+              btn.disabled = false; btn.textContent = '기록 남기기';
+              if (d && d.success) { msg.textContent = ''; load(); }
+              else msg.textContent = (d && d.error) || '저장하지 못했습니다.';
+            }).catch(function () {
+              btn.disabled = false; btn.textContent = '기록 남기기';
+              msg.textContent = '잠시 후 다시 시도해 주세요.';
+            });
+          });
+        }
+
+        function load() {
+          fetch('/api/notes/' + ch).then(function (r) { return r.json(); })
+            .then(draw).catch(function () { sec.innerHTML = ''; });
+        }
+        load();
+        if (noteTok) setTimeout(function () {
+          sec.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 400);
+      })();
+
       var bc = document.getElementById('sh-copy');
       if (bc) bc.addEventListener('click', function () {
         (navigator.clipboard ? navigator.clipboard.writeText(pageUrl) : Promise.reject())
