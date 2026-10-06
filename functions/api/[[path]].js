@@ -663,6 +663,7 @@ function mdToMailText(md) {
 function issueEmail(env, user, wisdomItem, unsubUrl, opt) {
   const promo = !!(opt && opt.promo);
   const noteUrl = (opt && opt.noteUrl) || '';
+  const notes = (opt && opt.notes) || null;
   const c = wisdomItem.column;
   const SITE = 'https://99wisdombook.org';
   const webUrl    = c ? SITE + '/insight/' + c.slug : SITE + '/daily.html?autoopen=1';
@@ -733,6 +734,28 @@ function issueEmail(env, user, wisdomItem, unsubUrl, opt) {
           + mailEsc(c.action).replace(/\n/g, '<br>') + '</td></tr></table>'
         : '')
     + '</td></tr>'
+    /* 다른 독자의 기록. 칼럼과 권유 사이에 놓는다. 읽고, 남이 무엇을
+       느꼈는지 보고, 그다음에 권유를 받는 순서다. 없으면 그리지 않는다. */
+    + (notes && notes.items && notes.items.length
+        ? '<tr><td style="padding:2px 26px 0;font-family:' + MAIL_SANS + ';">'
+          + '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"'
+          + ' style="border:1px solid #ece8e2;border-radius:11px;"><tr>'
+          + '<td style="padding:18px 20px;">'
+          + '<div style="font-family:Menlo,Consolas,monospace;font-size:11px;letter-spacing:.1em;'
+          + 'color:#9c9489;padding-bottom:4px;">'
+          + (notes.sameColumn ? '이 칼럼에 남은 기록' : '다른 독자가 남긴 기록') + '</div>'
+          + notes.items.map(function (nn) {
+              return '<div style="padding:11px 0 0;">'
+                + '<div style="font-size:12.5px;color:#a29a90;padding-bottom:3px;">'
+                + mailEsc(nn.masked)
+                + (nn.title ? ' · <a href="' + mailEsc(SITE + '/insight/' + encodeURIComponent(nn.slug))
+                    + '" style="color:#a29a90;">' + mailEsc(nn.title) + '</a>' : '')
+                + '</div>'
+                + '<div style="font-size:14px;line-height:1.75;color:#5c554d;">'
+                + mailEsc(nn.body) + '</div></div>';
+            }).join('')
+          + '</td></tr></table></td></tr>'
+        : '')
     /* 알림 유도 배너. 칼럼을 다 읽은 자리에 놓는다. 권유가 글보다
        앞에 오면 광고로 읽히고, 글 뒤에 오면 이어지는 제안이 된다. */
     + (promo
@@ -772,6 +795,12 @@ function issueEmail(env, user, wisdomItem, unsubUrl, opt) {
     promo ? '\n매일 아침 지혜의 문장으로 시작하세요\n이런 글을 매일 아침 한 편씩 보내 드립니다. 받는 시각은 직접 고르실 수 있고, 언제든 끄실 수 있습니다.\n이메일 알림 켜기: ' + notifyUrl : '',
     '\n원문 읽기: ' + sourceUrl,
     '웹에서 보기: ' + webUrl,
+    notes && notes.items && notes.items.length
+      ? '\n' + (notes.sameColumn ? '이 칼럼에 남은 기록' : '다른 독자가 남긴 기록') + '\n'
+        + notes.items.map(function (nn) {
+            return (nn.title ? nn.masked + ' (' + nn.title + ')' : nn.masked) + '\n' + nn.body;
+          }).join('\n\n')
+      : '',
     noteUrl ? '이 글에서 느낀 것 적기: ' + noteUrl : '',
     promo ? '' : '알림 설정: ' + notifyUrl,
     '\n---\n' + name + '님께 보내 드립니다 · 99wisdombook.org',
@@ -819,7 +848,14 @@ function noticeEmail(env, user, o) {
 async function sendNewsletterEmail(env, user, wisdomItem) {
   const t = await ensureUnsubscribeToken(env, user.id);
   const unsubUrl = 'https://99wisdombook.org/api/email/unsubscribe?t=' + t;
-  return sendAndLog(env, issueEmail(env, user, wisdomItem, unsubUrl), {
+  const col = wisdomItem && wisdomItem.column;
+  const ch = (col && col.chapter_id) || 0;
+  const opt = ch ? {
+    notes: await notesForEmail(env, ch, user.id),
+    noteUrl: 'https://99wisdombook.org/insight/' + encodeURIComponent(col.slug)
+      + '?note=' + (await noteMakeToken(env, user.id, ch)),
+  } : null;
+  return sendAndLog(env, issueEmail(env, user, wisdomItem, unsubUrl, opt), {
     kind: 'issue',
     user_id: user.id, user_name: user.name, user_email: user.email,
     chapter_id: (wisdomItem && wisdomItem.column && wisdomItem.column.chapter_id) || null,
@@ -1113,6 +1149,51 @@ function subPage(inner) {
    있고, 역산해서 수신 거부 토큰을 얻을 수도 없다.
 
    만료는 두지 않는다. 지난 메일의 링크도 계속 동작해야 한다. */
+
+/* 메일에 실을 다른 독자의 기록.
+
+   이 칼럼에 남은 기록을 먼저 찾고, 없으면 다른 칼럼의 최근 기록을
+   가져온다. 처음 보내는 칼럼에는 기록이 있을 수 없으니, 같은 칼럼만
+   보면 이 영역은 영원히 비어 있다. 그러면 순환이 시작되지 않는다.
+
+   본인 글은 뺀다. 자기가 쓴 것을 "다른 독자의 기록"으로 받으면 이상하다. */
+async function notesForEmail(env, chapterId, excludeUserId, limit) {
+  const n = limit || 2;
+  const ex = excludeUserId || 0;
+  try {
+    await ensureInsightNotesTable(env);
+
+    const same = await env.DB.prepare(
+      "SELECT nt.body, u.name FROM insight_notes nt JOIN users u ON u.id = nt.user_id"
+      + " WHERE nt.chapter_id = ? AND nt.status = 'visible' AND nt.user_id <> ?"
+      + ' ORDER BY nt.id DESC LIMIT ?'
+    ).bind(chapterId, ex, n).all();
+
+    if ((same.results || []).length)
+      return {
+        sameColumn: true,
+        items: same.results.map((x) => ({ masked: maskName(x.name), body: x.body })),
+      };
+
+    const other = await env.DB.prepare(
+      "SELECT nt.body, nt.chapter_id, u.name, i.title, i.slug"
+      + ' FROM insight_notes nt JOIN users u ON u.id = nt.user_id'
+      + ' JOIN insights i ON i.chapter_id = nt.chapter_id'
+      + " WHERE nt.status = 'visible' AND nt.user_id <> ? AND nt.chapter_id <> ?"
+      + ' ORDER BY nt.id DESC LIMIT ?'
+    ).bind(ex, chapterId, n).all();
+
+    return {
+      sameColumn: false,
+      items: (other.results || []).map((x) => ({
+        masked: maskName(x.name), body: x.body,
+        title: x.title, slug: x.slug, chapter_id: x.chapter_id,
+      })),
+    };
+  } catch (_) {
+    return { sameColumn: false, items: [] };
+  }
+}
 
 const NOTE_MAX_LEN = 300;
 const NOTE_SHOW_LIMIT = 20;
@@ -2504,7 +2585,10 @@ async function handlePromoCron(request, env) {
           + (await noteMakeToken(env, member.id, chapterId))
         : '';
       const r = await sendAndLog(env,
-        issueEmail(env, who, item, unsubUrl, { promo: true, noteUrl }),
+        issueEmail(env, who, item, unsubUrl, {
+          promo: true, noteUrl,
+          notes: await notesForEmail(env, chapterId, member ? member.id : 0),
+        }),
         { kind: 'promo_test', user_id: member ? member.id : null, user_email: to, chapter_id: chapterId });
       const want = (env.MAIL_FROM || '').trim() || MAIL_FROM_DEFAULT;
       return jsonResponse({
@@ -2538,6 +2622,7 @@ async function handlePromoCron(request, env) {
         issueEmail(env, user, item, `https://99wisdombook.org/api/email/unsubscribe?t=${t}`, {
           promo: true,
           noteUrl: `https://99wisdombook.org/insight/${encodeURIComponent(col.slug)}?note=${noteTok}`,
+          notes: await notesForEmail(env, chapterId, user.id),
         }),
         { kind: 'promo', user_id: user.id, user_name: user.name, user_email: user.email, chapter_id: chapterId });
       results.sent++;
