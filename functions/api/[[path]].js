@@ -2112,14 +2112,24 @@ async function handlePromoCron(request, env) {
 
   const item = { title: col.anchor_quote, id: col.chapter_id, column: col };
 
-  /* 테스트 발송. 회원이 아닌 주소로도 보낼 수 있어야 한다. */
+  /* 테스트 발송. 회원이 아닌 주소로도 보낼 수 있어야 한다.
+
+     ⚠ 받는 주소가 회원이면 그 회원의 실제 토큰을 쓴다. 그러지 않으면
+     메일의 알림 링크가 폴백으로 떨어져, 테스트로 본 메일과 회원이 받는
+     메일이 달라진다. 링크를 고쳐도 테스트에서는 확인되지 않는다. */
   if (to) {
     if (dryRun) return jsonResponse({ success: true, dry_run: true, mode: 'test', to, week, chapter_id: chapterId, title: col.title });
     try {
+      const member = await env.DB.prepare(
+        'SELECT id, name FROM users WHERE email = ?'
+      ).bind(to).first();
+      const who = member ? { id: member.id, name: member.name, email: to } : { id: null, name: '독자', email: to };
+      const unsubUrl = member
+        ? 'https://99wisdombook.org/api/email/unsubscribe?t=' + (await ensureUnsubscribeToken(env, member.id))
+        : 'https://99wisdombook.org/daily.html?notify=1';
       const r = await sendAndLog(env,
-        issueEmail(env, { id: null, name: '독자', email: to }, item,
-                   'https://99wisdombook.org/daily.html?notify=1', { promo: true }),
-        { kind: 'promo_test', user_email: to, chapter_id: chapterId });
+        issueEmail(env, who, item, unsubUrl, { promo: true }),
+        { kind: 'promo_test', user_id: member ? member.id : null, user_email: to, chapter_id: chapterId });
       const want = (env.MAIL_FROM || '').trim() || MAIL_FROM_DEFAULT;
       return jsonResponse({
         success: true, mode: 'test', to, chapter_id: chapterId,
