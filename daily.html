@@ -840,12 +840,12 @@
       return `${y}년 ${+m}월 ${+d}일`;
     }
 
+    /* 같은 사람에게 같은 문장이 나오게 하는 씨앗. 쓰기 토큰 앞머리가
+       사용자 번호라 그것으로 충분하다 — 여기서 서버를 부를 일이 아니다. */
     function actorId() {
       try {
-        if (wisdomAPI.isLoggedIn()) {
-          const u = wisdomAPI.getCurrentUser();
-          if (u?.id) return 'u-' + u.id;
-        }
+        const m = String(wisdomAPI.readerToken || '').match(/^(\d+)\./);
+        if (m) return 'u-' + m[1];
       } catch(_) {}
       return guestId();
     }
@@ -1160,7 +1160,8 @@
 
     async function loadNotifySettings() {
       try {
-        const u = wisdomAPI.getCurrentUser();
+        /* 로그인 캐시가 없다. 내가 누구인지는 /api/me 가 말해 준다. */
+        const u = await wisdomAPI.me();
         if (!u) return;
         const data = await wisdomAPI.request(`/api/users/${u.id}/notify`);
         if (!data.success) return;
@@ -1199,8 +1200,8 @@
       btn.disabled = true; btn.textContent = '저장 중…';
       msg.textContent = '';
       try {
-        const u = wisdomAPI.getCurrentUser();
-        if (!u) throw new Error('로그인이 필요합니다.');
+        const u = await wisdomAPI.me();
+        if (!u) throw new Error('메일로 받은 링크로 들어와 주세요.');
         const days = [...document.querySelectorAll('#notify-days input:checked')].map(cb => cb.value).join(',');
         const [hour, minute] = document.getElementById('notify-time').value.split(':').map(Number);
         const enabled = document.getElementById('notify-enabled').checked;
@@ -1264,23 +1265,21 @@
         });
       }
 
+      /* 메일 링크로 들어온 사람에게만 보이는 바. 이름 대신 별명을 쓴다. */
       try {
         if (wisdomAPI.isLoggedIn()) {
-          const u = wisdomAPI.getCurrentUser();
-          if (u) {
+          wisdomAPI.me().then((u) => {
+            if (!u) return;
             document.getElementById('logged-in-name').textContent =
-              `${u.name || u.username}님, 다시 오셨네요.`;
+              `${u.nick || '독자'}님, 다시 오셨네요.`;
             const link = document.getElementById('btn-goto-book');
             link.href = u.role === 'admin' ? 'admin.html' : '/parts.html';
             link.textContent = u.role === 'admin' ? '관리자 대시보드 →' : '도서 읽기 →';
             document.getElementById('logged-in-bar').classList.add('visible');
 
-            // 모든 로그인 사용자에게 알림 설정 버튼 표시 (이메일 + Web Push)
             const btnNotify = document.getElementById('btn-notify');
-            if (btnNotify) {
-              btnNotify.style.display = 'flex';
-            }
-          }
+            if (btnNotify) btnNotify.style.display = 'flex';
+          }).catch(() => {});
         }
       } catch(_) {}
     });
