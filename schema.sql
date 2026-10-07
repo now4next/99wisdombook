@@ -66,8 +66,18 @@ CREATE TABLE IF NOT EXISTS insights (
 -- 이메일 뉴스레터. API 가 필요 시 ALTER TABLE 로 자동 추가하므로 별도 마이그레이션은 없다.
 --   email_enabled     : 1 이면 알림 시각에 오늘의 칼럼을 메일로도 보낸다
 --   unsubscribe_token : 로그인 없이 해지할 수 있어야 해서 사용자마다 두는 32자 hex
+--   nickname          : 독자가 스스로 정하는 표시 이름. 공개되는 기록에는 이 값만
+--                       나간다(실명은 쓰지 않는다). 비어 있으면 '독자'로 보인다.
 -- ALTER TABLE users ADD COLUMN email_enabled INTEGER DEFAULT 0;
 -- ALTER TABLE users ADD COLUMN unsubscribe_token TEXT;
+-- ALTER TABLE users ADD COLUMN nickname TEXT;
+
+-- ⚠ 독자에게는 로그인이 없다(2026-10 개편).
+-- users.password 는 NOT NULL 이지만, 독자 계정은 빈 문자열로 둔다. 비밀번호로
+-- 들어오는 길이 없으므로 채울 값이 없다. 관리자 계정만 해시를 가진다.
+-- 신분 확인은 메일 링크의 토큰으로 한다 — 설정 토큰(unsubscribe_token, 만료 없음)과
+-- 60일 쓰기 토큰 두 가지이며, 쓰기 토큰은 설정 토큰을 키로 서명한 값이라
+-- 따로 저장하지 않는다.
 
 -- 로그인 세션. API가 필요 시 자동 생성하므로 별도 마이그레이션은 필요 없다.
 -- token_hash 는 클라이언트가 가진 64자 hex 토큰의 SHA-256 이며, 원본은 저장하지 않는다.

@@ -241,6 +241,10 @@ export async function onRequest(context) {
     if (path === '/api/auth/register' && method === 'POST') return handleRegister(request, env, context);
     if (path === '/api/auth/logout'   && method === 'POST') return handleLogout(request, env);
     if (path === '/api/email/unsubscribe' && method === 'GET') return handleEmailUnsubscribe(request, env);
+    if (path === '/api/email/start' && method === 'GET')  return handleEmailStartPage(request, env);
+    if (path === '/api/email/start' && method === 'POST') return handleEmailStart(request, env);
+    if (path === '/api/me' && method === 'GET')  return handleMe(request, env);
+    if (path === '/api/me' && method === 'PUT')  return handleMeUpdate(request, env);
     if (path === '/api/email/subscribe' && method === 'GET')  return handleEmailSubscribePage(request, env);
     if (path === '/api/email/subscribe' && method === 'POST') return handleEmailSubscribe(request, env);
 
@@ -325,6 +329,8 @@ export async function onRequest(context) {
     // 독자의 기록 (칼럼 아래 익명 소감)
     if (path.match(/^\/api\/notes\/\d+$/) && method === 'GET')
       return handleListNotes(path.split('/').pop(), request, env);
+    if (path.match(/^\/api\/notes\/\d+\/mine$/) && method === 'GET')
+      return handleMyNote(path.split('/')[3], request, env);
     if (path.match(/^\/api\/notes\/\d+$/) && method === 'POST')
       return handleSaveNote(path.split('/').pop(), request, env);
     if (path.match(/^\/api\/notes\/\d+$/) && method === 'DELETE')
@@ -456,6 +462,9 @@ async function ensureEmailColumns(env) {
   for (const sql of [
     'ALTER TABLE users ADD COLUMN email_enabled INTEGER DEFAULT 0',
     'ALTER TABLE users ADD COLUMN unsubscribe_token TEXT',
+    /* 독자가 스스로 정하는 표시 이름. 실명을 쓰지 않기로 했으므로
+       기록·목록에는 이 값만 나간다. 비어 있으면 '독자'. */
+    'ALTER TABLE users ADD COLUMN nickname TEXT',
   ]) {
     try { await env.DB.prepare(sql).run(); } catch (_) {}
   }
@@ -753,7 +762,7 @@ function issueEmail(env, user, wisdomItem, unsubUrl, opt) {
           + notes.items.map(function (nn) {
               return '<div style="padding:11px 0 0;">'
                 + '<div style="font-size:12.5px;color:#a29a90;padding-bottom:3px;">'
-                + mailEsc(nn.masked)
+                + mailEsc(nn.nick)
                 + (nn.title ? ' · <a href="' + mailEsc(SITE + '/insight/' + encodeURIComponent(nn.slug))
                     + '" style="color:#a29a90;">' + mailEsc(nn.title) + '</a>' : '')
                 + '</div>'
@@ -804,7 +813,7 @@ function issueEmail(env, user, wisdomItem, unsubUrl, opt) {
     notes && notes.items && notes.items.length
       ? '\n' + (notes.sameColumn ? '이 칼럼에 남은 기록' : '다른 독자가 남긴 기록') + '\n'
         + notes.items.map(function (nn) {
-            return (nn.title ? nn.masked + ' (' + nn.title + ')' : nn.masked) + '\n' + nn.body;
+            return (nn.title ? nn.nick + ' (' + nn.title + ')' : nn.nick) + '\n' + nn.body;
           }).join('\n\n')
       : '',
     noteUrl ? '이 글에서 느낀 것 적기: ' + noteUrl : '',
@@ -859,7 +868,7 @@ async function sendNewsletterEmail(env, user, wisdomItem) {
   const opt = ch ? {
     notes: await notesForEmail(env, ch, user.id),
     noteUrl: 'https://99wisdombook.org/insight/' + encodeURIComponent(col.slug)
-      + '?note=' + (await noteMakeToken(env, user.id, ch)),
+      + '?t=' + (await writeTokenFor(env, user.id)),
   } : null;
   return sendAndLog(env, issueEmail(env, user, wisdomItem, unsubUrl, opt), {
     kind: 'issue',
@@ -1170,7 +1179,7 @@ async function notesForEmail(env, chapterId, excludeUserId, limit) {
     await ensureInsightNotesTable(env);
 
     const same = await env.DB.prepare(
-      "SELECT nt.body, u.name FROM insight_notes nt JOIN users u ON u.id = nt.user_id"
+      'SELECT nt.body, u.nickname FROM insight_notes nt JOIN users u ON u.id = nt.user_id'
       + " WHERE nt.chapter_id = ? AND nt.status = 'visible' AND nt.user_id <> ?"
       + ' ORDER BY nt.id DESC LIMIT ?'
     ).bind(chapterId, ex, n).all();
@@ -1178,11 +1187,11 @@ async function notesForEmail(env, chapterId, excludeUserId, limit) {
     if ((same.results || []).length)
       return {
         sameColumn: true,
-        items: same.results.map((x) => ({ masked: maskName(x.name), body: x.body })),
+        items: same.results.map((x) => ({ nick: displayNick(x), body: x.body })),
       };
 
     const other = await env.DB.prepare(
-      "SELECT nt.body, nt.chapter_id, u.name, i.title, i.slug"
+      'SELECT nt.body, nt.chapter_id, u.nickname, i.title, i.slug'"
       + ' FROM insight_notes nt JOIN users u ON u.id = nt.user_id'
       + ' JOIN insights i ON i.chapter_id = nt.chapter_id'
       + " WHERE nt.status = 'visible' AND nt.user_id <> ? AND nt.chapter_id <> ?"
@@ -1192,7 +1201,7 @@ async function notesForEmail(env, chapterId, excludeUserId, limit) {
     return {
       sameColumn: false,
       items: (other.results || []).map((x) => ({
-        masked: maskName(x.name), body: x.body,
+        nick: displayNick(x), body: x.body,
         title: x.title, slug: x.slug, chapter_id: x.chapter_id,
       })),
     };
@@ -1201,6 +1210,112 @@ async function notesForEmail(env, chapterId, excludeUserId, limit) {
   }
 }
 
+/* ── 독자 토큰 ───────────────────────────────────────────────
+
+   독자 쪽에는 로그인이 없다. 비밀번호도 세션도 받지 않고, 메일에 실어
+   보낸 링크의 토큰으로 누구인지 확인한다. 자매 사이트와 같은 방식이다.
+
+   토큰은 두 가지다.
+     설정 토큰  unsubscribe_token 그 자체. 만료 없음. 알림 켜기·끄기,
+                받는 시각, 보관함처럼 본인만 보는 일에 쓴다.
+     쓰기 토큰  <user_id>.<만료 유닉스초>.<서명>. 60일.
+                공개되는 글(인사이트)에 쓴다.
+
+   왜 나누는가. 설정 링크는 메일 바닥에 늘 들어가고 만료가 없다. 그것
+   하나로 공개 글쓰기까지 열어 주면, 오래된 메일 한 통이 영구 글쓰기
+   권한이 된다. 공개되는 쪽에는 기한을 두는 편이 맞다.
+
+   서명 키는 그 사람의 설정 토큰이다. 서버에만 있는 값이라 밖에서는
+   쓰기 토큰을 만들 수 없고, 새 시크릿을 두지 않아도 된다.
+
+   편(칼럼)은 묶지 않는다. 메일로 받은 칼럼 말고 다른 칼럼을 읽다가
+   쓰고 싶을 때 막히면 안 된다. */
+
+const WRITE_TOKEN_DAYS = 60;
+const NICK_MIN = 2, NICK_MAX = 16;
+
+async function writeTokenFor(env, userId) {
+  const key = await ensureUnsubscribeToken(env, userId);
+  const exp = Math.floor(Date.now() / 1000) + WRITE_TOKEN_DAYS * 86400;
+  const enc = new TextEncoder();
+  const sig = await hmacSha256(enc.encode(key), enc.encode('w:' + userId + '.' + exp));
+  return userId + '.' + exp + '.' + b64uEncode(sig);
+}
+
+/** 쓰기 토큰 → 사용자 행. 만료·위조는 null. */
+async function readWriteToken(env, t) {
+  const m = String(t || '').match(/^(\d+)\.(\d+)\.([A-Za-z0-9_-]{20,})$/);
+  if (!m) return null;
+  const exp = parseInt(m[2], 10);
+  if (!(exp > Math.floor(Date.now() / 1000))) return null;
+  const userId = parseInt(m[1], 10);
+
+  const row = await env.DB.prepare(
+    'SELECT id, name, nickname, unsubscribe_token FROM users WHERE id = ?'
+  ).bind(userId).first();
+  if (!row || !row.unsubscribe_token) return null;
+
+  const enc = new TextEncoder();
+  const sig = await hmacSha256(enc.encode(row.unsubscribe_token), enc.encode('w:' + userId + '.' + exp));
+  return timingSafeEqual(b64uEncode(sig), m[3]) ? row : null;
+}
+
+/** 설정 토큰(=unsubscribe_token) → 사용자 행. */
+async function readSettingsToken(env, t) {
+  if (!/^[0-9a-f]{32}$/.test(String(t || ''))) return null;
+  return await env.DB.prepare(
+    'SELECT id, name, nickname, email, email_enabled, notify_enabled, notify_hour FROM users WHERE unsubscribe_token = ?'
+  ).bind(t).first();
+}
+
+/* 독자를 확정한다. 쓰기 토큰 → 설정 토큰 순으로 본다.
+   세션은 보지 않는다. 독자 쪽에 세션이 없다. */
+async function reader(env, body, url) {
+  const w = (body && body.t) || (url && url.searchParams.get('t')) || '';
+  const byWrite = await readWriteToken(env, w);
+  if (byWrite) return byWrite;
+  return await readSettingsToken(env, w);
+}
+
+/* 본인만 보는 일(보관함·알림 설정·스트릭)에서 쓰는 신분 확인.
+
+   순서가 중요하다. 먼저 독자 토큰을 보고, 없을 때만 세션을 본다.
+   관리자는 세션이 남아 있으므로 관리자 화면은 그대로 동작한다.
+
+   Authorization: Bearer 로 설정 토큰(32자 16진수)을 보내는 것도 받는다.
+   메일 링크로 들어온 화면이 매 요청에 ?t= 를 붙이는 대신 헤더로 넘길 수
+   있어야 기존 fetch 코드를 그대로 쓸 수 있다. */
+async function readerId(request, env, body) {
+  const url = new URL(request.url);
+  const byToken = await reader(env, body, url);
+  if (byToken) return byToken.id;
+
+  const auth = request.headers.get('Authorization') || '';
+  if (auth.startsWith('Bearer ')) {
+    const t = auth.slice(7).trim();
+    const byHeader = (await readWriteToken(env, t)) || (await readSettingsToken(env, t));
+    if (byHeader) return byHeader.id;
+  }
+
+  return await getUserIdFromToken(request, env);
+}
+
+/** 표시 이름. 별명이 없으면 '독자'. 실명은 쓰지 않는다. */
+function displayNick(row) {
+  const n = String((row && row.nickname) || '').trim();
+  return n || '독자';
+}
+
+function cleanNick(v) {
+  const s = String(v == null ? '' : v).replace(/\s+/g, ' ').trim();
+  if (!s) return { v: null };
+  if (s.length < NICK_MIN) return { err: `별명은 ${NICK_MIN}자 이상이어야 합니다.` };
+  if (s.length > NICK_MAX) return { err: `별명은 ${NICK_MAX}자까지 쓸 수 있습니다.` };
+  if (/https?:\/\/|www\.|\.[a-z]{2,}\//i.test(s)) return { err: '별명에 주소는 넣을 수 없습니다.' };
+  return { v: s };
+}
+
+const NOTE_MIN_LEN = 30;   // 한 문장으로는 기록이 되지 않는다
 const NOTE_MAX_LEN = 300;
 const NOTE_SHOW_LIMIT = 20;
 
@@ -1225,40 +1340,10 @@ async function ensureInsightNotesTable(env) {
   } catch (_) {}
 }
 
-/** 메일 링크에 실을 토큰. 칼럼마다 다르다. */
-async function noteMakeToken(env, userId, chapterId) {
-  const tok = await ensureUnsubscribeToken(env, userId);
-  const enc = new TextEncoder();
-  const sig = await hmacSha256(enc.encode(tok), enc.encode('note:' + userId + ':' + chapterId));
-  return userId + '.' + chapterId + '.' + b64uEncode(sig);
-}
-
-/** 토큰이 그 칼럼에 대해 유효하면 user 행, 아니면 null. */
-async function noteVerifyToken(env, token, chapterId) {
-  const m = String(token || '').match(/^(\d+)\.(\d+)\.([A-Za-z0-9_-]{20,})$/);
-  if (!m) return null;
-  if (parseInt(m[2], 10) !== parseInt(chapterId, 10)) return null;
-  const userId = parseInt(m[1], 10);
-
-  const row = await env.DB.prepare('SELECT id, name, unsubscribe_token FROM users WHERE id = ?')
-    .bind(userId).first();
-  if (!row || !row.unsubscribe_token) return null;
-
-  const enc = new TextEncoder();
-  const sig = await hmacSha256(enc.encode(row.unsubscribe_token),
-    enc.encode('note:' + userId + ':' + parseInt(chapterId, 10)));
-  return timingSafeEqual(b64uEncode(sig), m[3]) ? row : null;
-}
-
-/** 토큰이든 세션이든, 쓰는 사람을 확정한다. */
-async function noteWho(env, request, body, chapterId) {
-  if (body && body.note) {
-    const u = await noteVerifyToken(env, body.note, chapterId);
-    if (u) return u;
-  }
-  const uid = await getUserIdFromToken(request, env);
-  if (uid) return await env.DB.prepare('SELECT id, name FROM users WHERE id = ?').bind(uid).first();
-  return null;
+/* 기록을 쓰는 사람을 확정한다. 쓰기 토큰이 우선이고, 설정 페이지를 거쳐
+   온 사람은 설정 토큰으로도 쓸 수 있다. 세션은 보지 않는다. */
+async function noteWho(env, request, body) {
+  return await reader(env, body, new URL(request.url));
 }
 
 /* ── 독자의 기록 · 관리자 ────────────────────────────────────
@@ -1278,7 +1363,7 @@ async function handleAdminListNotes(request, env) {
   const limit = Math.min(parseInt(url.searchParams.get('limit'), 10) || 200, 500);
 
   let sql = 'SELECT nt.id, nt.chapter_id, nt.user_id, nt.body, nt.status,'
-    + ' nt.created_at, nt.updated_at, u.name, u.email, i.title, i.slug'
+    + ' nt.created_at, nt.updated_at, u.name, u.nickname, u.email, i.title, i.slug'
     + ' FROM insight_notes nt'
     + ' LEFT JOIN users u ON u.id = nt.user_id'
     + ' LEFT JOIN insights i ON i.chapter_id = nt.chapter_id';
@@ -1301,7 +1386,7 @@ async function handleAdminListNotes(request, env) {
     return jsonResponse({
       success: true,
       summary: sum || {},
-      notes: rows.map((x) => ({ ...x, masked: maskName(x.name) })),
+      notes: rows.map((x) => ({ ...x, nick: displayNick(x) })),
     });
   } catch (err) {
     return jsonResponse({ success: false, error: err.message }, 500);
@@ -1336,13 +1421,36 @@ async function handleAdminDeleteNote(id, request, env) {
   }
 }
 
+/* 글 화면이 "내가 이 칼럼에 쓴 것"과 내 별명을 미리 채우려고 부른다. */
+async function handleMyNote(chapterId, request, env) {
+  await ensureEmailColumns(env);
+  await ensureInsightNotesTable(env);
+  const url = new URL(request.url);
+  const who = await reader(env, null, url);
+  if (!who) return jsonResponse({ success: true, canWrite: false });
+
+  const ch = parseInt(chapterId, 10);
+  let mineRow = null;
+  try {
+    mineRow = await env.DB.prepare(
+      "SELECT body FROM insight_notes WHERE chapter_id = ? AND user_id = ? AND status = 'visible'"
+    ).bind(ch, who.id).first();
+  } catch (_) {}
+
+  return jsonResponse({
+    success: true, canWrite: true,
+    nick: (who.nickname || '').trim() || null,
+    body: (mineRow && mineRow.body) || null,
+  });
+}
+
 async function handleListNotes(chapterId, request, env) {
   await ensureInsightNotesTable(env);
   const ch = parseInt(chapterId, 10);
   try {
     const r = await env.DB.prepare(
-      "SELECT n.body, n.created_at, u.name FROM insight_notes n"
-      + " JOIN users u ON u.id = n.user_id"
+      'SELECT n.body, n.created_at, u.nickname FROM insight_notes n'
+      + ' JOIN users u ON u.id = n.user_id'
       + " WHERE n.chapter_id = ? AND n.status = 'visible'"
       + ' ORDER BY n.id DESC LIMIT ?'
     ).bind(ch, NOTE_SHOW_LIMIT).all();
@@ -1357,7 +1465,7 @@ async function handleListNotes(chapterId, request, env) {
       success: true,
       count: (c && c.n) || 0,
       notes: rows.map((x) => ({
-        masked: maskName(x.name),
+        nick: displayNick(x),
         body: x.body,
         created_at: x.created_at,
       })),
@@ -1368,21 +1476,40 @@ async function handleListNotes(chapterId, request, env) {
 }
 
 async function handleSaveNote(chapterId, request, env) {
+  await ensureEmailColumns(env);
   await ensureInsightNotesTable(env);
   const ch = parseInt(chapterId, 10);
   const b = await request.json().catch(() => ({}));
 
-  const who = await noteWho(env, request, b, ch);
+  const who = await noteWho(env, request, b);
   if (!who)
-    return jsonResponse({ success: false, error: '메일의 링크로 들어오시거나 로그인해 주세요.' }, 401);
+    return jsonResponse({
+      success: false,
+      error: '쓰기 링크가 만료됐습니다. 메일의 최근 링크로 다시 들어와 주세요.',
+    }, 401);
 
   const body = String(b.body || '').trim();
   if (!body) return jsonResponse({ success: false, error: '내용을 적어 주세요.' }, 400);
+  if (body.length < NOTE_MIN_LEN)
+    return jsonResponse({
+      success: false,
+      error: `${NOTE_MIN_LEN}자 이상 적어 주세요. 지금 ${body.length}자입니다.`,
+    }, 400);
   if (body.length > NOTE_MAX_LEN)
     return jsonResponse({ success: false, error: NOTE_MAX_LEN + '자까지 적을 수 있습니다.' }, 400);
   /* 링크는 받지 않는다. 광고가 들어오는 가장 짧은 길이다. */
   if (/https?:\/\/|www\./i.test(body))
     return jsonResponse({ success: false, error: '링크는 넣을 수 없습니다.' }, 400);
+
+  /* 별명은 처음 쓸 때만 받는다. 이미 있으면 보낸 값이 있을 때만 바꾼다.
+     정하지 않아도 쓸 수 있고, 그때는 '독자'로 표시된다. */
+  let nick = (who.nickname || '').trim() || null;
+  if (b.nickname != null && String(b.nickname).trim() !== '') {
+    const c = cleanNick(b.nickname);
+    if (c.err) return jsonResponse({ success: false, error: c.err }, 400);
+    nick = c.v;
+    await env.DB.prepare('UPDATE users SET nickname = ? WHERE id = ?').bind(nick, who.id).run();
+  }
 
   const col = await env.DB.prepare(
     "SELECT chapter_id FROM insights WHERE chapter_id = ? AND status = 'published'"
@@ -1395,7 +1522,7 @@ async function handleSaveNote(chapterId, request, env) {
       + ' ON CONFLICT(user_id, chapter_id) DO UPDATE SET'
       + " body = excluded.body, updated_at = datetime('now')"
     ).bind(ch, who.id, body).run();
-    return jsonResponse({ success: true, masked: maskName(who.name), body });
+    return jsonResponse({ success: true, nick: nick || '독자', body });
   } catch (err) {
     return jsonResponse({ success: false, error: '저장하지 못했습니다.' }, 500);
   }
@@ -1406,8 +1533,8 @@ async function handleDeleteNote(chapterId, request, env) {
   const ch = parseInt(chapterId, 10);
   const b = await request.json().catch(() => ({}));
 
-  const who = await noteWho(env, request, b, ch);
-  if (!who) return jsonResponse({ success: false, error: 'Unauthorized' }, 401);
+  const who = await noteWho(env, request, b);
+  if (!who) return jsonResponse({ success: false, error: '권한을 확인하지 못했습니다.' }, 401);
 
   try {
     await env.DB.prepare('DELETE FROM insight_notes WHERE user_id = ? AND chapter_id = ?')
@@ -1595,6 +1722,137 @@ async function handleResetSubmit(request, env) {
   }
 }
 
+/* ── 메일로 시작하기 ────────────────────────────────────────
+
+   로그인을 없앤 뒤 독자가 들어오는 문 하나다. 주소만 적으면 링크가 담긴
+   메일이 가고, 그 링크를 누르는 것으로 신분 확인이 끝난다. 비밀번호를
+   만들 일도, 기억할 일도 없다. 자매 사이트와 같은 방식이다.
+
+   가입 여부는 알려 주지 않는다. 처음 적은 주소면 자리를 만들고, 이미
+   있는 주소면 그 사람의 링크를 보낸다. 응답은 어느 쪽이나 같다 —
+   주소를 넣어 보며 회원인지 떠보는 길을 두지 않는다.
+
+   비밀번호 칸은 비워 둔다(NOT NULL 이라 빈 문자열). 독자 쪽에는
+   비밀번호로 들어오는 길이 없으므로 채울 값이 없다. */
+const START_MAX_PER_HOUR = 3;
+
+async function handleEmailStartPage(request, env) {
+  return authPage(
+    '<p style="margin:16px 0 6px;font-size:18px;font-weight:600;text-align:center;">메일로 시작하기</p>'
+    + '<p style="margin:0 0 20px;font-size:14px;line-height:1.75;color:#7a736a;text-align:center;">'
+    + '주소를 적어 주시면 링크를 보내 드립니다.<br>비밀번호는 없습니다.</p>'
+    + '<form id="f">'
+    + '<input id="e" type="email" required placeholder="이메일 주소" autocomplete="email" style="' + AUTH_INPUT + '">'
+    + '<button type="submit" style="' + AUTH_BTN + '">링크 받기</button>'
+    + '</form>'
+    + '<p id="m" style="margin:16px 0 0;font-size:14px;line-height:1.75;color:#5c554d;text-align:center;"></p>'
+    + '<script>document.getElementById("f").onsubmit=function(ev){ev.preventDefault();'
+    + 'var b=ev.target.querySelector("button");b.disabled=true;b.textContent="보내는 중…";'
+    + 'fetch("/api/email/start",{method:"POST",headers:{"Content-Type":"application/json"},'
+    + 'body:JSON.stringify({email:document.getElementById("e").value})})'
+    + '.then(function(r){return r.json()}).then(function(){'
+    + 'document.getElementById("f").style.display="none";'
+    + 'document.getElementById("m").innerHTML="메일을 보냈습니다.<br>받은편지함을 확인해 주세요.";'
+    + '}).catch(function(){b.disabled=false;b.textContent="링크 받기";'
+    + 'document.getElementById("m").textContent="잠시 후 다시 시도해 주세요.";});};</script>'
+  );
+}
+
+async function handleEmailStart(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const email = String(b.email || '').trim().toLowerCase();
+  const name = String(b.name || '').trim().slice(0, 40);
+
+  /* 응답은 언제나 같다. */
+  const ok = () => jsonResponse({ success: true });
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return ok();
+
+  try {
+    await ensureEmailColumns(env);
+    let row = await env.DB.prepare('SELECT id, name, email FROM users WHERE email = ?')
+      .bind(email).first();
+
+    if (!row) {
+      /* username 은 NOT NULL UNIQUE 다. 가입 화면이 있던 때부터 주소를
+         그대로 넣어 왔으므로 같은 규칙을 지킨다. auth_provider 도 맞춰 둔다. */
+      await env.DB.prepare(
+        "INSERT INTO users (username, name, email, password, role, permissions, auth_provider)"
+        + " VALUES (?, ?, ?, '', 'user', '[\"korean\"]', 'email')"
+      ).bind(email, name || email.split('@')[0], email).run();
+      row = await env.DB.prepare('SELECT id, name, email FROM users WHERE email = ?')
+        .bind(email).first();
+      if (!row) return ok();
+    }
+
+    /* 한 주소로 메일이 쏟아지지 않게 막는다. 발송 기록을 그대로 쓴다. */
+    const recent = await env.DB.prepare(
+      "SELECT COUNT(*) AS n FROM send_logs WHERE kind = 'email_start' AND user_id = ?"
+      + " AND sent_at > datetime('now', '-1 hours')"
+    ).bind(row.id).first();
+    if (recent && recent.n >= START_MAX_PER_HOUR) return ok();
+
+    const unsub = await ensureUnsubscribeToken(env, row.id);
+    const url = 'https://99wisdombook.org/api/email/subscribe?t=' + encodeURIComponent(unsub);
+
+    await sendAndLog(env, noticeEmail(env, row, {
+      subject: '시작 링크 · 99 Wisdom Insight',
+      heading: '아래 버튼 하나로 시작됩니다',
+      lead: '누르시면 이메일 알림이 켜지고, 바로 오늘의 문장으로 이어집니다.<br>'
+        + '받는 시각은 그 화면에서 고르실 수 있고, 메일 바닥의 링크로 언제든 끄실 수 있습니다.<br><br>'
+        + '<span style="color:#9c9489;">요청하지 않으셨다면 이 메일을 지우셔도 됩니다. '
+        + '누르지 않으면 아무것도 시작되지 않습니다.</span>',
+      cta: '알림 켜고 시작하기', ctaUrl: url,
+    }), { kind: 'email_start', user_id: row.id, user_name: row.name, user_email: row.email });
+  } catch (_) {}
+
+  return ok();
+}
+
+/* 화면이 "나는 누구이고 무엇을 켜 두었나"를 묻는 곳. 로그인 대신 쓴다. */
+async function handleMe(request, env) {
+  await ensureEmailColumns(env);
+  const userId = await readerId(request, env, null);
+  if (!userId) return jsonResponse({ success: false, error: 'Unauthorized' }, 401);
+
+  const row = await env.DB.prepare(
+    'SELECT id, name, nickname, email, role, email_enabled, notify_enabled,'
+    + ' notify_hour, notify_minute, notify_days, streak_count FROM users WHERE id = ?'
+  ).bind(userId).first();
+  if (!row) return jsonResponse({ success: false, error: 'Not found' }, 404);
+
+  /* 주소는 끝까지 돌려주지 않는다. 메일 링크는 전달될 수 있고, 전달받은
+     사람에게 원래 주인의 주소까지 보여 줄 이유가 없다. */
+  const em = String(row.email || '');
+  const at = em.indexOf('@');
+  const maskedEmail = at > 1 ? em.slice(0, 2) + '***' + em.slice(at) : em;
+
+  return jsonResponse({
+    success: true,
+    user: {
+      id: row.id, name: row.name, nickname: row.nickname || null,
+      nick: displayNick(row), email: maskedEmail, role: row.role,
+      email_enabled: row.email_enabled || 0, notify_enabled: row.notify_enabled || 0,
+      notify_hour: row.notify_hour, notify_minute: row.notify_minute || 0,
+      notify_days: row.notify_days, streak_count: row.streak_count || 0,
+    },
+  });
+}
+
+async function handleMeUpdate(request, env) {
+  await ensureEmailColumns(env);
+  const b = await request.json().catch(() => ({}));
+  const userId = await readerId(request, env, b);
+  if (!userId) return jsonResponse({ success: false, error: 'Unauthorized' }, 401);
+
+  if (b.nickname !== undefined) {
+    const c = cleanNick(b.nickname);
+    if (c.err) return jsonResponse({ success: false, error: c.err }, 400);
+    await env.DB.prepare('UPDATE users SET nickname = ? WHERE id = ?').bind(c.v, userId).run();
+  }
+  const row = await env.DB.prepare('SELECT nickname FROM users WHERE id = ?').bind(userId).first();
+  return jsonResponse({ success: true, nickname: (row && row.nickname) || null, nick: displayNick(row) });
+}
+
 async function handleEmailSubscribePage(request, env) {
   const t = new URL(request.url).searchParams.get('t') || '';
   if (!/^[0-9a-f]{32}$/.test(t))
@@ -1610,6 +1868,10 @@ async function handleEmailSubscribePage(request, env) {
   if (!row)
     return subPage('<p style="margin:18px 0 0;font-size:17px;line-height:1.7;">유효하지 않은 링크입니다.</p>');
 
+  /* 켠 다음 갈 곳을 준다. 토큰을 함께 실어 보내므로 그 화면에서 보관하기와
+     기록 쓰기가 바로 된다 — 로그인 화면으로 떨어지지 않는다. */
+  const goUrl = '/daily.html?t=' + encodeURIComponent(await writeTokenFor(env, row.id));
+
   const hours = [7, 8, 9, 21];
   const opts = hours.map((h) =>
     '<button data-h="' + h + '" style="background:#fff;border:1px solid #ddd8d0;border-radius:999px;'
@@ -1624,6 +1886,9 @@ async function handleEmailSubscribePage(request, env) {
     + '<div id="pick" style="display:none;margin:26px 0 0;">'
     + '<p style="margin:0 0 10px;font-size:13px;color:#9c9489;">받는 시각을 고르실 수 있습니다</p>'
     + opts + '</div>'
+    + '<p style="margin:26px 0 0;"><a href="' + mailEsc(goUrl) + '" style="display:inline-block;'
+    + 'background:#5FA97E;color:#fff;text-decoration:none;border-radius:999px;'
+    + 'padding:12px 24px;font-size:15px;font-weight:600;">오늘의 문장 보기</a></p>'
     + '<noscript><form method="POST" action="/api/email/subscribe">'
     + '<input type="hidden" name="t" value="' + mailEsc(t) + '">'
     + '<button type="submit" style="background:#5FA97E;color:#fff;border:0;border-radius:999px;'
@@ -1789,7 +2054,8 @@ async function ensureSavedWisdomTable(env) {
 }
 
 async function handleGetSaved(request, env) {
-  const userId = await getUserIdFromToken(request, env);
+  await ensureEmailColumns(env);
+  const userId = await readerId(request, env, null);
   if (!userId) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   await ensureSavedWisdomTable(env);
@@ -1801,10 +2067,12 @@ async function handleGetSaved(request, env) {
 }
 
 async function handleSaveWisdom(request, env) {
-  const userId = await getUserIdFromToken(request, env);
+  await ensureEmailColumns(env);
+  const b = await request.json().catch(() => ({}));
+  const userId = await readerId(request, env, b);
   if (!userId) return jsonResponse({ error: 'Unauthorized' }, 401);
 
-  const { chapter_id, title, memo } = await request.json();
+  const { chapter_id, title, memo } = b;
   if (!chapter_id || !title) return jsonResponse({ error: 'chapter_id and title required' }, 400);
 
   const memoText = (memo || '').trim().slice(0, 300);
@@ -1829,10 +2097,12 @@ async function handleSaveWisdom(request, env) {
 }
 
 async function handleUpdateMemo(chapterId, request, env) {
-  const userId = await getUserIdFromToken(request, env);
+  await ensureEmailColumns(env);
+  const b = await request.json().catch(() => ({}));
+  const userId = await readerId(request, env, b);
   if (!userId) return jsonResponse({ error: 'Unauthorized' }, 401);
 
-  const { memo } = await request.json();
+  const { memo } = b;
   const memoText = (memo || '').trim().slice(0, 300);
 
   await env.DB.prepare(
@@ -1843,7 +2113,8 @@ async function handleUpdateMemo(chapterId, request, env) {
 }
 
 async function handleUnsaveWisdom(chapterId, request, env) {
-  const userId = await getUserIdFromToken(request, env);
+  await ensureEmailColumns(env);
+  const userId = await readerId(request, env, null);
   if (!userId) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   await ensureSavedWisdomTable(env);
@@ -1856,10 +2127,12 @@ async function handleUnsaveWisdom(chapterId, request, env) {
 
 // ── Streak (스트릭) ─────────────────────────────────────────
 async function handleStreak(request, env) {
-  const userId = await getUserIdFromToken(request, env);
+  await ensureEmailColumns(env);
+  const b = await request.json().catch(() => ({}));
+  const userId = await readerId(request, env, b);
   if (!userId) return jsonResponse({ error: 'Unauthorized' }, 401);
 
-  const { date } = await request.json(); // 'YYYY-MM-DD'
+  const { date } = b; // 'YYYY-MM-DD'
   if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return jsonResponse({ error: 'Invalid date' }, 400);
 
   const row = await env.DB.prepare(
@@ -2390,9 +2663,9 @@ async function handleUpdatePermissions(userId, request, env) {
 
 // ── 알림 설정 (이메일 + Web Push) ───────────────────────────
 async function handleGetNotify(userId, request, env) {
-  const tokenUserId = await getUserIdFromToken(request, env);
-  if (!tokenUserId || tokenUserId !== parseInt(userId)) return jsonResponse({ error: 'Unauthorized' }, 401);
   await ensureEmailColumns(env);
+  const tokenUserId = await readerId(request, env, null);
+  if (!tokenUserId || tokenUserId !== parseInt(userId)) return jsonResponse({ error: 'Unauthorized' }, 401);
   const row = await env.DB.prepare(
     'SELECT notify_enabled, notify_days, notify_hour, notify_minute, email_enabled FROM users WHERE id = ?'
   ).bind(userId).first();
@@ -2401,7 +2674,9 @@ async function handleGetNotify(userId, request, env) {
 }
 
 async function handleUpdateNotify(userId, request, env) {
-  const tokenUserId = await getUserIdFromToken(request, env);
+  await ensureEmailColumns(env);
+  const body = await request.json().catch(() => ({}));
+  const tokenUserId = await readerId(request, env, body);
   if (!tokenUserId) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   /* 본인이거나 관리자면 고칠 수 있다. 관리자가 대신 꺼 주어야 하는
@@ -2412,8 +2687,7 @@ async function handleUpdateNotify(userId, request, env) {
     return jsonResponse({ error: 'Forbidden' }, 403);
   }
 
-  const b = await request.json().catch(() => ({}));
-  await ensureEmailColumns(env);
+  const b = body;
 
   /* 푸시는 브라우저에서 구독해야 생기므로 관리자가 켜 줄 수는 없다.
      끌 수는 있어야 한다(단말을 잃었거나 해지 요청을 받은 경우). */
@@ -2442,7 +2716,7 @@ function genReferralCode() {
 }
 
 async function handleGetReferralCode(request, env) {
-  const userId = await getUserIdFromToken(request, env);
+  const userId = await readerId(request, env, null);
   if (!userId) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   let user = await env.DB.prepare('SELECT id, name, referral_code, referral_count FROM users WHERE id = ?').bind(userId).first();
@@ -2473,7 +2747,7 @@ async function handleGetReferralCode(request, env) {
 }
 
 async function handleGetReferralStats(request, env) {
-  const userId = await getUserIdFromToken(request, env);
+  const userId = await readerId(request, env, null);
   if (!userId) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   const user = await env.DB.prepare('SELECT referral_count FROM users WHERE id = ?').bind(userId).first();
@@ -2662,8 +2936,8 @@ async function handlePromoCron(request, env) {
         ? 'https://99wisdombook.org/api/email/unsubscribe?t=' + (await ensureUnsubscribeToken(env, member.id))
         : 'https://99wisdombook.org/daily.html?notify=1';
       const noteUrl = member
-        ? `https://99wisdombook.org/insight/${encodeURIComponent(col.slug)}?note=`
-          + (await noteMakeToken(env, member.id, chapterId))
+        ? `https://99wisdombook.org/insight/${encodeURIComponent(col.slug)}?t=`
+          + (await writeTokenFor(env, member.id))
         : '';
       const r = await sendAndLog(env,
         issueEmail(env, who, item, unsubUrl, {
@@ -2698,11 +2972,11 @@ async function handlePromoCron(request, env) {
   for (const user of users) {
     try {
       const t = await ensureUnsubscribeToken(env, user.id);
-      const noteTok = await noteMakeToken(env, user.id, chapterId);
+      const noteTok = await writeTokenFor(env, user.id);
       await sendAndLog(env,
         issueEmail(env, user, item, `https://99wisdombook.org/api/email/unsubscribe?t=${t}`, {
           promo: true,
-          noteUrl: `https://99wisdombook.org/insight/${encodeURIComponent(col.slug)}?note=${noteTok}`,
+          noteUrl: `https://99wisdombook.org/insight/${encodeURIComponent(col.slug)}?t=${noteTok}`,
           notes: await notesForEmail(env, chapterId, user.id),
         }),
         { kind: 'promo', user_id: user.id, user_name: user.name, user_email: user.email, chapter_id: chapterId });
@@ -3203,9 +3477,9 @@ async function sendWebPushToUser(env, user, payload) {
 // ── Web Push 구독 관리 ──────────────────────────────────────────
 
 async function handlePushSubscribe(request, env) {
-  const tokenUserId = await getUserIdFromToken(request, env);
+  const body = await request.json().catch(() => ({}));
+  const tokenUserId = await readerId(request, env, body);
   if (!tokenUserId) return jsonResponse({ error: 'Unauthorized' }, 401);
-  const body = await request.json();
   const { endpoint } = body;
   const p256dh = body.keys?.p256dh;
   const auth   = body.keys?.auth;
@@ -3221,7 +3495,7 @@ async function handlePushSubscribe(request, env) {
 }
 
 async function handlePushUnsubscribe(request, env) {
-  const tokenUserId = await getUserIdFromToken(request, env);
+  const tokenUserId = await readerId(request, env, null);
   if (!tokenUserId) return jsonResponse({ error: 'Unauthorized' }, 401);
   try {
     await env.DB.prepare(
@@ -3232,7 +3506,7 @@ async function handlePushUnsubscribe(request, env) {
 }
 
 async function handlePushTest(request, env) {
-  const tokenUserId = await getUserIdFromToken(request, env);
+  const tokenUserId = await readerId(request, env, null);
   if (!tokenUserId) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   let row;
@@ -3303,7 +3577,7 @@ async function handlePushTest(request, env) {
 }
 
 async function handlePushStatus(request, env) {
-  const tokenUserId = await getUserIdFromToken(request, env);
+  const tokenUserId = await readerId(request, env, null);
   if (!tokenUserId) return jsonResponse({ error: 'Unauthorized' }, 401);
   try {
     const row = await env.DB.prepare(

@@ -166,13 +166,12 @@
     <h2 class="modal-title">🔔 Daily Wisdom 알림</h2>
     <p class="modal-note">설정한 요일과 시간에 오늘의 한 문장을<br>보내 드립니다</p>
 
-    <!-- 미로그인 — 설정은 계정에 저장되므로 로그인 없이는 저장할 곳이 없다 -->
+    <!-- 아직 메일 링크로 들어오지 않은 사람 — 설정을 담아 둘 자리가 없다 -->
     <div id="notify-signin" style="display:none;">
       <p style="font-size:.88rem;line-height:1.75;color:var(--muted);text-align:center;margin:4px 0 20px;">
-        알림 설정은 계정에 저장됩니다.<br>로그인하면 원하는 요일과 시간에 받으실 수 있습니다.
+        주소를 적어 주시면 링크를 보내 드립니다.<br>그 링크를 누르면 알림이 켜지고, 받는 시각도 고르실 수 있습니다.
       </p>
-      <button class="btn-submit" style="margin-top:0;" onclick="goLoginFromNotify('login')">로그인</button>
-      <button class="btn-ghost" style="width:100%;margin-top:9px;" onclick="goLoginFromNotify('register')">회원가입</button>
+      <button class="btn-submit" style="margin-top:0;" onclick="goLoginFromNotify()">메일로 시작하기</button>
       <div class="modal-btn-row" style="margin-top:16px;">
         <button class="btn-ghost" onclick="closeNotifyModal()" style="flex:1;">닫기</button>
       </div>
@@ -276,14 +275,14 @@
   <div class="modal-sheet" style="max-width:400px;">
     <div class="modal-handle"></div>
     <h2 class="modal-title">내 정보</h2>
-    <p class="modal-note">이메일은 로그인 아이디이면서<br>Daily Wisdom 을 받는 주소입니다</p>
+    <p class="modal-note">별명은 기록에 보이는 이름입니다<br>주소를 바꾸시려면 새 주소로 다시 시작하세요</p>
 
     <div class="alert alert-error" id="account-error"></div>
 
-    <div class="field"><label for="account-name">이름</label>
-      <input id="account-name" type="text" maxlength="40" autocomplete="name"></div>
+    <div class="field"><label for="account-name">별명 <span style="color:var(--muted-2);font-weight:400;">· 2~16자 · 비우면 ‘독자’</span></label>
+      <input id="account-name" type="text" maxlength="16" placeholder="독자"></div>
     <div class="field"><label for="account-email">이메일</label>
-      <input id="account-email" type="email" autocomplete="email"></div>
+      <input id="account-email" type="text" disabled style="opacity:.6"></div>
 
     <div class="modal-btn-row">
       <button class="btn-ghost" onclick="closeAccountModal()" style="flex:1;">닫기</button>
@@ -293,37 +292,23 @@
 
     <hr class="modal-hr">
 
-    <button class="btn-ghost" style="width:100%;" id="btn-pw-toggle" onclick="togglePwForm()">비밀번호 바꾸기</button>
-    <div id="pw-form" style="display:none;margin-top:14px;">
-      <div class="alert alert-error" id="pw-error"></div>
-      <div class="field"><label for="pw-current">현재 비밀번호</label>
-        <input id="pw-current" type="password" autocomplete="current-password"></div>
-      <div class="field"><label for="pw-new">새 비밀번호 <span style="color:var(--muted-2);font-weight:400;">· 8자 이상</span></label>
-        <input id="pw-new" type="password" autocomplete="new-password"></div>
-      <div class="field"><label for="pw-new2">새 비밀번호 확인</label>
-        <input id="pw-new2" type="password" autocomplete="new-password"></div>
-      <button class="btn-submit" id="btn-pw-save" onclick="changePassword()" style="margin-top:4px;">비밀번호 바꾸기</button>
-      <div id="pw-msg" style="margin-top:11px;font-size:.83rem;text-align:center;min-height:18px;color:var(--muted);"></div>
-    </div>
-
-    <hr class="modal-hr">
-    <button class="btn-ghost" style="width:100%;" onclick="handleLogout()">로그아웃</button>
+    <!-- 비밀번호가 없다. 지울 수 있는 것은 이 기기에 남은 토큰뿐이다. -->
+    <button class="btn-ghost" style="width:100%;" onclick="handleLogout()">이 기기에서 연결 끊기</button>
+    <p style="margin:9px 0 0;font-size:.78rem;line-height:1.7;color:var(--muted-2);text-align:center;">
+      메일의 링크를 다시 누르면 언제든 돌아옵니다.<br>
+      알림을 끊으시려면 메일 바닥의 ‘알림 끄기’를 눌러 주세요.
+    </p>
   </div>
 </div>
 
-<!-- 로그인 -->
-<div class="modal-backdrop" id="modal" role="dialog" aria-modal="true" aria-label="로그인">
+<!-- 관리자 로그인 — 독자에게는 로그인이 없다. 이 창은 관리자 화면으로
+     들어가려는 경우(?login=1)에만 열린다. -->
+<div class="modal-backdrop" id="modal" role="dialog" aria-modal="true" aria-label="관리자 로그인">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <h2 class="modal-title">99 Wisdom Insight</h2>
-    <p class="modal-subtitle">로그인하면 공감지혜 · 소감 · 연속 읽기 기록을 쓸 수 있어요.</p>
+    <h2 class="modal-title">관리자 로그인</h2>
+    <p class="modal-subtitle">독자는 로그인하지 않습니다. 메일로 받은 링크로 바로 쓰실 수 있어요.</p>
     <p class="alert alert-error" id="modal-denied" style="display:none;">관리자 페이지는 관리자 계정으로만 열 수 있습니다.<br>관리자 계정으로 다시 로그인해 주세요.</p>
-
-    <div class="tab-row">
-      <button class="tab-btn active" type="button" onclick="switchTab('login')">로그인</button>
-      <button class="tab-btn" type="button" onclick="switchTab('register')">회원가입</button>
-    </div>
-
 
     <div class="tab-panel active" id="panel-login">
       <div class="alert alert-error" id="login-error"></div>
@@ -335,17 +320,24 @@
       </form>
       <p class="forgot-link"><a href="/api/auth/forgot" style="color:inherit;text-decoration:none;">비밀번호를 잊으셨나요?</a></p>
     </div>
+  </div>
+</div>
 
-    <div class="tab-panel" id="panel-register">
-      <div class="alert alert-error" id="register-error"></div>
-      <div class="alert alert-success" id="register-success"></div>
-      <form onsubmit="handleRegister(event)">
-        <div class="field"><label for="reg-name">이름</label><input id="reg-name" type="text" required autocomplete="name" placeholder="홍길동"></div>
-        <div class="field"><label for="reg-email">이메일</label><input id="reg-email" type="email" required autocomplete="email"></div>
-        <div class="field"><label for="reg-pw">비밀번호</label><input id="reg-pw" type="password" required minlength="6" autocomplete="new-password"></div>
-        <div class="field"><label for="reg-pw2">비밀번호 확인</label><input id="reg-pw2" type="password" required autocomplete="new-password"></div>
-        <button class="btn-submit" type="submit" id="register-submit">회원가입</button>
-      </form>
+<!-- 메일로 시작하기 — 로그인을 대신하는 문. 주소만 적으면 링크가 간다. -->
+<div class="modal-backdrop" id="start-modal" role="dialog" aria-modal="true" aria-label="메일로 시작하기" style="z-index:1150;">
+  <div class="modal-sheet" style="max-width:400px;">
+    <div class="modal-handle"></div>
+    <h2 class="modal-title">메일로 시작하기</h2>
+    <p class="modal-subtitle">주소를 적어 주시면 링크를 보내 드립니다.<br>비밀번호는 없습니다.</p>
+    <div id="start-done" style="display:none;font-size:.9rem;line-height:1.8;text-align:center;color:var(--muted);margin:6px 0 4px;">
+      메일을 보냈습니다.<br>받은편지함의 링크를 누르면 바로 시작됩니다.
+    </div>
+    <form id="start-form" onsubmit="submitStart(event)">
+      <div class="field"><label for="start-email">이메일</label><input id="start-email" type="email" required autocomplete="email" placeholder="name@example.com"></div>
+      <button class="btn-submit" type="submit" id="start-submit">링크 받기</button>
+    </form>
+    <div class="modal-btn-row" style="margin-top:14px;">
+      <button class="btn-ghost" onclick="closeStartModal()" style="flex:1;">닫기</button>
     </div>
   </div>
 </div>
@@ -404,13 +396,36 @@
 
   <script src="/api-client.js"></script>
   <script>
-    // ── 탭 전환 ──
-    function switchTab(name) {
-      document.querySelectorAll('.tab-btn').forEach((b, i) =>
-        b.classList.toggle('active', (i === 0) === (name === 'login'))
-      );
-      document.getElementById('panel-login').classList.toggle('active', name === 'login');
-      document.getElementById('panel-register').classList.toggle('active', name === 'register');
+    /* 탭이 하나만 남았다(관리자 로그인). 다른 곳에서 부르던 자리를 위해
+       이름만 남겨 둔다. */
+    function switchTab() {}
+
+    // ── 메일로 시작하기 ──
+    function openStartModal() {
+      document.getElementById('start-form').style.display = 'block';
+      document.getElementById('start-done').style.display = 'none';
+      document.getElementById('start-modal').classList.add('visible');
+      setTimeout(() => document.getElementById('start-email').focus(), 200);
+    }
+    function closeStartModal() {
+      document.getElementById('start-modal').classList.remove('visible');
+    }
+
+    async function submitStart(e) {
+      e.preventDefault();
+      const btn = document.getElementById('start-submit');
+      btn.disabled = true; btn.textContent = '보내는 중…';
+      try {
+        await fetch('/api/email/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: document.getElementById('start-email').value.trim() }),
+        });
+      } catch (_) {}
+      /* 보냈는지 여부로 가입 여부가 드러나지 않게, 서버와 같은 말을 한다. */
+      document.getElementById('start-form').style.display = 'none';
+      document.getElementById('start-done').style.display = 'block';
+      btn.disabled = false; btn.textContent = '링크 받기';
     }
 
     // ── 모달 ──
@@ -430,7 +445,9 @@
           openModal();
           return;
         }
-        if (window.wisdomAPI && wisdomAPI.isLoggedIn()) {
+        /* isLoggedIn() 은 독자 토큰만 있어도 참이다. 그 사람을 admin.html
+           로 보내면 거기서 되돌려져 왕복한다. 관리자 세션만 본다. */
+        if (window.wisdomAPI && wisdomAPI.isAdmin()) {
           location.replace('admin.html');
           return;
         }
@@ -453,6 +470,9 @@
     }
     document.getElementById('modal').addEventListener('click', (e) => {
       if (e.target === e.currentTarget) closeModal();
+    });
+    document.getElementById('start-modal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeStartModal();
     });
 
     // ── 알림 ──
@@ -492,43 +512,6 @@
       } catch (err) {
         showAlert('login-error', err.message || '로그인에 실패했습니다.');
         btn.disabled = false; btn.textContent = '로그인';
-      }
-    }
-
-    // ── 회원가입 ──
-    async function handleRegister(e) {
-      e.preventDefault();
-      const pw = document.getElementById('reg-pw').value;
-      if (pw !== document.getElementById('reg-pw2').value) {
-        showAlert('register-error', '비밀번호가 일치하지 않습니다.'); return;
-      }
-      const btn = document.getElementById('register-submit');
-      btn.disabled = true; btn.textContent = '가입 중…';
-      try {
-        // 추천인 코드 자동 포함
-        const ref = sessionStorage.getItem('pendingRef') || '';
-        const res = await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: document.getElementById('reg-email').value.trim(),
-            password: pw,
-            name: document.getElementById('reg-name').value.trim(),
-            ref,
-          }),
-        });
-        const result = await res.json();
-        if (!res.ok) throw new Error(result.error || '회원가입에 실패했습니다.');
-        if (result.success) {
-          sessionStorage.removeItem('pendingRef');
-          showAlert('register-success', '가입 완료! 로그인해주세요.', 'success');
-          e.target.reset();
-          setTimeout(() => switchTab('login'), 1800);
-        }
-      } catch (err) {
-        showAlert('register-error', err.message || '회원가입에 실패했습니다.');
-      } finally {
-        btn.disabled = false; btn.textContent = '회원가입';
       }
     }
 
@@ -705,8 +688,10 @@
     let currentChapterId = null;
     let isSaved = false;
 
+    /* 관리자 세션이든 메일 링크로 받은 독자 토큰이든, 서버는 같은 자리에서
+       받는다. 어느 쪽인지는 여기서 가릴 일이 아니다. */
     function getToken() {
-      return localStorage.getItem('authToken') || sessionStorage.getItem('authToken') || '';
+      return (window.wisdomAPI && wisdomAPI.getStoredToken()) || '';
     }
 
     async function safeJson(res) {
@@ -734,7 +719,10 @@
     async function toggleSave() {
       const btn = document.getElementById('btn-save');
       const token = getToken();
-      if (!token || currentChapterId === null) return;
+      if (currentChapterId === null) return;
+      /* 토큰이 없으면 아무 일도 하지 않고 끝나던 자리다. 버튼은 보이는데
+         눌러도 반응이 없었다. 지금은 시작하는 길을 준다. */
+      if (!token) { openStartModal(); return; }
       if (isSaved) {
         // 삭제 흐름
         btn.disabled = true;
@@ -805,10 +793,18 @@
     async function initSaveButton(item) {
       currentChapterId = item.id;
       window._wisdomItem = item;
-      const token = getToken();
-      if (!token) return;
       const btn = document.getElementById('btn-save');
       btn.hidden = false;
+      /* 핸들러는 토큰이 있든 없든 붙인다. 전에는 토큰이 없으면 여기서
+         끝나서, 버튼이 그대로 보이는데 onclick 이 비어 있었다. */
+      btn.onclick = toggleSave;
+      const token = getToken();
+      if (!token) {
+        btn.innerHTML = `${IC_BOOKMARK(false)} 보관하기`;
+        btn.classList.remove('saved');
+        isSaved = false;
+        return;
+      }
       isSaved = await checkIfSaved(item.id);
       btn.innerHTML = isSaved ? `${IC_BOOKMARK(true)} 보관됨` : `${IC_BOOKMARK(false)} 보관하기`;
       if (isSaved) btn.classList.add('saved');
@@ -1075,9 +1071,11 @@
       document.getElementById('notify-signin').style.display = signedIn ? 'none' : 'block';
       document.getElementById('notify-body').style.display   = signedIn ? 'block' : 'none';
       if (signedIn) {
-        const u = wisdomAPI.getCurrentUser() || {};
         const who = document.getElementById('notify-whoami');
-        if (who) who.textContent = u.email || u.name || u.username || '';
+        if (who) {
+          who.textContent = '';
+          wisdomAPI.me().then((u) => { if (u) who.textContent = u.email || u.nick || ''; });
+        }
         loadNotifySettings();
         checkPushStatus();
       }
@@ -1086,18 +1084,16 @@
 
     /* 로그인 후 알림 모달로 돌아오게 한다. handleLogin 이 pendingChapterHref 로
        이동하므로 거기에 ?notify=1 을 심어 두면 된다. */
-    function goLoginFromNotify(tab) {
+    function goLoginFromNotify() {
       closeNotifyModal();
-      pendingChapterHref = 'daily.html?notify=1';
-      openModal();
-      switchTab(tab === 'register' ? 'register' : 'login');
+      openStartModal();
     }
 
     (function autoOpenAccount() {
       if (!/[?&]account=1/.test(location.search)) return;
       function go() {
         if (window.wisdomAPI && wisdomAPI.isLoggedIn()) openAccountModal();
-        else { pendingChapterHref = 'daily.html?account=1'; openModal(); }
+        else openStartModal();
       }
       if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go);
       else go();
@@ -1111,17 +1107,13 @@
     })();
 
     // ── 내 정보 ──
-    function openAccountModal() {
-      const u = window.wisdomAPI && wisdomAPI.getCurrentUser();
-      if (!u) { goLoginFromNotify('login'); return; }
-      document.getElementById('account-name').value  = u.name || u.username || '';
+    async function openAccountModal() {
+      const u = window.wisdomAPI && await wisdomAPI.me();
+      if (!u) { openStartModal(); return; }
+      document.getElementById('account-name').value  = u.nickname || '';
       document.getElementById('account-email').value = u.email || '';
       document.getElementById('account-msg').textContent = '';
       document.getElementById('account-error').className = 'alert alert-error';
-      /* 비밀번호 칸은 늘 접힌 채로 연다. 입력해 둔 값이 남아 있으면 안 된다. */
-      document.getElementById('pw-form').style.display = 'none';
-      document.getElementById('btn-pw-toggle').textContent = '비밀번호 바꾸기';
-      clearPwForm();
       document.getElementById('account-modal').classList.add('visible');
     }
     function closeAccountModal() {
@@ -1132,85 +1124,26 @@
     });
 
     async function saveAccount() {
-      const u = wisdomAPI.getCurrentUser();
-      if (!u) return;
       const btn = document.getElementById('btn-account-save');
       const msg = document.getElementById('account-msg');
       btn.disabled = true; btn.textContent = '저장 중…';
       msg.textContent = '';
       try {
-        const res = await wisdomAPI.request(`/api/users/${u.id}/profile`, {
+        const res = await wisdomAPI.request('/api/me', {
           method: 'PUT',
-          body: JSON.stringify({
-            name:  document.getElementById('account-name').value.trim(),
-            email: document.getElementById('account-email').value.trim(),
-          }),
+          body: JSON.stringify({ nickname: document.getElementById('account-name').value.trim() }),
         });
         if (!res.success) throw new Error(res.error || '저장에 실패했습니다.');
-        /* 저장된 값을 로컬에도 반영해야 한다. 안 그러면 이메일을 바꿔도
-           알림 화면에는 옛 주소가 계속 뜬다. */
-        const store = localStorage.getItem('currentUser') ? localStorage : sessionStorage;
-        store.setItem('currentUser', JSON.stringify({ ...u, ...res.user, _fromAPI: true }));
+        /* 캐시를 비워 둬야 다음에 열 때 바뀐 별명이 보인다. */
+        try { localStorage.removeItem('me'); } catch (_) {}
         msg.style.color = 'var(--accent)';
         msg.textContent = '저장했습니다';
-        const who = document.getElementById('notify-whoami');
-        if (who) who.textContent = res.user.email || res.user.name || '';
-        const nameEl = document.getElementById('logged-in-name');
-        if (nameEl) nameEl.textContent = `${res.user.name || res.user.username}님, 다시 오셨네요.`;
         setTimeout(closeAccountModal, 900);
       } catch (err) {
         msg.style.color = '';
         showAlert('account-error', err.message || '저장에 실패했습니다.');
       } finally {
         btn.disabled = false; btn.textContent = '저장하기';
-      }
-    }
-
-    function togglePwForm() {
-      var box = document.getElementById('pw-form');
-      var open = box.style.display !== 'none';
-      box.style.display = open ? 'none' : 'block';
-      document.getElementById('btn-pw-toggle').textContent = open ? '비밀번호 바꾸기' : '닫기';
-      if (!open) document.getElementById('pw-current').focus();
-      else clearPwForm();
-    }
-    function clearPwForm() {
-      ['pw-current', 'pw-new', 'pw-new2'].forEach(function (id) {
-        document.getElementById(id).value = '';
-      });
-      document.getElementById('pw-msg').textContent = '';
-    }
-
-    async function changePassword() {
-      var u = wisdomAPI.getCurrentUser();
-      if (!u) return;
-      var cur = document.getElementById('pw-current').value;
-      var next = document.getElementById('pw-new').value;
-      var again = document.getElementById('pw-new2').value;
-      var msg = document.getElementById('pw-msg');
-      msg.textContent = '';
-
-      if (next.length < 8) { showAlert('pw-error', '새 비밀번호는 8자 이상이어야 합니다.'); return; }
-      if (next !== again) { showAlert('pw-error', '새 비밀번호가 서로 다릅니다.'); return; }
-
-      var btn = document.getElementById('btn-pw-save');
-      btn.disabled = true; btn.textContent = '바꾸는 중…';
-      try {
-        var res = await wisdomAPI.request('/api/users/' + u.id + '/password', {
-          method: 'PUT',
-          body: JSON.stringify({ current_password: cur, new_password: next }),
-        });
-        if (!res.success) throw new Error(res.error || '바꾸지 못했습니다.');
-        clearPwForm();
-        msg.style.color = 'var(--accent)';
-        /* 다른 기기 세션은 서버에서 끊는다. 쓰고 있는 이 화면은 그대로 둔다. */
-        msg.textContent = '바꿨습니다. 다른 기기는 다시 로그인해야 합니다.';
-        setTimeout(function () { togglePwForm(); }, 1600);
-      } catch (e) {
-        msg.style.color = '';
-        showAlert('pw-error', e.message || '바꾸지 못했습니다.');
-      } finally {
-        btn.disabled = false; btn.textContent = '비밀번호 바꾸기';
       }
     }
 

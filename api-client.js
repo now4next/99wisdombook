@@ -3,15 +3,81 @@
  * Handles all API communications with the Cloudflare D1 backend
  */
 
+/* 독자 토큰 — 로그인을 대신하는 것.
+
+   메일에 실려 온 링크에는 ?t=<토큰> 이 붙어 있다. 그 주소로 들어오면
+   토큰을 이 기기에 넣어 두고, 이후 요청은 그것으로 신분을 밝힌다.
+   비밀번호를 적는 화면은 없다.
+
+   주소창에서는 지운다. 토큰이 붙은 주소가 그대로 남으면 공유나 북마크로
+   남의 손에 넘어가고, 리퍼러로 밖에 나간다.
+
+   authToken(관리자 세션)과는 따로 둔다. 관리자가 같은 기기에서 쓰더라도
+   서로를 지우지 않아야 한다. */
+const READER_KEY = 'readerToken';
+
+function captureReaderToken() {
+  try {
+    const u = new URL(window.location.href);
+    const t = (u.searchParams.get('t') || '').trim();
+    /* 쓰기 토큰(id.만료.서명)과 설정 토큰(32자 16진수) 두 꼴만 받는다. */
+    if (!/^\d+\.\d+\.[A-Za-z0-9_-]{20,}$/.test(t) && !/^[0-9a-f]{32}$/.test(t)) return;
+    localStorage.setItem(READER_KEY, t);
+    u.searchParams.delete('t');
+    window.history.replaceState(null, '', u.pathname + (u.search || '') + (u.hash || ''));
+  } catch (_) {}
+}
+
 class WisdomBookAPI {
   constructor(baseURL = '') {
     this.baseURL = baseURL || window.location.origin;
+    captureReaderToken();
     this.token = this.getStoredToken();
   }
 
-  // Get stored authentication token
+  /* 관리자 세션이 있으면 그것을 먼저 쓴다. 관리자 화면은 세션만 받는다. */
   getStoredToken() {
-    return localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    return localStorage.getItem('authToken')
+      || sessionStorage.getItem('authToken')
+      || localStorage.getItem(READER_KEY);
+  }
+
+  get readerToken() {
+    return localStorage.getItem(READER_KEY) || '';
+  }
+
+  clearReaderToken() {
+    localStorage.removeItem(READER_KEY);
+    localStorage.removeItem('me');
+    if (this.token === localStorage.getItem(READER_KEY)) this.token = null;
+  }
+
+  /* 내가 누구인지 서버에 묻는다. 로그인 캐시(currentUser) 대신 쓴다.
+     한 번 받아 두면 화면이 다시 열릴 때 깜빡이지 않는다. */
+  async me(force) {
+    if (!force) {
+      try {
+        const c = JSON.parse(localStorage.getItem('me') || 'null');
+        if (c && c.at > Date.now() - 6 * 3600 * 1000) return c.user;
+      } catch (_) {}
+    }
+    if (!this.token) return null;
+    try {
+      const d = await this.request('/api/me');
+      if (d && d.success) {
+        localStorage.setItem('me', JSON.stringify({ at: Date.now(), user: d.user }));
+        return d.user;
+      }
+    } catch (_) {
+      /* 토큰이 만료된 것이다. 붙잡고 있으면 매 요청이 401 이 된다. */
+      this.clearReaderToken();
+    }
+    return null;
+  }
+
+  /** 글을 쓸 수 있는가 — 쓰기 토큰을 들고 있는가. */
+  canWrite() {
+    return /^\d+\.\d+\./.test(this.readerToken);
   }
 
   // Store authentication token
@@ -108,6 +174,7 @@ class WisdomBookAPI {
   async logout() {
     const token = this.token;
     this.clearToken();
+    this.clearReaderToken();
     localStorage.removeItem('currentUser');
     sessionStorage.removeItem('currentUser');
     if (!token) return;
@@ -164,8 +231,10 @@ class WisdomBookAPI {
     }
   }
 
-  // Helper: Check if user is logged in
+  /* 들어와 있는가. 독자는 토큰만 있으면 들어와 있는 것이다(로그인 없음).
+     관리자는 예전처럼 세션과 캐시가 둘 다 있어야 한다. */
   isLoggedIn() {
+    if (this.readerToken) return true;
     return !!this.token && !!this.getCurrentUser();
   }
 
