@@ -1193,7 +1193,7 @@ async function notesForEmail(env, chapterId, excludeUserId, limit) {
       };
 
     const other = await env.DB.prepare(
-      'SELECT nt.body, nt.chapter_id, u.nickname, i.title, i.slug'"
+      'SELECT nt.body, nt.chapter_id, u.nickname, i.title, i.slug'
       + ' FROM insight_notes nt JOIN users u ON u.id = nt.user_id'
       + ' JOIN insights i ON i.chapter_id = nt.chapter_id'
       + " WHERE nt.status = 'visible' AND nt.user_id <> ? AND nt.chapter_id <> ?"
