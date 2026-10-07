@@ -73,7 +73,8 @@ const EXCLUDE_DIRS = new Set([
 /** 이것들이 하나라도 빠지면 배포하면 안 된다. */
 const REQUIRED = [
   'index.html', 'daily.html', 'reader.html', 'chapter-view.html',
-  'admin.html', 'api-client.js', 'admin-insights.js',
+  'admin.html', 'notes.html', 'api-client.js', 'admin-insights.js',
+  'notes.js', 'subscribe-cta.js',
   '_redirects', '_routes.json',
   'functions/api/[[path]].js',
   'functions/insight/[slug].js',
@@ -113,7 +114,7 @@ function assertChaptersAreLF() {
 
    주소에 해시를 넣으면 내용이 바뀐 순간 주소가 달라지므로 캐시가
    비켜 간다. 바뀌지 않으면 주소도 그대로라 캐시를 계속 쓴다. */
-const VERSIONED = ['api-client.js', 'admin-insights.js'];
+const VERSIONED = ['api-client.js', 'admin-insights.js', 'notes.js', 'subscribe-cta.js'];
 
 function hashOf(file) {
   return crypto.createHash('sha256')

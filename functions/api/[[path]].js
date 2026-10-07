@@ -358,6 +358,8 @@ export async function onRequest(context) {
     if (path.match(/^\/api\/insights\/[A-Za-z0-9가-힣_-]+$/) && method === 'GET')
       return handleGetInsight(decodeURIComponent(path.split('/').pop()), env);
     // 독자의 기록 (칼럼 아래 익명 소감)
+    if (path === '/api/notes/recent' && method === 'GET')
+      return handleRecentNotes(request, env);
     if (path.match(/^\/api\/notes\/\d+$/) && method === 'GET')
       return handleListNotes(path.split('/').pop(), request, env);
     if (path.match(/^\/api\/notes\/\d+\/mine$/) && method === 'GET')
@@ -1415,6 +1417,46 @@ async function handleAdminDeleteNote(id, request, env) {
 }
 
 /* 글 화면이 "내가 이 칼럼에 쓴 것"과 내 별명을 미리 채우려고 부른다. */
+/* 모아 보기. 한 칼럼 아래에서만 보이면 기록은 서로 닿지 않는다.
+
+   남이 무엇을 적었는지 보이는 자리가 있어야 쓰는 쪽도 는다. 메일에는
+   이미 한두 개씩 싣고 있는데, 사이트에는 그 자리가 없었다. */
+async function handleRecentNotes(request, env) {
+  await ensureEmailColumns(env);
+  await ensureInsightNotesTable(env);
+
+  const url = new URL(request.url);
+  const limit = Math.min(parseInt(url.searchParams.get('limit'), 10) || 50, 100);
+
+  try {
+    const r = await env.DB.prepare(
+      'SELECT nt.chapter_id, nt.body, nt.created_at, u.nickname, i.title, i.slug'
+      + ' FROM insight_notes nt'
+      + ' LEFT JOIN users u ON u.id = nt.user_id'
+      + ' LEFT JOIN insights i ON i.chapter_id = nt.chapter_id'
+      + " WHERE nt.status = 'visible'"
+      + ' ORDER BY nt.id DESC LIMIT ?'
+    ).bind(limit).all();
+
+    const rows = r.results || [];
+    const total = await env.DB.prepare(
+      "SELECT COUNT(*) AS n, COUNT(DISTINCT user_id) AS writers FROM insight_notes WHERE status = 'visible'"
+    ).first();
+
+    return jsonResponse({
+      success: true,
+      count: (total && total.n) || 0,
+      writers: (total && total.writers) || 0,
+      notes: rows.map((x) => ({
+        nick: displayNick(x), body: x.body, created_at: x.created_at,
+        chapter_id: x.chapter_id, title: x.title || null, slug: x.slug || null,
+      })),
+    });
+  } catch (err) {
+    return jsonResponse({ success: false, error: err.message }, 500);
+  }
+}
+
 async function handleMyNote(chapterId, request, env) {
   await ensureEmailColumns(env);
   await ensureInsightNotesTable(env);

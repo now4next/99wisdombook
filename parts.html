@@ -22,6 +22,18 @@
   <link rel="stylesheet" href="/assets/app.css?v=20260926b">
   <link rel="stylesheet" href="/assets/site.css?v=20260926d">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='80'>%F0%9F%93%9C</text></svg>">
+<style>
+  /* 목록에서 원문으로 바로 가는 버튼. 칼럼 줄에만 붙는다. */
+  .chap-src {
+    display: flex; align-items: center; padding: 0 14px;
+    font-size: .76rem; letter-spacing: .02em; color: var(--muted-2);
+    border: 1px solid var(--line); border-left: 0; border-radius: 0 10px 10px 0;
+    text-decoration: none; white-space: nowrap; background: var(--bg);
+  }
+  .chap-src:hover { color: var(--ink); background: var(--surface-2, rgba(0,0,0,.03)); }
+  .chap-row .chap { border-radius: 10px 0 0 10px; }
+  @media (max-width: 520px) { .chap-src { padding: 0 10px; font-size: .72rem; } }
+</style>
 </head>
 <body>
 
@@ -36,6 +48,7 @@
       <a href="/">칼럼</a>
       <a href="/parts.html" class="on">9부 99장</a>
       <a href="/daily.html">오늘의 한 문장</a>
+      <a href="/notes.html">독자의 기록</a>
       <a href="/my-wisdom.html">공감지혜</a>
       <a class="btn-cta keep" href="/daily.html">Daily Wisdom</a>
     </nav>
@@ -53,12 +66,15 @@
 
   <p style="max-width:660px;color:var(--muted);font-size:.93rem;line-height:1.85;margin-bottom:34px;word-break:keep-all">
     인생의 법칙을 <strong style="color:var(--ink)">9개의 축</strong>으로 나누고, 각 축마다 11개의
-    <strong style="color:var(--ink)">앵커 문장</strong>을 두었습니다. 칼럼이 준비된 장은 <strong style="color:var(--ink)">초록 배지</strong>로 표시되며, 나머지는 원문을 바로 읽을 수 있습니다. 모두 로그인 없이 공개됩니다.
+    <strong style="color:var(--ink)">앵커 문장</strong>을 두었습니다. 칼럼이 준비된 장은 <strong style="color:var(--ink)">초록 배지</strong>로 표시되고, 오른쪽 <strong style="color:var(--ink)">원문</strong>을 누르면 그 장의 본문으로 바로 갑니다. 모두 로그인 없이 공개됩니다.
   </p>
 
   <div id="parts-root">
     <p style="color:var(--muted-2);font-size:.9rem">99장을 불러오는 중입니다…</p>
   </div>
+
+  <!-- 목록을 훑고 내려온 자리에 받아 보는 길을 둔다 -->
+  <div id="sub-cta" style="margin-top:44px"></div>
 </section>
 </main>
 
@@ -71,12 +87,15 @@
     <nav class="foot-nav">
       <a href="/">칼럼</a>
       <a href="/parts.html">9부 99장</a>
+      <a href="/notes.html">독자의 기록</a>
       <a href="/my-wisdom.html">공감지혜</a>
     </nav>
   </div>
   <div class="foot-c">&copy; 2026 99 Wisdom Insight &middot; 9부 99장 &middot; 99wisdombook.org</div>
 </div></footer>
 
+<script src="/api-client.js"></script>
+<script src="/subscribe-cta.js"></script>
 <script>
 (function () {
   var PARTS = [
@@ -119,14 +138,23 @@
         var rows = chunk.map(function (it) {
           var n = ('0' + it.id).slice(-2);
           var c = cols[it.id];
-          return '<a class="chap" href="' + (c ? '/insight/' + encodeURIComponent(c.slug) : '/chapter/' + it.id) + '">' +
-                   '<span class="chap-no">' + n + '</span>' +
-                   '<span>' +
-                     '<span class="chap-t">' + esc(it.title) + '</span>' +
-                     '<span class="chap-s">' + esc(c ? c.title : it.subtitle) + '</span>' +
-                   '</span>' +
-                   '<span class="chap-state' + (c ? ' live' : '') + '">' + (c ? '칼럼' : '원문') + '</span>' +
-                 '</a>';
+          /* 칼럼이 있는 장은 칼럼으로 보내되, 원문으로 가는 길도 남긴다.
+             전에는 99장이 모두 칼럼 링크가 되면서 원문은 칼럼 안의
+             '원문 보기'를 거쳐야만 닿는 곳이 됐다. 원문이 이 책의
+             본문이고 칼럼은 그 위에 얹은 글인데 순서가 뒤집혀 있었다. */
+          return '<div class="chap-row" style="display:flex;align-items:stretch;gap:0">' +
+                   '<a class="chap" style="flex:1" href="' +
+                     (c ? '/insight/' + encodeURIComponent(c.slug) : '/chapter/' + it.id) + '">' +
+                     '<span class="chap-no">' + n + '</span>' +
+                     '<span>' +
+                       '<span class="chap-t">' + esc(it.title) + '</span>' +
+                       '<span class="chap-s">' + esc(c ? c.title : it.subtitle) + '</span>' +
+                     '</span>' +
+                     '<span class="chap-state' + (c ? ' live' : '') + '">' + (c ? '칼럼' : '원문') + '</span>' +
+                   '</a>' +
+                   (c ? '<a class="chap-src" href="/chapter/' + it.id + '"' +
+                        ' title="제' + it.id + '장 원문" aria-label="제' + it.id + '장 원문">원문</a>' : '') +
+                 '</div>';
         }).join('');
 
         html += '<section class="part t-p' + (p + 1) + '" id="part-' + (p + 1) + '">' +
@@ -145,6 +173,7 @@
       root.innerHTML = html;
       var nCols = Object.keys(cols).length;
       document.getElementById('stat-line').textContent = '칼럼 ' + nCols + '편 · 원문 ' + items.length + '장';
+      mountSubscribeCta(document.getElementById('sub-cta'));
 
       if (location.hash) {
         var t = document.querySelector(location.hash);
