@@ -926,10 +926,11 @@
         if (!opened) {
           opened = true;
           try {
-            if (wisdomAPI.isLoggedIn()) {
-              callStreak();
-              initSaveButton(selectedItem);
-            }
+            /* 보관 버튼은 들어와 있든 아니든 붙인다. 안 그러면 버튼은
+               보이는데 눌러도 아무 일이 없다 — 눌렀을 때 시작하는 길을
+               주는 것이 버튼을 죽여 두는 것보다 낫다. */
+            initSaveButton(selectedItem);
+            if (wisdomAPI.isLoggedIn()) callStreak();
           } catch(_) {}
         }
       };
@@ -968,7 +969,7 @@
           renderWisdom(items[rerollIdx]);
           updateReroll();
           try {
-            if (wisdomAPI.isLoggedIn() && opened) initSaveButton(items[rerollIdx]);
+            if (opened) initSaveButton(items[rerollIdx]);
           } catch(_) {}
         });
       } // end if (!sharedItem && rerollBtn)
