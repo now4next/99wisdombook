@@ -158,17 +158,6 @@ class WisdomBookAPI {
     return data;
   }
 
-  async register(email, password, name) {
-    const data = await this.request('/api/auth/register', {
-      method: 'POST',
-      body: JSON.stringify({ email, password, name }),
-      skipAuth: true,
-    });
-
-    return data;
-  }
-
-
   /* 토큰은 서버 sessions 테이블에 있는 세션이므로, 로컬만 지우면
      그 세션이 만료(90일)까지 살아남는다. 서버에도 폐기를 알린다. */
   async logout() {

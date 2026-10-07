@@ -1,10 +1,19 @@
 /**
  * Cloudflare Workers API for 99 Wisdom Book
  *
- * Auth endpoints:
+ * 독자에게는 로그인이 없다. 메일 링크의 토큰으로 신분을 확인한다.
+ * 비밀번호로 들어오는 길은 관리자에게만 남아 있다.
+ *
+ * 독자 (토큰):
+ * - POST   /api/email/start                 (주소만 적으면 링크를 보낸다)
+ * - GET    /api/email/subscribe             (링크를 누르면 알림이 켜진다)
+ * - GET    /api/email/unsubscribe
+ * - GET    /api/me  ·  PUT /api/me          (별명)
+ *
+ * Auth endpoints (관리자):
  * - POST   /api/auth/login
- * - POST   /api/auth/register
  * - POST   /api/auth/logout
+ * - GET/POST /api/auth/forgot · /api/auth/reset
  *
  * User endpoints:
  * - GET    /api/users                       (admin)
@@ -18,10 +27,16 @@
  * - POST   /api/users/:id/password/reset    (admin · 임시 비밀번호 재발급)
  *
  * Wisdom / Phase 2+3:
- * - GET    /api/wisdom/saved                (auth)
- * - POST   /api/wisdom/save                 (auth)
- * - DELETE /api/wisdom/save/:chapter_id     (auth)
- * - POST   /api/wisdom/streak               (auth)
+ * - GET    /api/wisdom/saved                (독자 토큰)
+ * - POST   /api/wisdom/save                 (독자 토큰)
+ * - DELETE /api/wisdom/save/:chapter_id     (독자 토큰)
+ * - POST   /api/wisdom/streak               (독자 토큰)
+ *
+ * 독자의 기록:
+ * - GET    /api/notes/:chapter_id           (공개 목록)
+ * - GET    /api/notes/:chapter_id/mine      (내가 쓴 것 · 쓸 수 있는지)
+ * - POST   /api/notes/:chapter_id           (쓰기 토큰)
+ * - DELETE /api/notes/:chapter_id
  */
 
 const corsHeaders = {
@@ -130,13 +145,18 @@ async function sha256hex(text) {
 }
 
 /* ⚠ 인증 계약 — 아래 규칙을 깨면 관리자 사칭이 가능해진다.
+
+   세션(아래)은 이제 관리자만 쓴다. 독자 쪽은 메일 링크의 토큰으로
+   확인하며 reader()/readerId() 를 거친다 — 아래 '독자 토큰' 참고.
+
      · 토큰은 64자 hex 난수이며 그 자체에 아무 정보도 담지 않는다.
        (예전 btoa(`id:시각`) 방식은 누구나 위조할 수 있어 폐기했다.)
      · 서버는 원본을 저장하지 않고 SHA-256 해시만 sessions 테이블에 둔다.
-     · 사용자 판별은 반드시 await getUserIdFromToken(request, env) 로 한다.
-       토큰 문자열을 직접 해석하는 코드를 다시 만들지 말 것.
-     · 관리자 확인은 verifyAdminStrict() 하나뿐이다. 길이나 존재만 보는
-       검사를 추가하지 말 것. */
+     · 관리자 판별은 반드시 await verifyAdminStrict(request, env) 로 한다.
+       토큰 문자열을 직접 해석하는 코드를 다시 만들지 말 것. 길이나 존재만
+       보는 검사를 추가하지 말 것.
+     · 독자 판별에 getUserIdFromToken 을 쓰지 말 것. 독자에게는 세션이
+       없으므로 늘 null 이 되고, 화면은 조용히 빈 채로 남는다. */
 const SESSION_TTL_MS = 90 * 24 * 60 * 60 * 1000;
 
 async function ensureSessionsTable(env) {
@@ -238,8 +258,16 @@ export async function onRequest(context) {
   try {
     // Auth
     if (path === '/api/auth/login'    && method === 'POST') return handleLogin(request, env);
-    if (path === '/api/auth/register' && method === 'POST') return handleRegister(request, env, context);
     if (path === '/api/auth/logout'   && method === 'POST') return handleLogout(request, env);
+    /* 가입은 없앴다. 주소를 적으면 메일로 링크가 가고, 그 링크가 곧
+       신분 확인이다. 화면도 함께 치웠으므로 이 경로로 들어오는 것은
+       옛 북마크나 긁는 쪽뿐이다. */
+    if (path === '/api/auth/register' && method === 'POST')
+      return jsonResponse({
+        success: false,
+        error: '가입 절차가 없어졌습니다. 이메일 주소만 적으시면 링크를 보내 드립니다.',
+        start: 'https://99wisdombook.org/api/email/start',
+      }, 410);
     if (path === '/api/email/unsubscribe' && method === 'GET') return handleEmailUnsubscribe(request, env);
     if (path === '/api/email/start' && method === 'GET')  return handleEmailStartPage(request, env);
     if (path === '/api/email/start' && method === 'POST') return handleEmailStart(request, env);
@@ -416,46 +444,6 @@ async function handleLogin(request, env) {
   const user = { ...row, streak_count, last_wisdom_date, permissions: JSON.parse(row.permissions || '[]') };
   const token = await createSession(env, user.id);
   return jsonResponse({ success: true, user, token });
-}
-
-async function handleRegister(request, env, context) {
-  const { email, password, name, ref } = await request.json();
-  if (!email || !password || !name) return jsonResponse({ error: '이름, 이메일, 비밀번호를 모두 입력해주세요.' }, 400);
-
-  const existing = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(email).first();
-  if (existing) return jsonResponse({ error: '이미 사용 중인 이메일입니다.' }, 409);
-
-  // 추천인 코드 검증
-  let referrerId = null;
-  if (ref) {
-    try {
-      const referrer = await env.DB.prepare('SELECT id FROM users WHERE referral_code = ?').bind(ref.toUpperCase()).first();
-      if (referrer) referrerId = referrer.id;
-    } catch (_) {}
-  }
-
-  const hashed = await hashPassword(password);
-  const row = await env.DB.prepare(
-    'INSERT INTO users (username, password, name, email, role, permissions, auth_provider, referred_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id, username, name, email, role, permissions, created_at'
-  ).bind(email, hashed, name, email, 'user', '["korean"]', 'local', referrerId).first();
-
-  if (!row) return jsonResponse({ error: 'Failed to create user' }, 500);
-
-  // 추천인 카운트 증가
-  if (referrerId) {
-    try {
-      await env.DB.prepare('UPDATE users SET referral_count = COALESCE(referral_count, 0) + 1 WHERE id = ?').bind(referrerId).run();
-    } catch (_) {}
-  }
-
-  // 관리자 알림 메일 (실패해도 가입은 정상 처리)
-  if (context?.waitUntil) {
-    context.waitUntil(sendNewUserNotification(env, { username: email, name, email }).catch(() => {}));
-  } else {
-    sendNewUserNotification(env, { username: email, name, email }).catch(() => {});
-  }
-
-  return jsonResponse({ success: true, user: { ...row, permissions: JSON.parse(row.permissions || '[]') }, message: 'User registered successfully' }, 201);
 }
 
 /* 이메일 뉴스레터용 컬럼. D1 에는 ADD COLUMN IF NOT EXISTS 가 없어
@@ -1784,6 +1772,9 @@ async function handleEmailStart(request, env) {
       row = await env.DB.prepare('SELECT id, name, email FROM users WHERE email = ?')
         .bind(email).first();
       if (!row) return ok();
+      /* 가입 화면이 있던 때 운영자에게 가던 알림을 여기로 옮긴다.
+         새 독자가 생기는 지점이 이제 여기 하나뿐이다. */
+      sendNewUserNotification(env, { username: email, name: row.name, email }).catch(() => {});
     }
 
     /* 한 주소로 메일이 쏟아지지 않게 막는다. 발송 기록을 그대로 쓴다. */
@@ -2021,11 +2012,11 @@ async function sendNewUserNotification(env, { username, name, email }) {
     body: JSON.stringify({
       from: '99wisdombook <noreply@99wisdombook.org>',
       to:   ['nowfornext@naver.com'],
-      subject: `[99wisdombook] 새 회원 가입: ${name}`,
+      subject: `[99wisdombook] 새 독자: ${name}`,
       html: `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;background:#fff;">
           <h2 style="color:#3e2820;border-bottom:2px solid #8d6e63;padding-bottom:10px;margin-top:0;">
-            📚 새 회원이 가입했습니다
+            📚 새 독자가 시작했습니다
           </h2>
           <table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:15px;">
             <tr>

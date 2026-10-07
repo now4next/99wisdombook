@@ -346,7 +346,7 @@
   <!-- ══════════ 독자의 기록 ══════════ -->
   <section class="panel" id="panel-notes">
     <h1>독자의 기록 <span id="note-count" style="font-family:var(--sans);font-size:13px;font-weight:400;color:var(--muted-2);"></span></h1>
-    <p class="lead">독자가 칼럼 아래에 남긴 소감입니다. 독자에게는 익명(홍**)으로 보이고, 이 화면에서만 실명이 함께 보입니다.
+    <p class="lead">독자가 칼럼 아래에 남긴 소감입니다. 독자에게는 본인이 정한 별명으로만 보이고, 이 화면에서만 실명이 함께 보입니다.
       지우는 것보다 <b>숨기기</b>를 먼저 쓰세요 — 지우면 같은 사람이 다시 쓸 때 전에 무슨 일이 있었는지 알 수 없습니다.</p>
 
     <div class="cards" style="margin-bottom:22px;">
@@ -999,8 +999,8 @@
       var hidden = n.status === 'hidden';
       return '<tr' + (hidden ? ' style="opacity:.55"' : '') + '>' +
         '<td style="white-space:nowrap">' + esc(kstTime((n.created_at || '') + 'Z')) + '</td>' +
-        '<td style="white-space:nowrap">' + esc(n.name || '–') +
-          '<br><span class="dim" style="font-size:12px">' + esc(n.masked || '') + '</span></td>' +
+        '<td style="white-space:nowrap">' + esc(n.nick || '독자') +
+          '<br><span class="dim" style="font-size:12px">' + esc(n.name || '') + '</span></td>' +
         '<td style="white-space:nowrap">' +
           (n.slug ? '<a href="/insight/' + encodeURIComponent(n.slug) + '" target="_blank" rel="noopener">' +
             esc(n.title || ('제' + n.chapter_id + '장')) + '</a>' : esc('제' + n.chapter_id + '장')) +
