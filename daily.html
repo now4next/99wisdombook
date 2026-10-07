@@ -1266,9 +1266,31 @@
         });
       }
 
-      /* 메일 링크로 들어온 사람에게만 보이는 바. 이름 대신 별명을 쓴다. */
+      /* 아래 바는 토큰이 있든 없든 보인다.
+
+         전에는 로그인한 사람에게만 보였다. 그래서 메일을 받아 본 적 없는
+         방문자에게는 '알림 설정' 입구가 화면 어디에도 없었다 — 19명에게
+         보낸 메일에서 알림을 켠 사람이 한 명도 없던 이유 가운데 하나다.
+         토큰이 없으면 버튼 하나(메일로 받기)만 남기고, 누르면 주소를
+         적는 화면이 열린다. */
       try {
-        if (wisdomAPI.isLoggedIn()) {
+        const bar = document.getElementById('logged-in-bar');
+        const btnNotify = document.getElementById('btn-notify');
+        const onlyNotify = () => {
+          [...bar.querySelectorAll('.btn-goto-book')].forEach((el) => {
+            if (el !== btnNotify) el.style.display = 'none';
+          });
+        };
+
+        if (!wisdomAPI.isLoggedIn()) {
+          document.getElementById('logged-in-name').textContent =
+            '매일 아침, 오늘의 문장을 메일로 받아 보세요.';
+          onlyNotify();
+          btnNotify.style.display = 'flex';
+          btnNotify.lastChild.textContent = ' 메일로 받기';
+          btnNotify.onclick = openStartModal;
+          bar.classList.add('visible');
+        } else {
           wisdomAPI.me().then((u) => {
             if (!u) return;
             document.getElementById('logged-in-name').textContent =
@@ -1276,10 +1298,8 @@
             const link = document.getElementById('btn-goto-book');
             link.href = u.role === 'admin' ? 'admin.html' : '/parts.html';
             link.textContent = u.role === 'admin' ? '관리자 대시보드 →' : '도서 읽기 →';
-            document.getElementById('logged-in-bar').classList.add('visible');
-
-            const btnNotify = document.getElementById('btn-notify');
-            if (btnNotify) btnNotify.style.display = 'flex';
+            btnNotify.style.display = 'flex';
+            bar.classList.add('visible');
           }).catch(() => {});
         }
       } catch(_) {}
