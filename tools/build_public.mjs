@@ -25,6 +25,7 @@
  *   data/wisdom.json 은 알림 크론이 읽는다.
  */
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -99,6 +100,57 @@ function assertChaptersAreLF() {
   }
 }
 
+/* 공용 스크립트에 내용 해시를 붙인다.
+
+   왜 필요한가
+   -----------
+   Pages 는 정적 파일에 `Cache-Control: public, max-age=14400` 을 준다.
+   그래서 api-client.js 를 고쳐 배포해도 이미 방문한 사람의 브라우저는
+   네 시간 동안 옛 파일을 쓴다. 로그인을 없애고 메일 링크의 토큰으로
+   신분을 확인하도록 바꿨을 때 실제로 이 일이 났다 — 서버는 새 코드,
+   브라우저는 토큰을 받는 코드가 없는 옛 파일이어서, 메일 링크로 들어와도
+   보관하기가 계속 "메일로 시작하기"로 되돌아갔다.
+
+   주소에 해시를 넣으면 내용이 바뀐 순간 주소가 달라지므로 캐시가
+   비켜 간다. 바뀌지 않으면 주소도 그대로라 캐시를 계속 쓴다. */
+const VERSIONED = ['api-client.js', 'admin-insights.js'];
+
+function hashOf(file) {
+  return crypto.createHash('sha256')
+    .update(fs.readFileSync(file)).digest('hex').slice(0, 8);
+}
+
+function stampAssets(dir) {
+  const stamps = new Map();
+  for (const name of VERSIONED) {
+    const f = path.join(dir, name);
+    if (fs.existsSync(f)) stamps.set(name, hashOf(f));
+  }
+  if (!stamps.size) return 0;
+
+  let touched = 0;
+  const walk = (d) => {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const full = path.join(d, e.name);
+      if (e.isDirectory()) { walk(full); continue; }
+      if (!e.name.endsWith('.html')) continue;
+      const before = fs.readFileSync(full, 'utf8');
+      let after = before;
+      for (const [name, h] of stamps) {
+        /* 손으로 붙여 둔 ?v= 도 내용 해시로 바꾼다. 사람이 적은 값은
+           파일이 바뀌어도 그대로 남아 캐시를 비켜 가지 못한다 — 그게
+           바로 막으려는 일이다. */
+        const pat = new RegExp(
+          'src="/' + name.replace(/\./g, '\\.') + '(\\?v=[^"]*)?"', 'g');
+        after = after.replace(pat, 'src="/' + name + '?v=' + h + '"');
+      }
+      if (after !== before) { fs.writeFileSync(full, after); touched++; }
+    }
+  };
+  walk(dir);
+  return touched;
+}
+
 const isExcludedRootFile = (name) => EXCLUDE_ROOT.some((re) => re.test(name));
 
 function countFiles(dir) {
@@ -147,6 +199,8 @@ function main() {
     process.exit(1);
   }
 
+  const stamped = stampAssets(DIST);
+
   const leaked = fs.readdirSync(DIST).filter(isExcludedRootFile);
   if (leaked.length) {
     console.error('제외했어야 할 파일이 남아 있음: ' + leaked.join(', '));
@@ -154,6 +208,7 @@ function main() {
   }
 
   console.log(`dist/ 생성 완료: 최상위 ${copied}개 항목, 전체 ${countFiles(DIST)}개 파일 (제외 ${skipped}개 항목)`);
+  console.log(`공용 스크립트 버전 표시: ${stamped}개 HTML`);
 }
 
 main();
