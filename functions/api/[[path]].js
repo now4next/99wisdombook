@@ -285,6 +285,8 @@ export async function onRequest(context) {
       return handleReminderCron(request, env);
     if (path === '/api/notify/weekly' && method === 'POST')
       return handleWeeklyCron(request, env);
+    if (path === '/api/admin/clear-reader-passwords' && method === 'POST')
+      return handleClearReaderPasswords(request, env);
     if (path === '/api/notify/promo' && method === 'POST')
       return handlePromoCron(request, env);
     if (path === '/api/notify/email-test' && method === 'POST')
@@ -2879,6 +2881,50 @@ function promoPick(order, week) {
                          1회 안내에만 쓴다. 반복 호출하지 말 것.
    to 를 주면 그 주소로만 한 통 보낸다(테스트). 회원 조회를 하지 않는다.
    dry_run 이면 보내지 않고 대상만 세어 돌려준다. */
+/* ── 독자 비밀번호 지우기 (한 번만 쓰는 것) ──────────────────
+
+   로그인을 없앴으니 독자 계정의 비밀번호 해시는 쓰이지 않는다. 쓰이지
+   않는 자격증명을 남겨 두는 것은 보관할 이유가 없는 위험이다. 관리자
+   계정은 그대로 둔다 — 관리자 화면은 계속 비밀번호로 들어간다.
+
+   빈 문자열을 넣는다. password 가 NOT NULL 이라 NULL 을 넣을 수 없고,
+   verifyPassword 는 빈 값을 먼저 걸러내므로 로그인은 되지 않는다.
+
+   CLI 에서 D1 에 닿지 않아 엔드포인트로 둔다. 관리자 세션이나
+   CRON_SECRET 중 하나면 된다. dry_run 으로 먼저 수를 볼 수 있다. */
+async function handleClearReaderPasswords(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const secret = (env.CRON_SECRET || '').trim();
+  const byCron = secret && (request.headers.get('Authorization') || '') === `Bearer ${secret}`;
+  if (!byCron && !(await verifyAdminStrict(request, env)))
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+
+  try {
+    const before = await env.DB.prepare(
+      "SELECT COUNT(*) AS n FROM users WHERE role != 'admin' AND password != ''"
+    ).first();
+
+    if (b.dry_run) return jsonResponse({ success: true, dry_run: true, would_clear: before?.n || 0 });
+
+    await env.DB.prepare("UPDATE users SET password = '' WHERE role != 'admin'").run();
+
+    const after = await env.DB.prepare(
+      "SELECT COUNT(*) AS n FROM users WHERE role != 'admin' AND password != ''"
+    ).first();
+    /* 비밀번호가 없어졌으니 남아 있던 독자 세션도 치운다. */
+    try {
+      await ensureSessionsTable(env);
+      await env.DB.prepare(
+        "DELETE FROM sessions WHERE user_id IN (SELECT id FROM users WHERE role != 'admin')"
+      ).run();
+    } catch (_) {}
+
+    return jsonResponse({ success: true, cleared: before?.n || 0, remaining: after?.n || 0 });
+  } catch (err) {
+    return jsonResponse({ success: false, error: err.message }, 500);
+  }
+}
+
 async function handlePromoCron(request, env) {
   const authHeader = request.headers.get('Authorization') || '';
   const cronSecret = (env.CRON_SECRET || '').trim();
