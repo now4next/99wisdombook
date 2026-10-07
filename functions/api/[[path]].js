@@ -1887,7 +1887,11 @@ async function handleEmailSubscribePage(request, env) {
     + '<p id="sub" style="margin:0;font-size:14px;line-height:1.75;color:#7a736a;"></p>'
     + '<div id="pick" style="display:none;margin:26px 0 0;">'
     + '<p style="margin:0 0 10px;font-size:13px;color:#9c9489;">받는 시각을 고르실 수 있습니다</p>'
-    + opts + '</div>'
+    + opts
+    /* 고른 결과를 버튼 바로 아래에 둔다. 전에는 알림 문구가 버튼 위에만
+       있어서, 누른 사람이 눈을 두는 곳에 아무 변화가 없었다. */
+    + '<p id="pickmsg" style="margin:6px 0 0;font-size:13px;line-height:1.7;min-height:18px;color:#5FA97E;"></p>'
+    + '</div>'
     + '<p style="margin:26px 0 0;"><a href="' + mailEsc(goUrl) + '" style="display:inline-block;'
     + 'background:#5FA97E;color:#fff;text-decoration:none;border-radius:999px;'
     + 'padding:12px 24px;font-size:15px;font-weight:600;">오늘의 문장 보기</a></p>'
@@ -1897,18 +1901,34 @@ async function handleEmailSubscribePage(request, env) {
     + 'padding:12px 24px;font-size:15px;font-weight:600;cursor:pointer;">이메일 알림 켜기</button>'
     + '</form></noscript>'
     + '<script>(function(){var T=' + JSON.stringify(t) + ';'
+    + 'var $=function(i){return document.getElementById(i)};'
     + 'function post(b){return fetch("/api/email/subscribe",{method:"POST",'
-    + 'headers:{"Content-Type":"application/json"},body:JSON.stringify(b)}).then(function(r){return r.json()});}'
+    + 'headers:{"Content-Type":"application/json"},body:JSON.stringify(b)})'
+    + '.then(function(r){return r.json()});}'
+    + 'function said(h){return "님께 "+h+"시에 보내 드립니다.<br>메일 바닥의 링크로 언제든 끄실 수 있습니다.";}'
+    /* 고른 시각에 표시를 남긴다. 눌렀는지 아닌지가 버튼에 보여야 한다. */
+    + 'function mark(h){Array.prototype.forEach.call(document.querySelectorAll("#pick button"),'
+    + 'function(b){var on=parseInt(b.dataset.h,10)===h;'
+    + 'b.style.background=on?"#5FA97E":"#fff";b.style.color=on?"#fff":"#4a443d";'
+    + 'b.style.borderColor=on?"#5FA97E":"#ddd8d0";});}'
     + 'post({t:T}).then(function(d){'
-    + 'if(!d||!d.success){document.getElementById("msg").textContent="처리 중 문제가 생겼습니다.";return;}'
-    + 'document.getElementById("msg").innerHTML="이메일 알림을 켰습니다.";'
-    + 'document.getElementById("sub").innerHTML=d.masked+"님께 "+d.hour+"시에 보내 드립니다.<br>'
-    + '메일 바닥의 링크로 언제든 끄실 수 있습니다.";'
-    + 'document.getElementById("pick").style.display="block";});'
+    + 'if(!d||!d.success){$("msg").textContent="처리 중 문제가 생겼습니다.";return;}'
+    + '$("msg").innerHTML="이메일 알림을 켰습니다.";'
+    + '$("sub").innerHTML=d.masked+said(d.hour);'
+    + '$("pick").style.display="block";mark(d.hour);})'
+    + '.catch(function(){$("msg").textContent="연결에 문제가 있습니다. 잠시 후 다시 열어 주세요.";});'
     + 'Array.prototype.forEach.call(document.querySelectorAll("#pick button"),function(b){'
-    + 'b.onclick=function(){post({t:T,hour:parseInt(b.dataset.h,10)}).then(function(d){'
-    + 'if(d&&d.success){document.getElementById("sub").innerHTML=d.masked+"님께 "+d.hour+"시에 보내 드립니다.<br>'
-    + '메일 바닥의 링크로 언제든 끄실 수 있습니다.";}});};});})();</script>';
+    + 'b.onclick=function(){var h=parseInt(b.dataset.h,10);'
+    + '$("pickmsg").style.color="#9c9489";$("pickmsg").textContent="바꾸는 중…";'
+    + 'post({t:T,hour:h}).then(function(d){'
+    /* 전에는 실패했을 때 아무 말도 하지 않았다. 누른 사람은 눌리지 않은
+       것인지 저장이 안 된 것인지 알 길이 없었다. */
+    + 'if(d&&d.success){mark(d.hour);$("sub").innerHTML=d.masked+said(d.hour);'
+    + '$("pickmsg").style.color="#5FA97E";$("pickmsg").textContent="바꿨습니다 · 이제 "+d.hour+"시에 보내 드립니다.";}'
+    + 'else{$("pickmsg").style.color="#c0564f";'
+    + '$("pickmsg").textContent=(d&&d.error)||"바꾸지 못했습니다.";}})'
+    + '.catch(function(){$("pickmsg").style.color="#c0564f";'
+    + '$("pickmsg").textContent="연결에 문제가 있습니다. 다시 눌러 주세요.";});};});})();</script>';
 
   return subPage(inner);
 }
