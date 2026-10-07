@@ -385,8 +385,16 @@
             }).then(function (r) { return r.json(); }).then(function (d) {
               btn.disabled = false;
               if (d && d.success) { msg.textContent = ''; load(); }
-              else { btn.textContent = myBody ? '기록 고치기' : '기록 남기기';
-                     msg.textContent = (d && d.error) || '저장하지 못했습니다.'; }
+              else {
+                btn.textContent = myBody ? '기록 고치기' : '기록 남기기';
+                msg.textContent = (d && d.error) || '저장하지 못했습니다.';
+                /* 만료는 사용자가 고칠 수 있는 일이다. 가는 곳을 준다. */
+                if (d && d.expired) {
+                  try { localStorage.removeItem('readerToken'); } catch (_) {}
+                  msg.innerHTML = esc(d.error) + ' <a href="' + esc(d.start || '/api/email/start')
+                    + '" style="color:var(--accent,#5FA97E)">메일로 새 링크 받기 →</a>';
+                }
+              }
             }).catch(function () {
               btn.disabled = false; btn.textContent = '기록 남기기';
               msg.textContent = '잠시 후 다시 시도해 주세요.';

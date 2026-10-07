@@ -46,10 +46,24 @@ class WisdomBookAPI {
     return localStorage.getItem(READER_KEY) || '';
   }
 
-  clearReaderToken() {
+  /* 토큰을 버린다. 왜 버렸는지는 남겨 둔다 — 화면이 아무 설명 없이
+     '메일로 받기'로 돌아가면, 쓰던 사람은 자기가 무엇을 잘못했는지
+     모른 채 처음부터 다시 하게 된다. */
+  clearReaderToken(expired) {
     localStorage.removeItem(READER_KEY);
     localStorage.removeItem('me');
-    if (this.token === localStorage.getItem(READER_KEY)) this.token = null;
+    this.token = localStorage.getItem('authToken')
+      || sessionStorage.getItem('authToken') || null;
+    if (expired) { try { sessionStorage.setItem('readerExpired', '1'); } catch (_) {} }
+  }
+
+  /** 방금 토큰이 만료돼 끊겼는가. 한 번 읽으면 지운다. */
+  takeExpiredFlag() {
+    try {
+      if (sessionStorage.getItem('readerExpired') !== '1') return false;
+      sessionStorage.removeItem('readerExpired');
+      return true;
+    } catch (_) { return false; }
   }
 
   /* 내가 누구인지 서버에 묻는다. 로그인 캐시(currentUser) 대신 쓴다.
@@ -70,7 +84,7 @@ class WisdomBookAPI {
       }
     } catch (_) {
       /* 토큰이 만료된 것이다. 붙잡고 있으면 매 요청이 401 이 된다. */
-      this.clearReaderToken();
+      if (this.readerToken) this.clearReaderToken(true);
     }
     return null;
   }

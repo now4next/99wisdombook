@@ -269,6 +269,7 @@ export async function onRequest(context) {
         start: 'https://99wisdombook.org/api/email/start',
       }, 410);
     if (path === '/api/email/unsubscribe' && method === 'GET') return handleEmailUnsubscribe(request, env);
+    if (path === '/api/email/unsubscribe/push' && method === 'POST') return handleUnsubscribePush(request, env);
     if (path === '/api/email/start' && method === 'GET')  return handleEmailStartPage(request, env);
     if (path === '/api/email/start' && method === 'POST') return handleEmailStart(request, env);
     if (path === '/api/me' && method === 'GET')  return handleMe(request, env);
@@ -1139,8 +1140,9 @@ function subPage(inner) {
 
 /* ── 독자의 기록 ─────────────────────────────────────────────
 
-   이메일로 칼럼을 받은 사람이 소감을 적으면 칼럼 아래에 익명으로
-   남는다. 홍길동 → 홍**.
+   이메일로 칼럼을 받은 사람이 소감을 적으면 칼럼 아래에 남는다.
+   보이는 이름은 본인이 정한 별명이고, 정하지 않았으면 '독자'다.
+   실명은 어느 쪽으로도 나가지 않는다(관리자 화면에만 함께 보인다).
 
    ⚠ saved_wisdom.memo 를 쓰지 않는다. 그 칸에는 공감지혜에서 본인만
    보도록 적은 메모가 이미 들어 있다(13건). 거기에 공개 기능을 얹으면
@@ -1148,12 +1150,13 @@ function subPage(inner) {
    코드가 어느 쪽을 읽는지 매번 확인해야 하고, 사고는 한 번으로 끝나지
    않는다. 그래서 테이블을 따로 둔다.
 
-   로그인 없이 써야 하므로 메일 링크에 토큰을 싣는다. 키는 그 사람의
-   수신 거부 토큰이고, 메시지에 chapter_id 를 넣어 칼럼마다 서명이
-   달라지게 한다. 그래서 한 칼럼의 링크가 유출돼도 그 칼럼에만 쓸 수
-   있고, 역산해서 수신 거부 토큰을 얻을 수도 없다.
+   로그인 없이 써야 하므로 메일 링크에 토큰을 싣는다. 자세한 것은
+   위의 '독자 토큰' 주석에 있다. 요약하면 공개되는 글에는 60일짜리
+   쓰기 토큰을 쓰고, 그 토큰은 편에 묶지 않는다 — 메일로 받은 칼럼
+   말고 다른 칼럼을 읽다가 쓰고 싶을 때 막히면 안 된다.
 
-   만료는 두지 않는다. 지난 메일의 링크도 계속 동작해야 한다. */
+   만료되면 그냥 막지 말고 다시 받는 곳을 함께 알려 준다. 60일 뒤에
+   그 메일을 찾아내라고 하는 것은 길을 끊는 것과 같다. */
 
 /* 메일에 실을 다른 독자의 기록.
 
@@ -1472,10 +1475,14 @@ async function handleSaveNote(chapterId, request, env) {
   const b = await request.json().catch(() => ({}));
 
   const who = await noteWho(env, request, b);
+  /* 만료됐다고만 말하면 막다른 길이다. 쓰기 토큰은 60일이고, 그때쯤이면
+     메일을 찾기도 어렵다. 다시 받는 곳을 함께 준다. */
   if (!who)
     return jsonResponse({
       success: false,
-      error: '쓰기 링크가 만료됐습니다. 메일의 최근 링크로 다시 들어와 주세요.',
+      expired: true,
+      error: '쓰기 링크가 만료됐습니다. 메일로 새 링크를 받으시면 이어서 쓰실 수 있습니다.',
+      start: '/api/email/start',
     }, 401);
 
   const body = String(b.body || '').trim();
@@ -1739,8 +1746,12 @@ async function handleEmailStartPage(request, env) {
     + '<script>document.getElementById("f").onsubmit=function(ev){ev.preventDefault();'
     + 'var b=ev.target.querySelector("button");b.disabled=true;b.textContent="보내는 중…";'
     + 'fetch("/api/email/start",{method:"POST",headers:{"Content-Type":"application/json"},'
-    + 'body:JSON.stringify({email:document.getElementById("e").value})})'
+    + 'body:JSON.stringify({email:document.getElementById("e").value,'
+    /* 친구 초대 링크로 들어온 사람은 sessionStorage 에 코드가 담겨 있다.
+       같은 출처라 이 화면에서도 읽힌다. */
+    + 'ref:(function(){try{return sessionStorage.getItem("pendingRef")||""}catch(e){return ""}})()})})'
     + '.then(function(r){return r.json()}).then(function(){'
+    + 'try{sessionStorage.removeItem("pendingRef")}catch(e){}'
     + 'document.getElementById("f").style.display="none";'
     + 'document.getElementById("m").innerHTML="메일을 보냈습니다.<br>받은편지함을 확인해 주세요.";'
     + '}).catch(function(){b.disabled=false;b.textContent="링크 받기";'
@@ -1752,6 +1763,7 @@ async function handleEmailStart(request, env) {
   const b = await request.json().catch(() => ({}));
   const email = String(b.email || '').trim().toLowerCase();
   const name = String(b.name || '').trim().slice(0, 40);
+  const ref = String(b.ref || '').trim().toUpperCase().slice(0, 16);
 
   /* 응답은 언제나 같다. */
   const ok = () => jsonResponse({ success: true });
@@ -1772,6 +1784,25 @@ async function handleEmailStart(request, env) {
       row = await env.DB.prepare('SELECT id, name, email FROM users WHERE email = ?')
         .bind(email).first();
       if (!row) return ok();
+
+      /* 추천인을 센다. 가입 화면이 소비하던 자리인데, 그 화면을 없애면서
+         ?ref= 는 담기기만 하고 아무도 읽지 않는 상태로 남아 있었다.
+         새로 생긴 사람에게만 붙인다 — 이미 있던 사람을 누가 데려왔다고
+         할 수는 없다. */
+      if (ref) {
+        try {
+          const by = await env.DB.prepare(
+            'SELECT id FROM users WHERE referral_code = ?'
+          ).bind(ref).first();
+          if (by && by.id !== row.id) {
+            await env.DB.prepare('UPDATE users SET referred_by = ? WHERE id = ?')
+              .bind(by.id, row.id).run();
+            await env.DB.prepare(
+              'UPDATE users SET referral_count = COALESCE(referral_count, 0) + 1 WHERE id = ?'
+            ).bind(by.id).run();
+          }
+        } catch (_) {}
+      }
       /* 가입 화면이 있던 때 운영자에게 가던 알림을 여기로 옮긴다.
          새 독자가 생기는 지점이 이제 여기 하나뿐이다. */
       sendNewUserNotification(env, { username: email, name: row.name, email }).catch(() => {});
@@ -1974,27 +2005,108 @@ async function handleEmailSubscribe(request, env) {
   }
 }
 
+/* 수신 거부. 로그인 없이 링크만으로 동작해야 한다.
+
+   되돌릴 길을 같은 화면에 둔다. 전에는 "설정에서 언제든 다시 켤 수
+   있습니다" 라고만 적혀 있었는데, 그 설정으로 가는 링크는 방금 해지한
+   메일 안에만 있었다. 잘못 눌렀을 때 돌아올 방법이 없었다.
+
+   브라우저 알림은 따로 다룬다. 이 링크의 이름은 '이메일 받지 않기'이고,
+   그 말대로 이메일만 끈다. 다만 푸시 구독이 남아 있으면 끈 줄 알았던
+   알림이 계속 뜨므로, 그 경우에만 끄는 버튼을 하나 더 보여 준다.
+   구독이 없으면 보낼 것이 남지 않으므로 notify_enabled 까지 내린다. */
 async function handleEmailUnsubscribe(request, env) {
   const t = new URL(request.url).searchParams.get('t') || '';
-  const page = (msg) => new Response(
-    `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-     <div style="font-family:-apple-system,'Apple SD Gothic Neo',sans-serif;max-width:420px;margin:18vh auto;padding:0 20px;text-align:center;color:#2c2722;">
-       <div style="font-size:12px;letter-spacing:.08em;color:#9c9489;">99 WISDOM INSIGHT</div>
-       <p style="margin:18px 0 24px;font-size:17px;line-height:1.7;">${msg}</p>
-       <a href="https://99wisdombook.org" style="color:#5FA97E;font-size:14px;">사이트로 가기</a>
-     </div>`,
-    { headers: { 'Content-Type': 'text/html; charset=utf-8', ...corsHeaders } }
-  );
+  if (!/^[0-9a-f]{32}$/.test(t))
+    return subPage('<p style="margin:18px 0 0;font-size:17px;line-height:1.7;">잘못된 링크입니다.</p>');
 
-  if (!/^[0-9a-f]{32}$/.test(t)) return page('잘못된 링크입니다.');
+  await ensureEmailColumns(env);
+  let row = null;
+  try {
+    row = await env.DB.prepare(
+      'SELECT id, name, push_endpoint FROM users WHERE unsubscribe_token = ?'
+    ).bind(t).first();
+  } catch (_) {}
+  if (!row)
+    return subPage('<p style="margin:18px 0 0;font-size:17px;line-height:1.7;">'
+      + '이미 해지되었거나 유효하지 않은 링크입니다.</p>');
+
+  const hasPush = !!row.push_endpoint;
+  try {
+    await env.DB.prepare(
+      hasPush
+        ? 'UPDATE users SET email_enabled = 0 WHERE id = ?'
+        : 'UPDATE users SET email_enabled = 0, notify_enabled = 0 WHERE id = ?'
+    ).bind(row.id).run();
+  } catch (_) {
+    return subPage('<p style="margin:18px 0 0;font-size:17px;line-height:1.7;">'
+      + '처리 중 문제가 생겼습니다. 잠시 후 다시 시도해 주세요.</p>');
+  }
+
+  const BTN = 'display:inline-block;border:0;border-radius:999px;padding:11px 22px;'
+    + 'font-size:14.5px;font-weight:600;cursor:pointer;text-decoration:none;';
+
+  return subPage(
+    '<p style="margin:18px 0 6px;font-size:17px;line-height:1.7;">이메일 수신을 해지했습니다.</p>'
+    + '<p id="sub" style="margin:0;font-size:14px;line-height:1.75;color:#7a736a;">'
+    + (hasPush
+        ? '더 이상 메일을 보내지 않습니다.<br>브라우저 알림은 아직 켜져 있습니다.'
+        : '더 이상 보내지 않습니다.')
+    + '</p>'
+    + '<div id="acts" style="margin:26px 0 0;">'
+    + (hasPush
+        ? '<button id="nopush" style="' + BTN + 'background:#fff;border:1px solid #ddd8d0;'
+          + 'color:#4a443d;margin:0 0 10px;">브라우저 알림도 끄기</button><br>'
+        : '')
+    /* 잘못 눌렀을 때 돌아오는 길. 이 화면을 떠나지 않아도 된다. */
+    + '<button id="back" style="' + BTN + 'background:#5FA97E;color:#fff;">다시 받기</button>'
+    + '</div>'
+    + '<p id="m" style="margin:14px 0 0;font-size:13.5px;line-height:1.7;min-height:18px;color:#7a736a;"></p>'
+    + '<script>(function(){var T=' + JSON.stringify(t) + ';'
+    + 'var $=function(i){return document.getElementById(i)};'
+    + 'function post(u,b){return fetch(u,{method:"POST",headers:{"Content-Type":"application/json"},'
+    + 'body:JSON.stringify(b)}).then(function(r){return r.json()});}'
+    + 'var back=$("back");back.onclick=function(){back.disabled=true;back.textContent="켜는 중…";'
+    + 'post("/api/email/subscribe",{t:T}).then(function(d){'
+    + 'if(d&&d.success){$("acts").style.display="none";'
+    + '$("sub").innerHTML="다시 받으시도록 켰습니다.<br>"+d.masked+"님께 "+d.hour+"시에 보내 드립니다.";}'
+    + 'else{back.disabled=false;back.textContent="다시 받기";'
+    + '$("m").textContent=(d&&d.error)||"켜지 못했습니다.";}})'
+    + '.catch(function(){back.disabled=false;back.textContent="다시 받기";'
+    + '$("m").textContent="잠시 후 다시 시도해 주세요.";});};'
+    + 'var np=$("nopush");if(np)np.onclick=function(){np.disabled=true;np.textContent="끄는 중…";'
+    + 'post("/api/email/unsubscribe/push",{t:T}).then(function(d){'
+    + 'if(d&&d.success){np.style.display="none";'
+    + '$("sub").innerHTML="더 이상 보내지 않습니다.<br>브라우저 알림도 껐습니다.";}'
+    + 'else{np.disabled=false;np.textContent="브라우저 알림도 끄기";'
+    + '$("m").textContent=(d&&d.error)||"끄지 못했습니다.";}})'
+    + '.catch(function(){np.disabled=false;np.textContent="브라우저 알림도 끄기";'
+    + '$("m").textContent="잠시 후 다시 시도해 주세요.";});};})();</script>'
+  );
+}
+
+/* 해지 화면에서 브라우저 알림까지 끄는 자리. 구독 정보를 지워야 실제로
+   멈춘다 — notify_enabled 만 내리면 다시 켤 때 옛 단말로 되살아난다. */
+async function handleUnsubscribePush(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const t = String(b.t || '').trim();
+  if (!/^[0-9a-f]{32}$/.test(t))
+    return jsonResponse({ success: false, error: '잘못된 링크입니다.' }, 400);
+
   try {
     await ensureEmailColumns(env);
-    const row = await env.DB.prepare('SELECT id FROM users WHERE unsubscribe_token = ?').bind(t).first();
-    if (!row) return page('이미 해지되었거나 유효하지 않은 링크입니다.');
-    await env.DB.prepare('UPDATE users SET email_enabled = 0 WHERE id = ?').bind(row.id).run();
-    return page('이메일 수신을 해지했습니다.<br>설정에서 언제든 다시 켤 수 있습니다.');
-  } catch (_) {
-    return page('처리 중 문제가 생겼습니다. 잠시 후 다시 시도해 주세요.');
+    const row = await env.DB.prepare(
+      'SELECT id FROM users WHERE unsubscribe_token = ?'
+    ).bind(t).first();
+    if (!row) return jsonResponse({ success: false, error: '유효하지 않은 링크입니다.' }, 400);
+
+    await env.DB.prepare(
+      'UPDATE users SET notify_enabled = 0, push_endpoint = NULL,'
+      + ' push_p256dh = NULL, push_auth = NULL WHERE id = ?'
+    ).bind(row.id).run();
+    return jsonResponse({ success: true });
+  } catch (err) {
+    return jsonResponse({ success: false, error: '처리 중 문제가 생겼습니다.' }, 500);
   }
 }
 
@@ -2943,7 +3055,15 @@ async function handlePromoCron(request, env) {
     return jsonResponse({ error: 'Unauthorized' }, 401);
 
   const b = await request.json().catch(() => ({}));
-  const audience = b.audience === 'all' ? 'all' : 'subscribed';
+  /* 이 메일의 일은 '아직 알림을 켜지 않은 사람을 데려오는 것'이다.
+     이미 켠 사람은 매일 아침 같은 칼럼을 받고 있으므로 보낼 이유가 없고,
+     수요일에 두 통을 받게 된다. 그래서 기본 대상을 뒤집었다.
+
+       promote(기본) 메일 주소는 있는데 알림을 켜지 않은 사람
+       subscribed    이미 켠 사람 (예전 기본값 · 명시할 때만)
+       all           주소가 있는 모든 사람 (1회성) */
+  const audience = b.audience === 'all' ? 'all'
+    : b.audience === 'subscribed' ? 'subscribed' : 'promote';
   const to = String(b.to || '').trim();
   const dryRun = !!b.dry_run;
 
@@ -3012,9 +3132,12 @@ async function handlePromoCron(request, env) {
     }
   }
 
+  const HAS_MAIL = " email IS NOT NULL AND email <> ''";
   const sql = audience === 'all'
-    ? "SELECT id, name, email FROM users WHERE email IS NOT NULL AND email <> ''"
-    : "SELECT id, name, email FROM users WHERE email_enabled = 1 AND email IS NOT NULL AND email <> ''";
+    ? 'SELECT id, name, email FROM users WHERE' + HAS_MAIL
+    : audience === 'subscribed'
+      ? 'SELECT id, name, email FROM users WHERE email_enabled = 1 AND' + HAS_MAIL
+      : 'SELECT id, name, email FROM users WHERE COALESCE(email_enabled, 0) != 1 AND' + HAS_MAIL;
   let users = [];
   try {
     users = (await env.DB.prepare(sql).all()).results || [];
@@ -3022,8 +3145,32 @@ async function handlePromoCron(request, env) {
     return jsonResponse({ error: err.message }, 500);
   }
 
+  /* 오늘 이미 메일을 받은 사람은 건너뛴다.
+
+     대상을 뒤집어도 겹침이 완전히 사라지지는 않는다 — 아침에 알림을
+     켠 사람은 낮 열두 시에는 'subscribed' 가 되어 있고, audience 를
+     손으로 지정해 돌리는 경우도 있다. 보내기 직전에 한 번 더 본다.
+     하루에 두 통은 그 자체로 해지 사유다. */
+  await ensureSendLogTable(env);
+  let sameDay = new Set();
+  try {
+    const r = await env.DB.prepare(
+      "SELECT DISTINCT user_id FROM send_logs"
+      + " WHERE channel = 'email' AND status = 'ok' AND user_id IS NOT NULL"
+      + " AND kind IN ('issue', 'promo')"
+      + " AND date(sent_at, '+9 hours') = date('now', '+9 hours')"
+    ).all();
+    sameDay = new Set((r.results || []).map((x) => x.user_id));
+  } catch (_) {}
+
+  const skippedToday = users.filter((u) => sameDay.has(u.id)).length;
+  users = users.filter((u) => !sameDay.has(u.id));
+
   if (dryRun)
-    return jsonResponse({ success: true, dry_run: true, audience, week, chapter_id: chapterId, title: col.title, total: users.length });
+    return jsonResponse({
+      success: true, dry_run: true, audience, week, chapter_id: chapterId,
+      title: col.title, total: users.length, skipped_today: skippedToday,
+    });
 
   const results = { sent: 0, errors: [] };
   for (const user of users) {
@@ -3042,7 +3189,10 @@ async function handlePromoCron(request, env) {
       results.errors.push({ userId: user.id, error: err.message });
     }
   }
-  return jsonResponse({ success: true, audience, week, chapter_id: chapterId, title: col.title, total: users.length, ...results });
+  return jsonResponse({
+    success: true, audience, week, chapter_id: chapterId, title: col.title,
+    total: users.length, skipped_today: skippedToday, ...results,
+  });
 }
 
 // ── 주간 리포트 (일요일 저녁) ──────────────────────────────────

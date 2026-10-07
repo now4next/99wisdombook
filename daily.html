@@ -1283,8 +1283,13 @@
         };
 
         if (!wisdomAPI.isLoggedIn()) {
+          /* 토큰이 만료돼 끊긴 경우에는 그렇게 말한다. 아무 설명 없이
+             처음 온 사람과 같은 화면을 보여 주면, 쓰던 사람은 자기가
+             무엇을 잘못했는지 모른 채 처음부터 다시 하게 된다. */
           document.getElementById('logged-in-name').textContent =
-            '매일 아침, 오늘의 문장을 메일로 받아 보세요.';
+            wisdomAPI.takeExpiredFlag()
+              ? '링크가 만료됐습니다. 메일로 새 링크를 받으시면 이어서 쓰실 수 있어요.'
+              : '매일 아침, 오늘의 문장을 메일로 받아 보세요.';
           onlyNotify();
           btnNotify.style.display = 'flex';
           btnNotify.lastChild.textContent = ' 메일로 받기';
