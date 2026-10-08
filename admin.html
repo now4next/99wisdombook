@@ -473,12 +473,19 @@
 
       <label class="fld" style="margin-top:0;">비밀번호</label>
       <div id="pw-reset-idle">
-        <p class="note" style="margin-top:6px;">이 사이트에는 재설정 메일이 없습니다. 회원이 비밀번호를 잊었다면
-          새로 발급해 전달해 주세요. 발급하면 그 회원의 기존 로그인은 모두 끊깁니다.</p>
-        <button class="btn ghost" style="margin-top:10px;" onclick="resetPassword()" id="btn-pw-reset">임시 비밀번호 발급</button>
+        <p class="note" style="margin-top:6px;">비밀번호를 잊었다면 새로 발급해 전달해 주세요.
+          발급하면 그 회원의 기존 로그인은 모두 끊깁니다.</p>
+        <div class="row" style="margin-top:10px;gap:8px;flex-wrap:nowrap;">
+          <input id="pw-reset-set" type="text" autocomplete="off" placeholder="직접 지정 · 비워 두면 자동 생성"
+                 style="font-family:var(--mono);font-size:14px;">
+          <button class="btn ghost" style="flex:none;" onclick="resetPassword()" id="btn-pw-reset">발급</button>
+        </div>
+        <p class="note" style="margin-top:7px;">8자 이상. 직접 적으시면 전화로 불러 주기 쉬운 값을 쓸 수 있습니다 —
+          자동 생성한 값은 한 번 보여 주고 마는 문자열입니다.</p>
+        <p class="alert" id="pw-reset-error" style="display:none;margin-top:9px;"></p>
       </div>
       <div id="pw-reset-done" style="display:none;">
-        <p class="note" style="margin-top:6px;">발급했습니다. 본인에게 전달해 주세요.
+        <p class="note" id="pw-reset-msg" style="margin-top:6px;">발급했습니다. 본인에게 전달해 주세요.
           <b style="color:var(--ink);">이 창을 닫으면 다시 볼 수 없습니다.</b></p>
         <div class="row" style="margin-top:10px;gap:8px;flex-wrap:nowrap;">
           <input id="pw-reset-value" type="text" readonly style="font-family:var(--mono);font-size:15px;">
@@ -509,8 +516,11 @@
           <label><input type="radio" name="cu-role" value="user" checked> 일반 회원</label>
           <label><input type="radio" name="cu-role" value="admin"> 관리자</label>
         </div>
-        <p class="note" style="margin-top:14px;">비밀번호는 자동으로 만들어져 저장한 뒤 한 번만 보여 드립니다.
-          이 사이트에는 비밀번호 재설정 기능이 없으니, 받아서 본인에게 전달해 주세요.</p>
+        <label class="fld">비밀번호 <span class="hint">· 비워 두면 자동 생성 · 8자 이상</span>
+          <input id="cu-password" type="text" autocomplete="off" placeholder="직접 지정하지 않으려면 비워 두세요"
+                 style="font-family:var(--mono);font-size:14px;"></label>
+        <p class="note" style="margin-top:14px;">비워 두시면 자동으로 만들어져 저장한 뒤 한 번만 보여 드립니다.
+          직접 적으시면 그 값이 쓰이고, 다시 확인하실 수 있습니다. 어느 쪽이든 본인에게 전달해 주세요.</p>
       </div>
 
       <div id="create-done" style="display:none;">
@@ -730,15 +740,19 @@
     document.getElementById('nt-minute').value = (user.notify_minute === 30) ? 30 : 0;
     syncNotifyDetail();
 
-    // 비밀번호 구역은 늘 접힌 상태로 연다
+    /* 비밀번호 구역은 늘 접힌 상태로 연다. 적어 둔 값이 다음 회원
+       화면까지 따라가면 엉뚱한 사람의 비밀번호가 된다. */
     document.getElementById('pw-reset-idle').style.display = 'block';
     document.getElementById('pw-reset-done').style.display = 'none';
     document.getElementById('pw-reset-value').value = '';
+    document.getElementById('pw-reset-set').value = '';
+    document.getElementById('pw-reset-error').style.display = 'none';
 
     document.getElementById('edit-modal').classList.add('active');
   }
   function closeModal() {
     document.getElementById('edit-modal').classList.remove('active');
+    document.getElementById('pw-reset-set').value = '';
     /* 발급한 비밀번호가 화면에 남지 않게 지운다. */
     document.getElementById('pw-reset-value').value = '';
     currentEditUser = null;
@@ -792,25 +806,47 @@
   async function resetPassword() {
     var u = currentEditUser;
     if (!u) return;
-    if (!confirm('"' + (u.name || u.username) + '" 의 비밀번호를 새로 발급합니다.\n\n'
+    var err = document.getElementById('pw-reset-error');
+    var set = document.getElementById('pw-reset-set').value.trim();
+    err.style.display = 'none';
+
+    /* 서버도 막지만 여기서 먼저 잡는다. 확인창을 지나고 나서 8자라는
+       말을 듣는 것은 한 걸음 늦다. */
+    if (set && set.length < 8) {
+      err.textContent = '비밀번호는 8자 이상이어야 합니다.';
+      err.style.display = 'block';
+      return;
+    }
+
+    if (!confirm('"' + (u.name || u.username) + '" 의 비밀번호를 '
+      + (set ? '적으신 값으로 바꿉니다.' : '새로 발급합니다.') + '\n\n'
       + '기존 비밀번호는 쓸 수 없게 되고, 이 회원의 로그인은 모두 끊깁니다. 계속할까요?')) return;
 
     var btn = document.getElementById('btn-pw-reset');
-    btn.disabled = true; btn.textContent = '발급 중…';
+    btn.disabled = true; btn.textContent = '처리 중…';
     try {
       var res = await fetch('/api/users/' + u.id + '/password/reset', {
         method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + wisdomAPI.token },
+        headers: { 'Authorization': 'Bearer ' + wisdomAPI.token, 'Content-Type': 'application/json' },
+        body: JSON.stringify(set ? { password: set } : {}),
       });
       var d = await res.json();
       if (!d.success) throw new Error(d.error || '발급하지 못했습니다');
+
       document.getElementById('pw-reset-value').value = d.password;
+      /* 직접 지정한 값은 운영자가 이미 알고 있다. "다시 볼 수 없다"고
+         겁줄 이유가 없다. */
+      document.getElementById('pw-reset-msg').innerHTML = d.generated
+        ? '발급했습니다. 본인에게 전달해 주세요. <b style="color:var(--ink);">이 창을 닫으면 다시 볼 수 없습니다.</b>'
+        : '적으신 값으로 바꿨습니다. 본인에게 전달해 주세요.';
+      document.getElementById('pw-reset-set').value = '';
       document.getElementById('pw-reset-idle').style.display = 'none';
       document.getElementById('pw-reset-done').style.display = 'block';
     } catch (e) {
-      alert(e.message);
+      err.textContent = e.message;
+      err.style.display = 'block';
     } finally {
-      btn.disabled = false; btn.textContent = '임시 비밀번호 발급';
+      btn.disabled = false; btn.textContent = '발급';
     }
   }
 
@@ -872,6 +908,7 @@
           name: document.getElementById('cu-name').value.trim(),
           email: document.getElementById('cu-email').value.trim(),
           role: role,
+          password: document.getElementById('cu-password').value.trim(),
         }),
       });
       var d = await res.json();
@@ -879,7 +916,8 @@
 
       document.getElementById('cu-done-name').textContent = d.user.name;
       document.getElementById('cu-done-email').textContent = d.user.email;
-      document.getElementById('cu-done-pw').value = d.password || '(관리자가 지정함)';
+      document.getElementById('cu-done-pw').value =
+        d.password || document.getElementById('cu-password').value.trim() || '(관리자가 지정함)';
       document.getElementById('create-form').style.display = 'none';
       document.getElementById('create-done').style.display = 'block';
       btn.style.display = 'none';

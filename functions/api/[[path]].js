@@ -2770,20 +2770,34 @@ async function handleChangePassword(userId, request, env) {
 /* 관리자가 임시 비밀번호를 재발급한다. 이 사이트에는 재설정 메일 흐름이
    없어서, 회원이 비밀번호를 잊으면 이 경로밖에 없다.
    관리자에게도 해시만 있고 원래 비밀번호는 알 수 없으므로 새로 만든다. */
+/* 임시 비밀번호 재발급.
+
+   관리자가 값을 직접 적어 보내면 그것을 쓰고, 비워 두면 만들어 준다.
+   자동 생성한 값은 한 번 보여 주고 마는 문자열이라 전화로 불러 주기
+   어렵다. 운영자가 그 자리에서 정하고 바로 알려 줄 수 있어야 한다. */
 async function handleResetPassword(userId, request, env) {
   if (!await verifyAdminStrict(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
 
   const row = await env.DB.prepare('SELECT id, name, email FROM users WHERE id = ?').bind(userId).first();
   if (!row) return jsonResponse({ error: 'User not found' }, 404);
 
-  const password = genTempPassword();
+  const b = await request.json().catch(() => ({}));
+  const supplied = String(b.password || '').trim();
+  if (supplied) {
+    const bad = passwordProblem(supplied);
+    if (bad) return jsonResponse({ success: false, error: bad }, 400);
+  }
+  const password = supplied || genTempPassword();
+
   await env.DB.prepare('UPDATE users SET password = ? WHERE id = ?')
     .bind(await hashPassword(password), userId).run();
 
-  // 재발급했으면 기존 세션은 전부 끊는다
+  /* 비밀번호가 바뀌었으니 기존 세션은 전부 끊는다. 같은 이유로 그
+     사람 앞으로 나가 있던 재설정 링크도 이 시점에 효력을 잃는다
+     (서명 키가 비밀번호 해시다). */
   await revokeSessions(env, parseInt(userId), null);
 
-  return jsonResponse({ success: true, user: row, password });
+  return jsonResponse({ success: true, user: row, password, generated: !supplied });
 }
 
 async function handleUpdateUser(userId, request, env) {
