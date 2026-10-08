@@ -321,6 +321,7 @@
         <button class="btn-submit" type="submit" id="login-submit">로그인</button>
       </form>
       <p class="forgot-link"><a href="/api/auth/forgot" style="color:inherit;text-decoration:none;">비밀번호를 잊으셨나요?</a></p>
+      <button class="btn-ghost" type="button" onclick="closeModal()" style="width:100%;margin-top:4px;">닫기</button>
     </div>
   </div>
 </div>
@@ -470,8 +471,16 @@
     function closeModal() {
       document.getElementById('modal').classList.remove('visible');
     }
-    document.getElementById('modal').addEventListener('click', (e) => {
-      if (e.target === e.currentTarget) closeModal();
+    /* 이 창은 바깥을 눌러도 닫지 않는다.
+
+       비밀번호를 적다가 바깥을 한 번 스치면 창이 닫히고 적던 것이
+       사라졌다. 로그인 창은 잠깐 보고 마는 창이 아니라 두 칸을 채워야
+       하는 창이라, 실수로 닫히는 비용이 크다. 닫는 길은 아래 '닫기'
+       버튼과 Esc 두 가지로 둔다 — 둘 다 일부러 하는 동작이다. */
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      const m = document.getElementById('modal');
+      if (m && m.classList.contains('visible')) closeModal();
     });
     document.getElementById('start-modal').addEventListener('click', (e) => {
       if (e.target === e.currentTarget) closeStartModal();
