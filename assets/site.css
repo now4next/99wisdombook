@@ -605,6 +605,8 @@ svg.empty-icon {
 
 /* 상단은 앵커만 — 여백을 줄이고 구분선으로 본문과 끊는다 */
 .art-head.anchor-only { padding: 44px 0 26px; }
+/* 커버가 머리를 대신한다. 카드가 테두리를 가지고 있어 위아래 여백만 준다. */
+.art-head.cover-head { padding: 34px 0 30px; }
 
 /* 본문 시작부 — 칼럼 제목과 메타.
    ⚠ .art-head .art-title 로 쓰면 장 페이지(chapter-view) 제목까지

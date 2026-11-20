@@ -196,15 +196,16 @@
 
       var html = '';
 
-      /* 머리 — 앵커 문장이 주인공, 제목은 그 아래 각도 */
-      html += '<header class="art-head anchor-only">' +
-        '<span class="kicker">제' + partNo + '부 ' + it.chapter_id + '장 · ' + esc(lensKo) + '</span>' +
-        (it.anchor_quote
-          ? '<div class="anchor-hero">' +
-              '<p class="anchor-hero-q">' + esc(it.anchor_quote) + '</p>' +
-            '</div>'
-          : '') +
-        '<div class="art-mark">' + markSvg(it.chapter_id, 'mark-lead') + '</div>' +
+      /* 머리 — 공유 카드와 같은 커버.
+
+         전에는 키커와 앵커 문장을 글자로 짜 두었다. 공유 카드가 같은
+         두 줄을 다른 모양으로 그리고 있어서, 메일에서 카드를 보고 들어온
+         사람은 같은 내용을 두 번 다른 꼴로 만났다. 한 벌로 합친다.
+
+         커버는 그림이 아니라 HTML 이다. 글자는 그대로 글자라서 선택되고
+         검색되고 화면 낭독기가 읽는다 — 이미지로 바꿨다면 잃었을 것들이다. */
+      html += '<header class="art-head cover-head">' +
+        '<div class="wcard-fit" id="art-cover"></div>' +
       '</header>';
 
       /* 본문 — 제목·메타·리드를 본문 시작부로 내린다 */
@@ -324,6 +325,9 @@
         el.textContent = t; el.classList.add('on');
         setTimeout(function () { el.classList.remove('on'); }, 2200);
       }
+      /* sub:false — 받침은 글 끝의 Quotable 에 있다(card.js 주석 참고). */
+      mountCard(document.getElementById('art-cover'), it, 'auto', { sub: false });
+
       mountNotes(document.getElementById('notes-sec'), it.chapter_id);
       mountSubscribeCta(document.getElementById('sub-cta'));
 

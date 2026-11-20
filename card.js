@@ -34,12 +34,17 @@
       .replace(/"/g, '&quot;');
   }
 
-  function markup(item, ratio) {
+  function markup(item, ratio, opts) {
+    var o = opts || {};
     var part = parseInt(item.part_id, 10) || 1;
     var ch = parseInt(item.chapter_id, 10) || 0;
     var lens = LENS_KO[item.lens] || item.lens || '';
     var head = String(item.anchor_quote || item.title || '').trim();
-    var sub = String(item.quotable || '').trim();
+    /* 글 안의 커버에서는 받침(quotable)을 뺀다. 그 문장은 글 끝의
+        'Quotable · 오늘의 한 줄' 에 이미 있어서, 커버에 또 실으면 한
+        화면에 같은 문장이 두 번 나온다. 공유 카드는 혼자 떠다니므로
+        계속 싣는다 — 그때는 받쳐 줄 글이 옆에 없다. */
+    var sub = o.sub === false ? '' : String(item.quotable || '').trim();
     var no = (ch < 10 ? '0' : '') + ch;
 
     return '<div class="wcard t-p' + part + (ratio === '1x1' ? ' sq' : '') + '">'
@@ -110,10 +115,23 @@
    */
   function mountCard(host, item, ratio, opts) {
     if (!host || !item) return null;
-    ratio = ratio === '1x1' ? '1x1' : '2x1';
     var o = opts || {};
+    /* 'auto' — 좁은 화면에서는 정사각을 쓴다. 2:1 카드를 폰 폭(375px)에
+       맞춰 줄이면 높이가 187px 밖에 안 되고 키커가 8px 가 된다. 세로가
+       긴 쪽이 읽을 자리를 준다(자매 사이트도 커버는 세로형이다).
 
-    host.innerHTML = markup(item, ratio);
+       ⚠ 원래 값을 먼저 담아 둔다. 비엄격 모드에서 arguments 는 파라미터와
+       묶여 있어, ratio 에 다시 대입하면 arguments[2] 도 함께 바뀐다. */
+    var asked = ratio;
+    if (ratio === 'auto') ratio = pickRatio(host);
+    ratio = ratio === '1x1' ? '1x1' : '2x1';
+
+    if (asked === 'auto') {
+      host.dataset.autoRatio = '1';
+      host.dataset.item = JSON.stringify(item);
+      host.dataset.opts = JSON.stringify({ sub: o.sub, scale: o.scale });
+    }
+    host.innerHTML = markup(item, ratio, o);
     var card = host.firstChild;
 
     /* 폰트가 아직 안 실렸으면 글자 폭이 달라져 맞춘 크기가 어긋난다.
@@ -132,12 +150,26 @@
         window.addEventListener('resize', function () {
           document.querySelectorAll('.wcard-fit').forEach(function (h) {
             var c = h.querySelector('.wcard');
-            if (c) scaleToHost(h, c);
+            if (!c) return;
+            /* 비율 경계를 넘었으면 줄이는 것만으로는 안 된다. 다시 그린다. */
+            var want = h.dataset.autoRatio ? pickRatio(h) : null;
+            if (want && want !== (c.classList.contains('sq') ? '1x1' : '2x1')) {
+              mountCard(h, JSON.parse(h.dataset.item), 'auto', JSON.parse(h.dataset.opts || '{}'));
+              return;
+            }
+            scaleToHost(h, c);
           });
         });
       }
     }
     return card;
+  }
+
+  var RATIO_SWITCH = 560;   // 이 폭보다 좁으면 정사각
+
+  function pickRatio(host) {
+    var w = host.clientWidth || (window.innerWidth || 0);
+    return w < RATIO_SWITCH ? '1x1' : '2x1';
   }
 
   /* 설계 크기 카드를 담는 자리 폭에 맞춰 줄인다. 카드 자체는 건드리지
