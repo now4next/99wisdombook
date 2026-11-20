@@ -20,6 +20,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Serif+KR:wght@400;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/app.css?v=20260926b">
 <link rel="stylesheet" href="/assets/site.css?v=20260926d">
+<!-- 버전은 빌드가 내용 해시로 붙인다. 손으로 달지 말 것. -->
+<link rel="stylesheet" href="/assets/card.css">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='80'>%F0%9F%8C%BF</text></svg>">
 </head>
 <body>
@@ -69,6 +71,7 @@
 </footer>
 
 <script src="/api-client.js"></script>
+<script src="/card.js"></script>
 <script src="/notes.js"></script>
 <script src="/subscribe-cta.js"></script>
 <script>
@@ -180,6 +183,17 @@
         ? pubDate.getFullYear() + '. ' + String(pubDate.getMonth() + 1).padStart(2, '0') + '. ' + String(pubDate.getDate()).padStart(2, '0')
         : '';
 
+      /* 카드 주소. D1 의 hero_image 는 .png 로 들어 있는 행이 많다 —
+         카드를 JPEG 로 바꾸면서 확장자만 여기서 맞춘다. 행을 일괄로 고치지
+         않는 것은 관리자가 넣은 바깥 주소까지 건드리지 않기 위해서다.
+         우리가 구운 og/ 아래 것만 바꾼다. */
+      function cardSrc(hero, ratio) {
+        var u = String(hero || '');
+        if (!u) return '';
+        if (ratio === '1x1') u = u.replace(/(\.[a-z]+)$/i, '-1x1$1');
+        return /\/og\/[^/]+\.png$/i.test(u) ? u.replace(/\.png$/i, '.jpg') : u;
+      }
+
       var html = '';
 
       /* 머리 — 앵커 문장이 주인공, 제목은 그 아래 각도 */
@@ -246,21 +260,26 @@
         '</ol></section>';
       }
 
-      /* 공유 카드 — quotable 로 구운 PNG (링크 미리보기/인스타)
-         ⚠ 카드 PNG 는 슬러그당 경로가 고정이고 Cache-Control 이 4시간이다.
+      /* 공유 카드 — 링크 미리보기/인스타용으로 구운 이미지.
+
+         화면 맨 위의 커버와 같은 디자인이다(assets/card.css + card.js).
+         여기서는 '구워진 결과'를 보여 준다 — 카톡에 붙였을 때 무엇이
+         뜨는지, 저장하면 무엇이 나오는지 그대로여야 하기 때문이다.
+
+         ⚠ 카드 경로는 슬러그당 고정이고 Cache-Control 이 4시간이다.
             앵커 문구를 고쳐 카드를 다시 구우면 URL 이 그대로라 브라우저가
             옛 카드를 계속 쓴다. 그래서 updated_at 을 ?v= 로 붙여 둔다.
             칼럼을 고칠 때 updated_at 을 반드시 함께 갱신할 것. */
       if (it.hero_image) {
         var cardVer = String(it.updated_at || it.published_at || '').replace(/\D/g, '').slice(0, 14) || '1';
-        var card2x1 = it.hero_image + (it.hero_image.indexOf('?') >= 0 ? '&' : '?') + 'v=' + cardVer;
-        var card1x1 = it.hero_image.replace(/\.png$/, '-1x1.png') + '?v=' + cardVer;
+        var card2x1 = cardSrc(it.hero_image, '2x1') + '?v=' + cardVer;
+        var card1x1 = cardSrc(it.hero_image, '1x1') + '?v=' + cardVer;
         html += '<section style="margin-bottom:44px">' +
           '<div class="slabel"><h2>Share</h2><span class="sub">카드 이미지</span><span class="rule"></span></div>' +
           '<div class="share-cards">' +
-            '<figure><img src="' + esc(card2x1) + '" alt="공유 카드 2:1" loading="lazy">' +
+            '<figure><img src="' + esc(card2x1) + '" alt="공유 카드 2:1" loading="lazy" width="1200" height="600">' +
               '<figcaption>2:1 · 링크 미리보기</figcaption></figure>' +
-            '<figure><img src="' + esc(card1x1) + '" alt="공유 카드 1:1" loading="lazy">' +
+            '<figure><img src="' + esc(card1x1) + '" alt="공유 카드 1:1" loading="lazy" width="1080" height="1080">' +
               '<figcaption>1:1 · 인스타그램 피드</figcaption></figure>' +
           '</div>' +
           '<div class="share-btns">' +

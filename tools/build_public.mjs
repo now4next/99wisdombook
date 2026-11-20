@@ -74,14 +74,15 @@ const EXCLUDE_DIRS = new Set([
 const REQUIRED = [
   'index.html', 'daily.html', 'reader.html', 'chapter-view.html',
   'admin.html', 'notes.html', 'api-client.js', 'admin-insights.js',
-  'notes.js', 'subscribe-cta.js',
+  'notes.js', 'subscribe-cta.js', 'card.js',
+  'assets/card.css',
   '_redirects', '_routes.json',
   'functions/api/[[path]].js',
   'functions/insight/[slug].js',
   'functions/chapter/[id].js',
   'data/wisdom.json', 'data/chapters/1.md', 'data/chapters/99.md',
   'assets/app.css', 'assets/site.css',
-  'og/ginkgo-survived.png',
+  'og/ginkgo-survived.jpg',
 ];
 
 /* ⚠ 장별 원문은 프론트매터를 정규식으로 걷어낸다. 윈도우에서 한 번
@@ -114,7 +115,12 @@ function assertChaptersAreLF() {
 
    주소에 해시를 넣으면 내용이 바뀐 순간 주소가 달라지므로 캐시가
    비켜 간다. 바뀌지 않으면 주소도 그대로라 캐시를 계속 쓴다. */
-const VERSIONED = ['api-client.js', 'admin-insights.js', 'notes.js', 'subscribe-cta.js'];
+const VERSIONED = ['api-client.js', 'admin-insights.js', 'notes.js', 'subscribe-cta.js', 'card.js'];
+/* 스타일시트도 같다. app.css·site.css 는 그동안 ?v=20260926b 처럼 손으로
+   달아 왔는데, 사람이 적은 값은 파일이 바뀌어도 그대로 남는다. 실제로
+   api-client.js 를 고쳤을 때 브라우저가 네 시간 동안 옛 파일을 써서
+   메일 링크로 들어와도 아무 일이 일어나지 않았다. */
+const VERSIONED_CSS = ['assets/app.css', 'assets/site.css', 'assets/card.css'];
 
 function hashOf(file) {
   return crypto.createHash('sha256')
@@ -122,12 +128,17 @@ function hashOf(file) {
 }
 
 function stampAssets(dir) {
-  const stamps = new Map();
+  const stamps = new Map();      // src="/..."  (스크립트)
+  const cssStamps = new Map();   // href="/..." (스타일시트)
   for (const name of VERSIONED) {
     const f = path.join(dir, name);
     if (fs.existsSync(f)) stamps.set(name, hashOf(f));
   }
-  if (!stamps.size) return 0;
+  for (const name of VERSIONED_CSS) {
+    const f = path.join(dir, ...name.split('/'));
+    if (fs.existsSync(f)) cssStamps.set(name, hashOf(f));
+  }
+  if (!stamps.size && !cssStamps.size) return 0;
 
   let touched = 0;
   const walk = (d) => {
@@ -144,6 +155,11 @@ function stampAssets(dir) {
         const pat = new RegExp(
           'src="/' + name.replace(/\./g, '\\.') + '(\\?v=[^"]*)?"', 'g');
         after = after.replace(pat, 'src="/' + name + '?v=' + h + '"');
+      }
+      for (const [name, h] of cssStamps) {
+        const pat = new RegExp(
+          'href="/' + name.replace(/\./g, '\\.') + '(\\?v=[^"]*)?"', 'g');
+        after = after.replace(pat, 'href="/' + name + '?v=' + h + '"');
       }
       if (after !== before) { fs.writeFileSync(full, after); touched++; }
     }
@@ -209,7 +225,7 @@ function main() {
   }
 
   console.log(`dist/ 생성 완료: 최상위 ${copied}개 항목, 전체 ${countFiles(DIST)}개 파일 (제외 ${skipped}개 항목)`);
-  console.log(`공용 스크립트 버전 표시: ${stamped}개 HTML`);
+  console.log(`공용 스크립트·스타일 버전 표시: ${stamped}개 HTML`);
 }
 
 main();

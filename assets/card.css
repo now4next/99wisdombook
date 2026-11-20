@@ -1,0 +1,185 @@
+/* 공유 카드 — 화면과 구운 이미지가 함께 쓰는 한 벌.
+
+   전에는 tools/make_og.py 가 PIL 로 픽셀을 직접 그렸다. 좌표와 줄바꿈을
+   손으로 계산해야 했고, 폰트 경로가 C:\Windows\Fonts 로 박혀 있어 한 대의
+   PC 에서만 구워졌다. 디자인을 여기로 옮기고, 이미지는 이 HTML 을 브라우저로
+   찍어 만든다. 화면의 커버와 카톡 미리보기가 같은 원본에서 나온다.
+
+   카드는 늘 설계 크기(1200x600 · 1080x1080)로 그린다. 화면에서는 .wcard-fit
+   이 transform 으로 줄일 뿐이다. 그래서 페이지에 보이는 커버가 곧 구워질
+   카드의 미리보기가 된다 — 둘이 어긋날 자리가 없다. */
+
+.wcard {
+  position: relative;
+  width: 1200px;
+  height: 600px;
+  overflow: hidden;
+  box-sizing: border-box;
+  background: var(--bg, #FBFBF8);
+  color: var(--ink, #1C1E1B);
+  font-family: var(--sans, 'Inter Tight', 'Noto Sans KR', sans-serif);
+  /* 좌상단에서 퍼지는 파스텔 틴트 — 부(部) 색을 옅게 깐다 */
+  /* 반지름을 명시한다. 기본값(farthest-corner)으로 두면 대각선 전체에
+     걸쳐 번져 카드가 통째로 물든다. 오른쪽은 비어 있어야 글이 선다. */
+  background-image: radial-gradient(
+    circle var(--tint-r) at 0% 0%,
+    color-mix(in srgb, var(--accent, #5FA97E) 22%, var(--bg, #FBFBF8)) 0%,
+    var(--bg, #FBFBF8) 100%);
+  --pad: 88px;
+  --bar: 12px;
+  --kicker: 26px;
+  --head: 84px;
+  --sub: 33px;
+  --foot: 24px;
+  --ghost: 300px;
+  --tint-r: 950px;
+}
+
+.wcard.sq {
+  width: 1080px;
+  height: 1080px;
+  --pad: 96px;
+  --bar: 14px;
+  --kicker: 30px;
+  --head: 116px;
+  --sub: 39px;
+  --foot: 28px;
+  --ghost: 380px;
+  --tint-r: 1180px;
+}
+
+/* 좌측 액센트 바 */
+.wcard::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: var(--bar);
+  background: var(--accent, #5FA97E);
+}
+
+/* 고스트 장 번호 — 오른쪽 아래, 가장자리에서 살짝 잘린다(의도된 재단) */
+.wc-ghost {
+  position: absolute;
+  right: 36px;
+  /* 옛 카드는 베이스라인을 바닥에서 24px 띄우고 글자를 앉혔다.
+     line-height:1 상자를 그 자리에 맞춘다. */
+  bottom: calc(var(--ghost) * -0.06);
+  font-family: var(--serif-card, 'Noto Serif KR', serif);
+  font-weight: 700;
+  font-size: var(--ghost);
+  line-height: 1;
+  letter-spacing: -.04em;
+  color: color-mix(in srgb, var(--accent, #5FA97E) 21%, var(--bg, #FBFBF8));
+  user-select: none;
+  pointer-events: none;
+}
+
+/* 본문 블록 — 푸터 위 영역에서 수직 중앙보다 살짝 위 */
+.wc-main {
+  position: absolute;
+  left: calc(var(--pad) + var(--bar));
+  right: var(--pad);
+  top: var(--pad);
+  bottom: calc(var(--pad) + var(--foot) * 2 + 34px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-bottom: calc(var(--head) * 0.14);
+}
+
+.wcard:not(.sq) .wc-main { max-width: calc((1200px - var(--pad) * 2 - var(--bar)) * 0.80); }
+
+/* 줄지 않는다.
+
+   flex 아이템은 기본으로 줄어든다(flex-shrink:1). 내용이 빠듯한 카드에서
+   3px 짜리 구분선이 0 으로 찌그러져 사라진 적이 있다 — 여백은 margin 이라
+   남고 선만 없어져서, 보고도 무엇이 빠졌는지 알기 어려웠다.
+   크기를 맞추는 일은 card.js 의 fit() 이 한다. 여기서 줄 일이 아니다. */
+.wc-main > * { flex: none; }
+
+.wc-kicker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: var(--kicker);
+  font-weight: 500;
+  letter-spacing: .01em;
+  color: color-mix(in srgb, var(--accent, #5FA97E) 75%, #000);
+  margin-bottom: calc(var(--kicker) * 1.5);
+}
+.wc-kicker::before {
+  content: '';
+  flex: none;
+  width: calc(var(--kicker) * .46);
+  height: calc(var(--kicker) * .46);
+  border-radius: 50%;
+  background: var(--accent, #5FA97E);
+}
+
+/* 카드의 주인공은 속담이다. 공감이 가장 빨리 일어나는 문장이라 가장 크게 둔다. */
+.wc-head {
+  font-family: var(--serif-card, 'Noto Serif KR', serif);
+  font-weight: 700;
+  font-size: var(--head);
+  line-height: 1.34;
+  letter-spacing: 0;
+  color: var(--ink, #1C1E1B);
+  word-break: keep-all;
+}
+
+/* 속담과 받침을 가르는 짧은 선. 부 색이라 좌측 바와 호응한다. */
+.wc-rule {
+  width: calc(var(--sub) * 2.4);
+  height: 3px;
+  background: var(--accent, #5FA97E);
+  margin: calc(var(--sub) * 1.3) 0 calc(var(--sub) * 1.0);
+}
+
+.wc-sub {
+  font-size: var(--sub);
+  font-weight: 500;
+  line-height: 1.62;
+  letter-spacing: -.01em;
+  color: var(--ink-2, #3D423B);
+  word-break: keep-all;
+}
+
+.wc-foot {
+  position: absolute;
+  left: calc(var(--pad) + var(--bar));
+  right: var(--pad);
+  bottom: var(--pad);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  padding-top: 30px;
+  border-top: 1px solid color-mix(in srgb, var(--ink, #1C1E1B) 12%, var(--bg, #FBFBF8));
+  font-size: var(--foot);
+  font-weight: 500;
+}
+.wc-brand {
+  letter-spacing: .09em;
+  color: color-mix(in srgb, var(--ink, #1C1E1B) 62%, var(--bg, #FBFBF8));
+}
+.wc-part {
+  font-size: calc(var(--foot) - 3px);
+  font-weight: 400;
+  color: var(--muted, #6E7469);
+  white-space: nowrap;
+}
+
+/* ── 화면에 얹을 때 ────────────────────────────────────────
+   카드는 설계 크기 그대로 두고 감싸는 쪽이 줄인다. 폭에 맞춰 scale 을
+   계산하는 일은 card.js 가 한다. */
+.wcard-fit {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid var(--line, rgba(28,30,27,.10));
+}
+.wcard-fit > .wcard {
+  transform-origin: 0 0;
+  will-change: transform;
+}

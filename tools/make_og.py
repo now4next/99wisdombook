@@ -4,252 +4,169 @@
 
   python tools/make_og.py            # 발행된 전 칼럼 재생성
   python tools/make_og.py <slug> ..  # 지정 칼럼만
+  python tools/make_og.py --keep-png # 중간 PNG 를 지우지 않는다(비교용)
 
-산출: og/{slug}.png (1200x600, 2:1)  — 카카오톡 / OG / 트위터 공용
-      og/{slug}-1x1.png (1080x1080)  — 인스타 피드
+산출: og/{slug}.jpg (1200x600, 2:1)  — 카카오톡 / OG / 트위터 / 메일 공용
+      og/{slug}-1x1.jpg (1080x1080)  — 인스타 피드
 
-카카오·페이스북 미리보기는 SVG를 읽지 못하므로 PNG로 굽는다.
-디자인은 사이트의 라이트/파스텔 테마(assets/app.css)를 따른다.
+어떻게 만드는가
+---------------
+디자인은 assets/card.css + card.js 한 벌에 있다. 이 스크립트는 그것을
+tools/card.html 에 끼워 넣고 헤드리스 브라우저로 찍을 뿐이다. 그래서
+칼럼 페이지 위에 보이는 커버와 여기서 구운 카드가 같은 원본에서 나온다.
+
+전에는 PIL 로 픽셀을 직접 그렸다. 좌표와 줄바꿈을 손으로 계산해야 했고
+(wrap() 을 직접 구현했다), 폰트 경로가 C:\\Windows\\Fonts 로 박혀 있어
+한 대의 PC 에서만 구워졌다. 브라우저는 줄바꿈도 웹폰트도 알아서 한다.
+
+왜 JPEG 인가
+------------
+카드는 넓은 그라데이션 면이라 PNG 로는 비효율이다. 같은 99편이
+PNG 13.5MB 였던 것이 JPEG 로는 4MB 안팎이 된다. 레포와 git 히스토리가
+그만큼 가벼워진다(PNG 는 바이너리라 커밋마다 통째로 쌓인다).
+
+카카오·페이스북 미리보기는 SVG 를 읽지 못하므로 래스터로 굽는 것은
+그대로다. 바뀐 것은 '무엇으로 그리는가'이지 '무엇을 내보내는가'가 아니다.
 """
-import io, json, os, sys, subprocess, base64, time
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
+import io, json, os, sys, subprocess, tempfile, shutil, time
+
+from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT  = os.path.join(ROOT, 'og')
+OUT = os.path.join(ROOT, 'og')
+TPL = os.path.join(ROOT, 'tools', 'card.html')
 
-BG      = (251, 251, 248)
-INK     = (28, 30, 27)
-INK_2   = (61, 66, 59)
-MUTED   = (110, 116, 105)
-MUTED_2 = (154, 160, 148)
+JPEG_QUALITY = 88
 
-PART_COLOR = {
-    1: (201, 149, 74), 2: (95, 169, 126), 3: (94, 155, 198),
-    4: (155, 135, 198), 5: (224, 144, 110), 6: (79, 160, 160),
-    7: (212, 112, 110), 8: (176, 138, 102), 9: (139, 149, 166),
-}
-PART_NAME = {
-    1: '경제와 거래', 2: '인과와 자연', 3: '시간과 변화', 4: '인간 본성과 심리',
-    5: '관계와 처세', 6: '실행과 노력', 7: '위기와 생존', 8: '지혜와 통찰', 9: '운명과 수용',
-}
-LENS_KO = {
-    'origin': '원형', 'science': '과학', 'history': '역사', 'person': '인물',
-    'business': '비즈니스', 'daily': '일상', 'counter': '반론',
-    'eastwest': '동서', 'practice': '실천', 'reflection': '성찰',
-}
+RATIOS = (
+    # (ratio, 파일 접미사, 가로, 세로)
+    ('2x1', '', 1200, 600),
+    ('1x1', '-1x1', 1080, 1080),
+)
 
-SERIF = r'C:\Windows\Fonts\NotoSerifKR-VF.ttf'
-SANS  = r'C:\Windows\Fonts\NotoSansKR-VF.ttf'
+BROWSER = next((p for p in [
+    r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe',
+    r'C:\Program Files\Microsoft\Edge\Application\msedge.exe',
+    r'C:\Program Files\Google\Chrome\Application\chrome.exe',
+    r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',
+    shutil.which('msedge') or '',
+    shutil.which('chrome') or '',
+    shutil.which('chromium') or '',
+] if p and os.path.exists(p)), None)
 
 
-def font(path, size, variation=None):
-    f = ImageFont.truetype(path, size)
-    if variation:
-        try:
-            f.set_variation_by_name(variation)
-        except Exception:
-            pass
-    return f
+def file_url(path):
+    return 'file:///' + os.path.abspath(path).replace('\\', '/')
 
 
-def mix(c, bg, ratio):
-    """c 를 bg 와 ratio(0~1) 비율로 섞는다."""
-    return tuple(int(bg[i] + (c[i] - bg[i]) * ratio) for i in range(3))
+def page(item, ratio):
+    """틀에 값을 끼워 넣어 한 장짜리 HTML 을 만든다."""
+    html = io.open(TPL, encoding='utf-8').read()
+    return (html
+            .replace('__APP_CSS__', file_url(os.path.join(ROOT, 'assets', 'app.css')))
+            .replace('__CARD_CSS__', file_url(os.path.join(ROOT, 'assets', 'card.css')))
+            .replace('__CARD_JS__', file_url(os.path.join(ROOT, 'card.js')))
+            .replace('__ITEM__', json.dumps(item, ensure_ascii=False))
+            .replace('__RATIO__', ratio))
 
 
-def wrap(draw, text, fnt, max_w):
-    """어절 단위 줄바꿈, 어절이 너무 길면 글자 단위."""
-    words, lines, cur = text.split(' '), [], ''
-    for w in words:
-        test = (cur + ' ' + w).strip()
-        if draw.textlength(test, font=fnt) <= max_w:
-            cur = test
-            continue
-        if cur:
-            lines.append(cur)
-        if draw.textlength(w, font=fnt) > max_w:
-            buf = ''
-            for ch in w:
-                if draw.textlength(buf + ch, font=fnt) <= max_w:
-                    buf += ch
-                else:
-                    lines.append(buf); buf = ch
-            cur = buf
-        else:
-            cur = w
-    if cur:
-        lines.append(cur)
-    return lines
+def shoot(html, w, h, png_path, tmpdir):
+    """헤드리스 브라우저로 한 장 찍는다."""
+    src = os.path.join(tmpdir, 'card.html')
+    io.open(src, 'w', encoding='utf-8', newline='\n').write(html)
+
+    if os.path.exists(png_path):
+        os.remove(png_path)
+
+    prof = os.path.join(tmpdir, 'profile')
+    # 파이프를 붙잡아야 한다. 런처는 렌더러 자식이 파일을 다 쓰기 전에 돌아온다.
+    subprocess.run([
+        BROWSER, '--headless=new', '--disable-gpu', '--no-first-run',
+        '--no-default-browser-check', '--hide-scrollbars',
+        '--force-device-scale-factor=1',
+        f'--user-data-dir={prof}',
+        f'--window-size={w},{h}',
+        # 웹폰트를 받아 오고 fit() 이 끝날 시간을 준다
+        '--virtual-time-budget=9000',
+        f'--screenshot={png_path}',
+        file_url(src),
+    ], capture_output=True, timeout=180)
+
+    # 런처가 먼저 돌아오는 경우가 있어 파일이 떨어질 때까지 기다린다
+    for _ in range(120):
+        if os.path.exists(png_path) and os.path.getsize(png_path) > 1000:
+            break
+        time.sleep(0.25)
+    if not os.path.exists(png_path):
+        raise SystemExit('렌더 실패: %s' % png_path)
 
 
-def radial_tint(size, color, strength=0.20):
-    """좌상단에서 퍼지는 부드러운 파스텔 틴트."""
-    W, H = size
-    layer = Image.new('RGB', (W, H), color)
-    g = Image.radial_gradient('L').resize((W * 2, H * 2), Image.LANCZOS)
-    # 중심을 좌상단으로 이동시켜 잘라 쓴다
-    mask = g.crop((W, H, W * 2, H * 2)).transpose(Image.ROTATE_180)
-    mask = mask.point(lambda v: int((255 - v) * strength))
-    return layer, mask
+def bake(item, tmpdir, keep_png=False):
+    made = []
+    if True:
+        for ratio, suffix, w, h in RATIOS:
+            png = os.path.join(OUT, '%s%s.png' % (item['slug'], suffix))
+            jpg = os.path.join(OUT, '%s%s.jpg' % (item['slug'], suffix))
+            shoot(page(item, ratio), w, h, png, tmpdir)
+
+            im = Image.open(png).convert('RGB')
+            if im.size != (w, h):
+                # 창 크기와 어긋나면 레이아웃이 밀린 것이다. 조용히 넘기지 않는다.
+                raise SystemExit('크기가 어긋남 %s: %s (기대 %dx%d)' % (jpg, im.size, w, h))
+            im.save(jpg, 'JPEG', quality=JPEG_QUALITY, optimize=True, progressive=True)
+            if not keep_png:
+                os.remove(png)
+            made.append(jpg)
+    return made
 
 
-def build(item, ratio='2x1'):
-    # 카드의 주인공은 속담(anchor_quote)이다. 공감이 가장 빨리 일어나는 문장이라
-    # 가장 크게 놓고, 칼럼의 인사이트 한 줄(quotable)은 그 아래에 작게 받친다.
-    if ratio == '2x1':
-        W, H = 1200, 600
-        pad, bar = 88, 12
-        k_size, a_size, q_size, f_size = 26, 84, 33, 24
-        a_min, a_max_lines, q_max_lines = 44, 3, 2
-        ghost_size = 300
-    else:
-        W, H = 1080, 1080
-        pad, bar = 96, 14
-        k_size, a_size, q_size, f_size = 30, 116, 39, 28
-        a_min, a_max_lines, q_max_lines = 52, 4, 3
-        ghost_size = 380
-
-    part = int(item.get('part_id') or 1)
-    col  = PART_COLOR.get(part, PART_COLOR[1])
-
-    im = Image.new('RGB', (W, H), BG)
-    tint, mask = radial_tint((W, H), col, 0.22)
-    im.paste(tint, (0, 0), mask)
-
-    d = ImageDraw.Draw(im)
-
-    # 좌측 액센트 바
-    d.rectangle([0, 0, bar, H], fill=col)
-
-    left = pad + bar
-
-    # 고스트 장 번호 — 오른쪽에 크게, 가장자리에서 살짝 잘리도록 (의도된 재단)
-    ghost_f = font(SERIF, ghost_size, 'Bold')
-    gtxt = '%02d' % int(item.get('chapter_id') or 0)
-    d.text((W - 36, H - 24), gtxt, font=ghost_f,
-           fill=mix(col, BG, 0.26), anchor='rs')
-
-    # ── 좌측 텍스트 블록: 키커 + 헤드라인을 하나로 묶어 수직 중앙 정렬 ──
-    lens = LENS_KO.get(item.get('lens'), item.get('lens') or '')
-    kicker = '제%d부 %d장 · %s' % (part, int(item.get('chapter_id') or 0), lens)
-    kf = font(SANS, k_size, 'Medium')
-
-    text_w = int((W - left - pad) * (0.78 if ratio == '2x1' else 0.95))
-
-    anchor = (item.get('anchor_quote') or item.get('title') or '').strip()
-    sub    = (item.get('quotable') or '').strip()
-
-    gap      = int(k_size * 1.6)      # 키커 ↔ 속담
-    foot_top = H - pad - f_size * 2 - 34
-    avail    = foot_top - pad
-
-    def layout(a_px, q_px):
-        """주어진 두 크기로 배치했을 때의 줄과 전체 높이를 돌려준다."""
-        af = font(SERIF, a_px, 'Bold')
-        a_ls = wrap(d, anchor, af, text_w)
-
-        qf = font(SANS, q_px, 'Medium')
-        q_ls = wrap(d, sub, qf, text_w) if sub else []
-
-        a_lh = int(af.size * 1.34)
-        q_lh = int(qf.size * 1.62)
-        mid_ = int(q_px * 1.3)        # 속담 ↔ 구분선
-        rgap = int(q_px * 1.0)        # 구분선 ↔ 받침
-
-        h = k_size + gap + a_lh * len(a_ls)
-        if q_ls:
-            h += mid_ + rgap + q_lh * len(q_ls)
-        return dict(af=af, a_ls=a_ls, a_lh=a_lh, qf=qf, q_ls=q_ls, q_lh=q_lh,
-                    mid=mid_, rgap=rgap, h=h)
-
-    # 1) 헤드라인부터 줄인다. 속담이 4자에서 38자까지 있어 줄 수와 높이를 함께 본다.
-    a_cur = a_size
-    L = layout(a_cur, q_size)
-    while (len(L['a_ls']) > a_max_lines or L['h'] > avail) and a_cur > a_min:
-        a_cur = int(a_cur * 0.9)
-        L = layout(a_cur, q_size)
-
-    # 2) 그래도 넘치면 받침을 줄인다. 문장을 자르는 것보다 작아지는 편이 낫다.
-    q_cur = q_size
-    q_floor = int(q_size * 0.72)
-    while (L['h'] > avail or len(L['q_ls']) > q_max_lines) and q_cur > q_floor:
-        q_cur = int(q_cur * 0.94)
-        L = layout(a_cur, q_cur)
-
-    # 3) 마지막 수단으로만 줄임표를 붙인다. 문장 끝이 소리 없이 사라지는 일을 막는다.
-    if len(L['q_ls']) > q_max_lines or L['h'] > avail:
-        keep = max(1, min(q_max_lines, len(L['q_ls'])))
-        if L['h'] > avail and keep > 1:
-            keep -= 1
-        if keep < len(L['q_ls']):
-            L['q_ls'] = L['q_ls'][:keep]
-            L['q_ls'][-1] = L['q_ls'][-1].rstrip() + '…'
-        L['h'] = k_size + gap + L['a_lh'] * len(L['a_ls'])                  + L['mid'] + L['rgap'] + L['q_lh'] * len(L['q_ls'])
-
-    af, a_lines, a_line_h = L['af'], L['a_ls'], L['a_lh']
-    qf, q_lines, q_line_h = L['qf'], L['q_ls'], L['q_lh']
-    mid, rule_gap, block_h = L['mid'], L['rgap'], L['h']
-    q_size = qf.size
-
-    top = max(pad, int((foot_top - block_h) * 0.46))
-
-    d.ellipse([left, top + k_size * 0.28, left + 12, top + k_size * 0.28 + 12], fill=col)
-    d.text((left + 24, top), kicker, font=kf, fill=mix(col, (0, 0, 0), 0.75))
-
-    ty = top + k_size + gap
-    for ln in a_lines:
-        d.text((left, ty), ln, font=af, fill=INK)
-        ty += a_line_h
-
-    if q_lines:
-        # 속담과 받침을 가르는 짧은 선. 부 색을 써서 좌측 액센트 바와 호응시킨다.
-        ty += mid
-        d.line([left, ty, left + int(q_size * 2.4), ty], fill=col, width=3)
-        ty += rule_gap
-        for ln in q_lines:
-            d.text((left, ty), ln, font=qf, fill=INK_2)
-            ty += q_line_h
-
-    # ── 하단 ──
-    fy = H - pad - f_size
-    d.line([left, fy - 30, W - pad, fy - 30], fill=mix(INK, BG, 0.12), width=1)
-
-    ff = font(SANS, f_size, 'Medium')
-    d.text((left, fy), '99 WISDOM INSIGHT', font=ff, fill=mix(INK, BG, 0.62))
-
-    pf = font(SANS, f_size - 3, 'Regular')
-    d.text((W - pad, fy + 4), PART_NAME.get(part, '') + '의 법칙',
-           font=pf, fill=MUTED, anchor='ra')
-
-    return im
-
-
-def main():
-    os.makedirs(OUT, exist_ok=True)
-    # 공개 목록 API 를 쓴다. 관리자 API 는 실제 관리자 세션이 필요해졌고,
-    # 카드에 들어가는 값(제목·quotable·장 번호)은 공개 목록에 전부 들어 있다.
+def fetch_items():
+    """공개 목록 API 를 쓴다. 카드에 들어가는 값은 전부 여기에 있다."""
     tmp = os.path.join(OUT, '_list.json')
     subprocess.run(['curl', '-s', 'https://99wisdombook.org/api/insights?limit=200',
                     '-o', tmp], check=True)
     payload = json.load(io.open(tmp, encoding='utf-8'))
-    items = payload.get('items')
     os.remove(tmp)
+    items = payload.get('items')
     if not items:
         raise SystemExit('칼럼 목록을 받지 못했습니다: %s' % str(payload)[:200])
+    return items
 
-    want = set(sys.argv[1:])
+
+def main():
+    if not BROWSER:
+        raise SystemExit('헤드리스로 쓸 브라우저를 찾지 못했습니다 (Edge 또는 Chrome).')
+    os.makedirs(OUT, exist_ok=True)
+
+    args = sys.argv[1:]
+    keep_png = '--keep-png' in args
+    want = set(a for a in args if not a.startswith('--'))
+
+    items = fetch_items()
     if want:
         items = [i for i in items if i['slug'] in want]
+        missing = want - {i['slug'] for i in items}
+        if missing:
+            raise SystemExit('없는 슬러그: %s' % ', '.join(sorted(missing)))
 
+    total = 0
+    # 한 번 만들어 끝까지 돌려 쓴다. 브라우저가 프로필을 쥐고 있어서
+    # 매번 지우려 하면 PermissionError 가 난다(ignore_cleanup_errors).
+    tmp = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
+    tmpdir = tmp.name
     for it in items:
-        for ratio, suffix in (('2x1', ''), ('1x1', '-1x1')):
-            im = build(it, ratio)
-            p = os.path.join(OUT, '%s%s.png' % (it['slug'], suffix))
-            im.save(p, 'PNG', optimize=True)
-        print('%-32s %d부 %2d장  %s' % (it['slug'], it['part_id'], it['chapter_id'],
-                                        (it.get('quotable') or it['title'])[:26]))
+        bake(it, tmpdir, keep_png)
+        total += len(RATIOS)
+        print('%-32s %d부 %2d장  %s' % (
+            it['slug'], it['part_id'], it['chapter_id'],
+            (it.get('quotable') or it['title'])[:26]))
+
+    size = sum(os.path.getsize(os.path.join(OUT, f))
+               for f in os.listdir(OUT) if f.endswith('.jpg'))
     print()
-    print('생성: %d편 x 2종 = %d장 → og/' % (len(items), len(items) * 2))
+    print('생성: %d편 x %d종 = %d장 → og/' % (len(items), len(RATIOS), total))
+    print('og/ 전체 JPEG %.1f MB' % (size / 1048576))
+    tmp.cleanup()
 
 
 if __name__ == '__main__':

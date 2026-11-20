@@ -609,6 +609,16 @@ function mailVia(env, r) {
   return r && r.from && r.from !== want ? 'via ' + r.from : null;
 }
 
+/* 구운 카드의 주소. D1 의 hero_image 는 .png 로 들어 있는 행이 많다 —
+   카드를 JPEG 로 바꾸면서 확장자만 여기서 맞춘다. 행을 일괄로 고치지
+   않는 것은 관리자가 넣은 바깥 주소까지 건드리지 않기 위해서다.
+   우리가 구운 og/ 아래 것만 바꾼다.
+   (reader.html 의 cardSrc · functions/insight/[slug].js 와 같은 규칙) */
+function ogCardSrc(hero) {
+  const u = String(hero || '');
+  return /\/og\/[^/]+\.png$/i.test(u) ? u.replace(/\.png$/i, '.jpg') : u;
+}
+
 const mailEsc = (t) => String(t == null ? '' : t)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -699,7 +709,7 @@ function issueEmail(env, user, wisdomItem, unsubUrl, opt) {
      updated_at 을 ?v= 로 붙여 둔다(reader.html 과 같은 이유). */
   const cardVer = String((c && (c.updated_at || c.published_at)) || '').replace(/\D/g, '').slice(0, 14);
   const cardUrl = (c && c.hero_image)
-    ? c.hero_image + (c.hero_image.indexOf('?') >= 0 ? '&' : '?') + 'v=' + (cardVer || '1')
+    ? ogCardSrc(c.hero_image) + '?v=' + (cardVer || '1')
     : '';
 
   const hero = cardUrl

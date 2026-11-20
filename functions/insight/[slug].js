@@ -36,7 +36,12 @@ export async function onRequestGet(context) {
   if (it) {
     const title = it.title + ' · 99 Wisdom Insight';
     const desc  = it.hook || it.quotable || '9부 99장의 지혜를 사례와 출처가 있는 칼럼으로.';
-    const img   = it.hero_image || (origin + '/og-share.png');
+    /* 구운 카드는 JPEG 다. D1 에 .png 로 남아 있는 행의 확장자만 맞춘다
+       (reader.html 의 cardSrc · api 의 ogCardSrc 와 같은 규칙). */
+    const hero  = String(it.hero_image || '');
+    const img   = (/\/og\/[^/]+\.png$/i.test(hero)
+                    ? hero.replace(/\.png$/i, '.jpg')
+                    : hero) || (origin + '/og-share.png');
     const url   = origin + '/insight/' + encodeURIComponent(it.slug);
 
     html = html

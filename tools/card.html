@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>card bake</title>
+<!--
+  카드를 굽기 위한 틀. 사람이 열어 볼 화면이 아니다.
+
+  tools/make_og.py 가 __ITEM__ 과 __RATIO__ 를 채워 임시 파일로 쓴 뒤
+  헤드리스 브라우저로 이 페이지를 찍는다. 사이트와 같은 CSS·같은 JS 를
+  싣기 때문에 구워진 이미지가 화면의 커버와 어긋나지 않는다.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700&family=Noto+Serif+KR:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="__APP_CSS__">
+<link rel="stylesheet" href="__CARD_CSS__">
+<style>
+  html, body { margin: 0; padding: 0; background: #FBFBF8; }
+  /* 창 크기를 카드에 딱 맞춰 열므로 여백이 없어야 한다. */
+  #host { line-height: 0; }
+</style>
+</head>
+<body>
+<div id="host"></div>
+<script src="__CARD_JS__"></script>
+<script>
+(function () {
+  var item  = __ITEM__;
+  var ratio = "__RATIO__";
+  /* scale:false — 설계 크기 그대로 그린다. 줄이는 것은 화면에서만 하는 일이다. */
+  mountCard(document.getElementById('host'), item, ratio, { scale: false });
+})();
+</script>
+</body>
+</html>
