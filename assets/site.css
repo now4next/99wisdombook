@@ -580,39 +580,19 @@ svg.empty-icon {
   .share-btns > * { flex: 1; justify-content: center; }
 }
 
-/* ══════════ 칼럼 머리 — 앵커 문장이 주인공 ══════════
+/* ══════════ 칼럼 머리 — 공유 카드와 같은 커버 ══════════
    각 장의 대표 문장(속담)이 독자에게 가장 먼저, 가장 크게 닿도록 한다.
-   칼럼 제목은 그 문장을 읽는 '각도'로서 아래에 놓인다. */
-.anchor-hero { margin: 22px 0 16px; }
-.anchor-hero-q {
-  position: relative;
-  font-family: var(--serif); font-weight: 700;
-  /* 데스크톱 30.4px = 기존 50.4px의 60%.
-     하한을 1.45rem로 둔 이유: 모바일에서 본문(16.6px)과 붙어 위계가 사라지기 때문. */
-  font-size: clamp(1.45rem, 3.7vw, 1.9rem);
-  line-height: 1.42; letter-spacing: -.03em;
-  color: var(--ink); word-break: keep-all;
-  padding-left: .55em; text-indent: -.55em;
-}
-.anchor-hero-q::before {
-  content: '\201C'; color: color-mix(in srgb, var(--accent) 65%, #fff);
-  font-family: var(--serif-display); margin-right: .04em;
-}
-.anchor-hero-q::after {
-  content: '\201D'; color: color-mix(in srgb, var(--accent) 65%, #fff);
-  font-family: var(--serif-display); margin-left: .02em;
-}
-
-/* 상단은 앵커만 — 여백을 줄이고 구분선으로 본문과 끊는다 */
-.art-head.anchor-only { padding: 44px 0 26px; }
-/* 커버가 머리를 대신한다. 카드가 테두리를 가지고 있어 위아래 여백만 준다. */
+   예전에는 이 자리를 글자로 짜 두었는데(.anchor-hero), 공유 카드가 같은
+   두 줄을 다른 모양으로 그리고 있어 한 벌로 합쳤다. 모양은
+   assets/card.css 에 있다 — 그림이 아니라 HTML 이라 글자는 그대로 글자다.
+   카드가 테두리를 가지고 있으므로 여기서는 위아래 여백만 준다. */
 .art-head.cover-head { padding: 34px 0 30px; }
 
 /* 본문 시작부 — 칼럼 제목과 메타.
    ⚠ .art-head .art-title 로 쓰면 장 페이지(chapter-view) 제목까지
      줄어드므로 반드시 .art-open 아래로 한정한다. */
 .art-open { margin-bottom: 0; }
-/* 칼럼 제목은 화면에서 감춘다 — 앵커와 리드가 이미 글을 소개하므로 중복.
+/* 칼럼 제목은 화면에서 감춘다 — 커버와 리드가 이미 글을 소개하므로 중복.
    다만 h1 은 검색·스크린리더·공유 카드의 근거이므로 마크업에는 남긴다. */
 .art-open .art-title {
   position: absolute; width: 1px; height: 1px;
@@ -645,21 +625,12 @@ svg.empty-icon {
 }
 .source-one a { color: var(--muted); border-bottom: 1px solid var(--line); }
 
-@media (max-width: 720px) {
-  .anchor-hero { margin: 16px 0 12px; }
-  .anchor-hero-q { line-height: 1.46; }
-}
-
 /* ══════════ 핵심 메시지 상징 문양 ══════════
-   원형 16종 × 9부 색상 조합으로 칼럼마다 고유한 마크를 갖는다. */
-.art-mark { margin-top: 22px; }
-.art-mark svg.mark-lead {
-  width: 76px; height: 76px;
-  stroke: var(--accent); fill: none;
-  stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
-  opacity: .85;
-}
-/* 끝맺음 — 같은 문양을 작게, 가운데, 흐리게 */
+   원형 16종 × 9부 색상 조합으로 칼럼마다 고유한 마크를 갖는다.
+   머리에 크게 두던 것(.art-mark svg.mark-lead)은 없앴다 — 커버가 그
+   자리에 들어왔고, 카드에는 이미 고스트 장 번호가 있다. 문양은 글을
+   맺는 자리에만 남는다. */
+/* 끝맺음 — 작게, 가운데, 흐리게 */
 .mark-close { display: flex; justify-content: center; margin: 44px 0 -8px; }
 .mark-close svg.mark-end {
   width: 34px; height: 34px;
@@ -668,7 +639,5 @@ svg.empty-icon {
   opacity: .42;
 }
 @media (max-width: 720px) {
-  .art-mark { margin-top: 18px; }
-  .art-mark svg.mark-lead { width: 62px; height: 62px; }
   .mark-close { margin: 34px 0 -6px; }
 }
