@@ -369,6 +369,8 @@ export async function onRequest(context) {
     if (path.match(/^\/api\/notes\/\d+$/) && method === 'DELETE')
       return handleDeleteNote(path.split('/').pop(), request, env);
 
+    if (path === '/api/admin/insights/bulk' && method === 'POST')
+      return handleBulkInsights(request, env);
     if (path === '/api/admin/notes' && method === 'GET')
       return handleAdminListNotes(request, env);
     if (path.match(/^\/api\/admin\/notes\/\d+$/) && method === 'PUT')
@@ -1361,6 +1363,109 @@ async function noteWho(env, request, body) {
 
    지우는 것보다 숨기는 것을 기본으로 둔다. 지우면 왜 지웠는지 남지
    않고, 같은 사람이 다시 쓸 때 전에 무슨 일이 있었는지 알 수 없다. */
+/* ── 칼럼 일괄 손보기 ────────────────────────────────────────
+
+   글을 다듬는 일은 한 번에 끝나지 않는다. 기준을 세우고 99편을 훑고 나면
+   고칠 곳이 수십 군데 나오는데, 관리자 화면에서 한 편씩 열어 붙여 넣는
+   것은 옮겨 적다 틀리기 좋은 일이다.
+
+   두 가지 방식을 받는다.
+
+     set      칸을 통째로 바꾼다. 다시 쓴 글에 쓴다.
+     replace  본문에서 한 대목만 갈아 끼운다. 문장 한둘을 고칠 때 쓴다.
+
+   replace 는 찾는 글이 **정확히 한 번** 나올 때만 바꾼다. 없으면 그 편은
+   건드리지 않고 왜 못 했는지 돌려준다. 여러 번 나오면 어느 것을 고치려는
+   것인지 알 수 없으므로 역시 건드리지 않는다. 글을 고치는 일에서 '아마
+   여기겠지' 는 틀린 곳을 조용히 바꾸는 길이다.
+
+   dry_run 으로 먼저 본다. 무엇이 바뀌는지 보지 않고 99편을 건드리지 않는다.
+
+   updated_at 을 함께 올린다. 카드 주소의 ?v= 가 이 값이라, 올리지 않으면
+   문구를 고쳐도 옛 카드가 계속 나간다. */
+async function handleBulkInsights(request, env) {
+  const b = await request.json().catch(() => ({}));
+  const secret = (env.CRON_SECRET || '').trim();
+  const byCron = secret && (request.headers.get('Authorization') || '') === `Bearer ${secret}`;
+  if (!byCron && !(await verifyAdminStrict(request, env)))
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+
+  await ensureInsights(env);
+
+  const updates = Array.isArray(b.updates) ? b.updates : [];
+  if (!updates.length)
+    return jsonResponse({ success: false, error: 'updates 가 비어 있습니다.' }, 400);
+
+  const SETTABLE = ['title', 'hook', 'anchor_quote', 'body_md', 'action', 'quotable', 'lens'];
+  const REPLACEABLE = ['body_md', 'hook', 'quotable', 'action', 'title'];
+  const dryRun = !!b.dry_run;
+  const results = [];
+
+  for (const u of updates) {
+    const slug = String(u.slug || '').trim();
+    const r = { slug, ok: false };
+
+    const cur = slug
+      ? await env.DB.prepare('SELECT * FROM insights WHERE slug = ?').bind(slug).first()
+      : null;
+    if (!cur) { r.error = '없는 슬러그'; results.push(r); continue; }
+
+    const next = {};
+
+    /* set — 칸을 통째로 */
+    for (const c of SETTABLE) {
+      if (u.set && u.set[c] !== undefined) next[c] = String(u.set[c]);
+    }
+
+    /* replace — 한 대목만. 정확히 한 번 나와야 한다 */
+    let failed = null;
+    for (const rp of (Array.isArray(u.replace) ? u.replace : [])) {
+      const field = String(rp.in || 'body_md');
+      if (!REPLACEABLE.includes(field)) { failed = '고칠 수 없는 칸: ' + field; break; }
+      const from = String(rp.from || '');
+      if (!from) { failed = 'from 이 비어 있습니다'; break; }
+
+      const base = next[field] !== undefined ? next[field] : String(cur[field] || '');
+      const n = base.split(from).length - 1;
+      if (n !== 1) { failed = `"${from.slice(0, 24)}…" 가 ${field} 에 ${n}번 나옵니다 (1번이어야 함)`; break; }
+      next[field] = base.replace(from, String(rp.to || ''));
+    }
+    if (failed) { r.error = failed; results.push(r); continue; }
+
+    const cols = Object.keys(next);
+    if (!cols.length) { r.error = '바뀌는 것이 없습니다'; results.push(r); continue; }
+
+    r.fields = cols;
+    r.before = {}; r.after = {};
+    for (const c of cols) {
+      r.before[c] = String(cur[c] || '').length;
+      r.after[c] = next[c].length;
+    }
+
+    if (dryRun) { r.ok = true; r.dry_run = true; results.push(r); continue; }
+
+    try {
+      const sets = cols.map((c) => c + ' = ?');
+      sets.push('updated_at = CURRENT_TIMESTAMP');
+      await env.DB.prepare(
+        `UPDATE insights SET ${sets.join(', ')} WHERE slug = ?`
+      ).bind(...cols.map((c) => next[c]), slug).run();
+      r.ok = true;
+    } catch (err) {
+      r.error = err.message;
+    }
+    results.push(r);
+  }
+
+  const done = results.filter((x) => x.ok).length;
+  return jsonResponse({
+    success: results.every((x) => x.ok),
+    dry_run: dryRun,
+    total: results.length, ok: done, failed: results.length - done,
+    results,
+  });
+}
+
 async function handleAdminListNotes(request, env) {
   if (!await verifyAdminStrict(request, env)) return jsonResponse({ error: 'Unauthorized' }, 401);
   await ensureInsightNotesTable(env);
