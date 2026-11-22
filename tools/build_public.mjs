@@ -216,6 +216,23 @@ function main() {
     process.exit(1);
   }
 
+  /* 칼럼 손보기 묶음을 관리자 화면이 읽을 수 있게 옮긴다.
+
+     tools/ 는 배포에서 빼는 디렉터리지만 이 파일들만은 내보낸다. 관리자가
+     브라우저에서 눌러 반영하려면 브라우저가 읽을 수 있어야 한다.
+
+     비밀이 아니다 — 곧 칼럼으로 공개될 글이다. 다만 사람이 돌아다니다
+     마주칠 자리는 아니라서 링크를 걸지 않는다. */
+  const batchSrc = path.join(ROOT, 'tools', 'column-batches');
+  if (fs.existsSync(batchSrc)) {
+    const outDir = path.join(DIST, 'admin-batches');
+    fs.mkdirSync(outDir, { recursive: true });
+    const names = fs.readdirSync(batchSrc).filter((f) => /^batch-\d+\.json$/.test(f))
+      .sort((a, b) => parseInt(a.match(/\d+/)[0], 10) - parseInt(b.match(/\d+/)[0], 10));
+    for (const f of names) fs.copyFileSync(path.join(batchSrc, f), path.join(outDir, f));
+    fs.writeFileSync(path.join(outDir, 'index.json'), JSON.stringify({ batches: names }, null, 1));
+  }
+
   const stamped = stampAssets(DIST);
 
   const leaked = fs.readdirSync(DIST).filter(isExcludedRootFile);
