@@ -8,7 +8,7 @@
 ```bash
 curl -s -X POST https://99wisdombook.org/api/admin/insights/bulk \
   -H "Authorization: Bearer <CRON_SECRET>" -H 'Content-Type: application/json' \
-  -d "$(python -c "import json,sys;d=json.load(open('tools/column-batches/batch-2.json',encoding='utf-8'));d['dry_run']=True;print(json.dumps(d,ensure_ascii=False))")"
+  -d "$(python -c "import json,sys;d=json.load(open('tools/column-batches/batch-1.json',encoding='utf-8'));d['dry_run']=True;print(json.dumps(d,ensure_ascii=False))")"
 ```
 
 확인했으면 반영한다.
@@ -16,7 +16,7 @@ curl -s -X POST https://99wisdombook.org/api/admin/insights/bulk \
 ```bash
 curl -s -X POST https://99wisdombook.org/api/admin/insights/bulk \
   -H "Authorization: Bearer <CRON_SECRET>" -H 'Content-Type: application/json' \
-  --data-binary @tools/column-batches/batch-2.json
+  --data-binary @tools/column-batches/batch-1.json
 ```
 
 `replace` 는 찾는 글이 **정확히 한 번** 나올 때만 바꾼다. 어긋나면 그 편은
@@ -34,5 +34,11 @@ python tools/make_og.py hapjong-and-balance-theory
 
 | 묶음 | 편 | 한 일 |
 |---|---|---|
-| 1 | 22·32·15·9·82 | 22장 다시 씀, 나머지 문장 수술 (docs/column-batch-1.md) |
+| 1 | 22·32·15·9·82 | 22장 다시 씀, 나머지 문장 수술 |
 | 2 | 74·88·66·69·56 | 74장 quotable 교체, 나머지 되짚기 수술 |
+
+## 묶음은 번호 순서대로 반영한다
+
+1묶음과 2묶음은 서로 다른 편을 건드리므로 순서가 바뀌어도 상관없다. 다만
+같은 편을 두 묶음에서 손보게 되면 뒤 묶음의 `from` 이 앞 묶음 결과를
+전제하므로, 번호 순서를 지키는 편이 안전하다.
