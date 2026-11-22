@@ -870,8 +870,10 @@ async function sendNewsletterEmail(env, user, wisdomItem) {
   const ch = (col && col.chapter_id) || 0;
   const opt = ch ? {
     notes: await notesForEmail(env, ch, user.id),
+    /* #notes — 기록 자리로 내려 달라는 표시. 이 링크로 온 사람만 내린다
+       (notes.js 참고). 다른 링크로 들어오면 글 처음부터 읽는다. */
     noteUrl: 'https://99wisdombook.org/insight/' + encodeURIComponent(col.slug)
-      + '?t=' + (await writeTokenFor(env, user.id)),
+      + '?t=' + (await writeTokenFor(env, user.id)) + '#notes',
   } : null;
   return sendAndLog(env, issueEmail(env, user, wisdomItem, unsubUrl, opt), {
     kind: 'issue',
@@ -3180,7 +3182,7 @@ async function handlePromoCron(request, env) {
         : 'https://99wisdombook.org/daily.html?notify=1';
       const noteUrl = member
         ? `https://99wisdombook.org/insight/${encodeURIComponent(col.slug)}?t=`
-          + (await writeTokenFor(env, member.id))
+          + (await writeTokenFor(env, member.id)) + '#notes'
         : '';
       const r = await sendAndLog(env,
         issueEmail(env, who, item, unsubUrl, {
@@ -3246,7 +3248,7 @@ async function handlePromoCron(request, env) {
       await sendAndLog(env,
         issueEmail(env, user, item, `https://99wisdombook.org/api/email/unsubscribe?t=${t}`, {
           promo: true,
-          noteUrl: `https://99wisdombook.org/insight/${encodeURIComponent(col.slug)}?t=${noteTok}`,
+          noteUrl: `https://99wisdombook.org/insight/${encodeURIComponent(col.slug)}?t=${noteTok}#notes`,
           notes: await notesForEmail(env, chapterId, user.id),
         }),
         { kind: 'promo', user_id: user.id, user_name: user.name, user_email: user.email, chapter_id: chapterId });

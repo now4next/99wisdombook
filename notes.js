@@ -193,7 +193,21 @@
     }
 
     load();
-    if (tok) setTimeout(function () {
+
+    /* 기록 자리로 내려 주는 것은 '이 글에서 느낀 것 적기' 를 누르고 온
+       사람에게만 할 일이다.
+
+       전에는 토큰이 있으면 내렸다. 토큰은 localStorage 에 한 번 들어가면
+       계속 남으므로, 메일 링크를 한 번이라도 누른 사람은 그 뒤 모든 칼럼과
+       원문이 열리자마자 아래로 끌려 내려갔다 — 글을 처음부터 읽을 수가
+       없었다. 토큰이 있다는 것은 '전에 왔었다' 이지 '지금 쓰러 왔다' 가
+       아니다.
+
+       그래서 주소에 표시를 둔다. 메일의 기록 링크에만 #notes 가 붙는다
+       (?t= 는 api-client.js 가 지우지만 조각은 남긴다). 옛 메일의
+       ?note= 도 같은 뜻으로 받는다. */
+    var cameToWrite = location.hash === '#notes' || !!legacy;
+    if (cameToWrite) setTimeout(function () {
       sec.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 400);
   }
